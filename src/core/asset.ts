@@ -40,7 +40,7 @@ export class VideoAsset extends MediaAsset {
    * @param config - The configuration of the audio asset.
    * @returns A new AudioAsset instance.
    */
-  constructor(assetId: string, config?: VideoAssetConfig) {
+  constructor(assetId: string, config?: Partial<VideoAssetConfig>) {
     const { start = 0, end } = config || {};
     super(assetId);
     this.start = start;
@@ -72,7 +72,7 @@ export class AudioAsset extends MediaAsset {
    * @param config - The configuration of the audio asset.
    * @returns A new AudioAsset instance.
    */
-  constructor(assetId: string, config?: AudioAssetConfig) {
+  constructor(assetId: string, config?: Partial<AudioAssetConfig>) {
     const {
       start = 0,
       end,
