@@ -63,6 +63,7 @@ export const uploadToServer = async (
     name: data.name,
     description: data.description,
     callback_url: data.callbackUrl,
+    media_type: data.mediaType,
   };
 
   if (finalData.callback_url) {

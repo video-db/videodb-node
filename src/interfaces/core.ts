@@ -4,6 +4,7 @@ import type { IndexType, SearchType } from '@/types';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { StreamableURL, Timeline, Transcript } from '@/types/video';
 import { IndexJob, TranscriptJob, UploadJob } from '@/utils/job';
+import { AudioAsset, VideoAsset } from '..';
 
 /**
  * Base type for all collection objects
@@ -57,6 +58,25 @@ export interface IVideo {
 }
 
 /**
+ * Base type for all audio objects
+ */
+export interface AudioBase {
+  collectionId: string;
+  id: string;
+  length: string;
+  name: string;
+  size: string;
+  userId: string;
+}
+
+/**
+ * Audio class interface for reference
+ */
+export interface IAudio {
+  meta: AudioBase;
+}
+
+/**
  * Base type for all Shot objects
  */
 export interface ShotBase {
@@ -89,4 +109,13 @@ export interface IShot {
 export interface Search<V, C> {
   searchInsideVideo: (data: V) => Promise<SearchResult>;
   searchInsideCollection: (data: C) => Promise<SearchResult>;
+}
+
+export interface ITimeline {
+  timeline: Array<object>;
+  streamUrl: string;
+  playerUrl: string;
+  addInline(asset: VideoAsset): void;
+  addOverlay(start: number, asset: AudioAsset): void;
+  generateStream(): Promise<string>;
 }

@@ -53,6 +53,16 @@ export type VideoResponse = {
   player_url: string;
 };
 
+//#TODO: cross check the arugments
+export type AudioResponse = {
+  collection_id: string;
+  id: string;
+  length: string;
+  name: string;
+  size: string;
+  user_id: string;
+};
+
 export type CollectionResponse = {
   id: string;
   name: string;
@@ -73,6 +83,10 @@ export type GetUploadUrl = {
 
 export type GetVideos = {
   videos: VideoResponse[];
+};
+
+export type GetAudios = {
+  audios: AudioResponse[];
 };
 
 export type GenerateStreamResponse = {

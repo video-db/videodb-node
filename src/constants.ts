@@ -16,6 +16,7 @@ export const ApiPath = {
   collection: 'collection',
   upload: 'upload',
   video: 'video',
+  audio: 'audio',
   stream: 'stream',
   thumbnail: 'thumbnail',
   upload_url: 'upload_url',
@@ -24,6 +25,7 @@ export const ApiPath = {
   search: 'search',
   compile: 'compile',
   workflow: 'workflow',
+  timeline: 'timeline',
 } as const;
 
 export const ResponseStatus = {
@@ -36,6 +38,10 @@ export const HttpClientDefaultValues = {
   timeout: 30 * 1000,
   backoff_factor: 0.1,
 } as const;
+
+export const MaxSupported = {
+  fadeDuration: 5,
+};
 
 export const VIDEO_DB_API = 'https://api.videodb.io';
 export const PLAYER_URL = 'https://console.videodb.io/player';

@@ -18,9 +18,9 @@ class VdbHttpClient extends HttpClient {
  * primary collection.
  */
 export class Connection {
-  #vhttp: HttpClient;
+  public vhttp: HttpClient;
   constructor(baseURL: string, ApiKey: string) {
-    this.#vhttp = new VdbHttpClient(baseURL, ApiKey);
+    this.vhttp = new VdbHttpClient(baseURL, ApiKey);
   }
 
   /**
@@ -31,9 +31,9 @@ export class Connection {
    * else returns the default collection.
    */
   public async getCollection(id = 'default'): Promise<Collection> {
-    const res = await this.#vhttp.get<CollectionResponse>(['collection', id]);
+    const res = await this.vhttp.get<CollectionResponse>(['collection', id]);
     const convertedData = fromSnakeToCamel(res.data) as CollectionBase;
-    const collection = new Collection(this.#vhttp, convertedData);
+    const collection = new Collection(this.vhttp, convertedData);
     return collection;
   }
 
@@ -51,7 +51,7 @@ export class Connection {
     collectionId: string = 'default',
     data: FileUploadConfig
   ) => {
-    return uploadToServer(this.#vhttp, collectionId, data);
+    return uploadToServer(this.vhttp, collectionId, data);
   };
 
   /**
@@ -68,6 +68,6 @@ export class Connection {
     collectionId: string = 'default',
     data: URLUploadConfig
   ) => {
-    return uploadToServer(this.#vhttp, collectionId, data);
+    return uploadToServer(this.vhttp, collectionId, data);
   };
 }

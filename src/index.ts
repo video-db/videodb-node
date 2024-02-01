@@ -19,7 +19,10 @@ function connect(apiKey?: string, baseURL = VIDEO_DB_API) {
 }
 
 export { Collection } from './core/collection';
+export { Timeline } from './core/timeline';
+export { AudioAsset, VideoAsset } from './core/asset';
 export { Video } from './core/video';
+export { Audio } from './core/audio';
 export { Shot } from './core/shot';
 export { IndexJob, UploadJob, TranscriptJob } from './utils/job';
 
