@@ -3,6 +3,7 @@
 *** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
+
 [![Npm Version][npm-shield]][npm-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
@@ -65,29 +66,39 @@ const conn = connect('YOUR_API_KEY');
 A default collection is created when you create your first connection. Use the `getCollection` method on the established database connection to get the `Collection` object.
 
 ```ts
-// get the default collection
-const coll = await conn.getCollection();
+// Get Default collection
+conn
+  .getCollection()
+  .then(coll => console.log('Collection Id : ', coll.meta.id));
+```
+
+Or using `async`/`await`
+
+```ts
+// Get Default Collection
+(async () => {
+  const coll = await conn.getCollection();
+  console.log('Collection Id : ', coll.meta.id);
+})();
 ```
 
 ## Working with a single video
 
-#### ⬆️ Uploading a Video
+### ⬆️ Upload Video
 
 Now that you have established a connection to VideoDB, you can upload your videos using `coll.uploadURL()` or `coll.uploadFile()`.  
 You can directly upload from `youtube`, `any public url`, `S3 bucket` or a `local file path`. A default collection is created when you create your first connection.
 
 ```ts
-// upload to the default collection using the local file path or a url which returns an upload job
+// upload to the default collection using url which returns an upload job
 const uploadJob = await coll.uploadURL({
   url: 'https://www.youtube.com/watch?v=WDv4AWk0J3U',
 });
 
-let video;
-
 // Attach optional event listeners
-uploadJob.on('success', uploadedVideo => {
-  console.log("Video Uploaded with ID ", uploadedVideo.meta.id)
-});
+uploadJob.on('success', uploadedVideo =>
+  console.log('Video Uploaded. VideoID : ', uploadedVideo.meta.id)
+);
 uploadJob.on('error', err => {
   console.error(err);
 });
@@ -104,9 +115,12 @@ Generate a streamable url for the video using `video.generateStream()`
 Get a browser playable link using `video.play()`
 
 ```ts
-const video = await coll.getVideo("VIDEO_ID")
+// Replace {VIDEO_ID} with your video id
+const video = await coll.getVideo('VIDEO_ID');
+
+// Generate a preview stream for video
 const playerUrl = await video.play();
-console.log(playerUrl);
+console.log('Video Preview : ', playerUrl);
 ```
 
 ### ⛓️ Stream Sections of videos
@@ -115,14 +129,15 @@ You can easily clip specific sections of a video by passing a timeline of the st
 For example, this will generate a streaming URL for a compilation of the fist `10 seconds`, and the part between the `120th` and the `140th` second.
 
 ```ts
-let streamUrl;
-streamUrl = await video.generateStream({
-  timeline: [
-    [0, 10],
-    [120, 140],
-  ],
-});
-console.log(playStream(streamUrl));
+import { playStream } from 'videodb';
+
+const streamLink = await video.generateStream([
+  [0, 10],
+  [120, 140],
+]);
+
+const streamPreview = playStream(streamLink);
+console.log('Clipped Video Preview : ', streamPreview);
 ```
 
 ### 🔍 Searching inside a video
@@ -132,11 +147,13 @@ _P.S. Indexing may take some time for longer videos._
 
 ```ts
 const indexJob = video.index();
+
 indexJob.on('success', async () => {
   const results = await video.search('Morning Sunlight');
   const resultsUrl = await results.play();
-  console.log(resultsUrl);
+  console.log('Search results preview : ', resultsUrl);
 });
+
 indexJob.start();
 ```
 
@@ -164,35 +181,30 @@ In the future you'll be able to index videos using:
 ### 🔄 Using Collection to Upload Multiple Videos
 
 ```ts
-# Upload Videos to a collection
-
 const uploadJobHandler = (video) => {
   console.log(`Video uploaded :${video.meta.name}`);
 };
 
+// Upload Video1 to VideoDB
 const job1 = await coll.uploadURL({
   url: "https://www.youtube.com/watch?v=lsODSDmY4CY",
 });
-if (job1) {
-  job1.on("success", uploadJobHandler);
-  job1.start();
-}
+job1.on("success", uploadJobHandler);
+job1.start();
 
+// Upload Video2 to VideoDB
 const job2 = await coll.uploadURL({
   url: "https://www.youtube.com/watch?v=vZ4kOr38JhY",
 });
-if (job2) {
-  job2.on("success", uploadJobHandler);
-  job2.start();
-}
+job2.on("success", uploadJobHandler);
+job2.start();
 
+// Upload Video3 to VideoDB
 const job3 = await coll.uploadURL({
   url: "https://www.youtube.com/watch?v=uak_dXHh6s4",
 });
-if (job3) {
-  job3.on("success", uploadJobHandler);
-  job3.start();
-}
+job3.on("success", uploadJobHandler);
+job3.start();
 ```
 
 ### 📂 Search Inside Collection
@@ -203,7 +215,7 @@ You can simply Index all the videos in a collection and use the search method to
 
 ```ts
 const indexJobHandler = res => {
-  console.log(`Video Indexed`, res);
+  console.log(`Video Indexed : `, res);
 };
 
 const videos = await coll.getVideos();
@@ -222,7 +234,7 @@ for (let video of videos) {
 const searchRes = await coll.search('What is dopamine');
 const resultsUrl = await searchRes.play();
 
-console.log(resultsUrl);
+console.log('Search Result Preview : ', resultsUrl);
 ```
 
 The result here has all the matching bits in a single stream from your collection. You can use these results in your application right away.
@@ -315,6 +327,7 @@ Contributions are what make the open source community such an amazing place to b
 <!-- LICENSE -->
 
 ## License
+
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 

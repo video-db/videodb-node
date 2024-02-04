@@ -1,15 +1,26 @@
 import { ApiPath, DefaultSearchType } from '@/constants';
-import type { CollectionBase, ICollection, VideoBase } from '@/interfaces/core';
+import type {
+  CollectionBase,
+  ICollection,
+  VideoBase,
+  AudioBase,
+} from '@/interfaces/core';
 import { SearchType } from '@/types';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
-import type { GetVideos, VideoResponse } from '@/types/response';
+import type {
+  GetVideos,
+  GetAudios,
+  VideoResponse,
+  AudioResponse,
+} from '@/types/response';
 import { fromSnakeToCamel } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
 import { SearchFactory } from './search';
 import { Video } from './video';
+import { Audio } from './audio';
 
-const { video } = ApiPath;
+const { video, audio } = ApiPath;
 
 /**
  * The base VideoDB class
@@ -25,8 +36,7 @@ export class Collection implements ICollection {
     this.#vhttp = http;
   }
 
-  /**
-   * Get all videos from the collection
+  /** * Get all videos from the collection
    * @returns A list of objects of the Video class
    * @throws an error if the request fails
    */
@@ -59,6 +69,41 @@ export class Collection implements ICollection {
    */
   public deleteVideo = async (videoId: string) => {
     return await this.#vhttp.delete<Record<string, never>>([video, videoId]);
+  };
+
+  /** * Get all audios from the collection
+   * @returns A list of objects of the Audio class
+   * @throws an error if the request fails
+   */
+  public getAudios = async () => {
+    const res = await this.#vhttp.get<GetAudios>([audio]);
+    const audios = res.data.audios;
+    return audios.map(audio => {
+      const data = fromSnakeToCamel(audio) as AudioBase;
+      return new Audio(this.#vhttp, data);
+    });
+  };
+
+  /**
+   * Get all the information for a specific audio
+   * @param audioId- Unique ID of the audio.
+   * @returns An object of the Audio class
+   * @throws an error if the request fails
+   */
+  public getAudio = async (audioId: string) => {
+    const res = await this.#vhttp.get<AudioResponse>([audio, audioId]);
+    const data = fromSnakeToCamel(res.data) as AudioBase;
+    return new Audio(this.#vhttp, data);
+  };
+
+  /**
+   *
+   * @param audioId- Id of the audio to be deleted
+   * @returns A promise that resolves when delete is successful
+   * @throws an error if the request fails
+   */
+  public deleteAudio = async (audioId: string) => {
+    return await this.#vhttp.delete<Record<string, never>>([audio, audioId]);
   };
 
   /**

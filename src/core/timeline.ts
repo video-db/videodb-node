@@ -1,0 +1,75 @@
+import { ApiPath } from '@/constants';
+import { GenerateStreamResponse } from '@/types/response';
+import { fromCamelToSnake } from '@/utils';
+import { HttpClient } from '@/utils/httpClient';
+import { AudioAsset, VideoAsset } from './asset';
+import { Connection } from './connection';
+import { ITimeline } from '@/interfaces/core';
+
+const { timeline } = ApiPath;
+
+export class Timeline implements ITimeline {
+  #vhttp: HttpClient;
+  public timeline: Array<object>;
+  public streamUrl: string;
+  public playerUrl: string;
+
+  /**
+   * Initialize a timeline object
+   * @param connection - Connection object. See [[Connection]]
+   * @returns Timeline object
+   */
+  constructor(connection: Connection) {
+    this.#vhttp = connection.vhttp;
+    this.timeline = [];
+    this.streamUrl = '';
+    this.playerUrl = '';
+  }
+
+  private getRequestData() {
+    const reqData = fromCamelToSnake({
+      requestType: 'compile',
+      timeline: this.timeline,
+    });
+    return reqData;
+  }
+
+  /**
+   * Adds a VideoAsset to the timeline in inline position
+   * @param asset - VideoAsset object. Can be created using [[VideoAsset]]
+   */
+  addInline(asset: VideoAsset): void {
+    if (!(asset instanceof VideoAsset)) {
+      throw new Error('Asset is not an VideoAsset');
+    }
+    this.timeline.push(asset.toJSON());
+  }
+
+  /**
+   * Adds a AudioAsset to the timeline in overlay position
+   * @param start - Start time of the overlay w.r.t Base Timline
+   * @param asset - AudioAsset object. Can be created using [[AudioAsset]]
+   */
+  addOverlay(start: number, asset: AudioAsset): void {
+    if (!(asset instanceof AudioAsset)) {
+      throw new Error('Asset is not an AudioAsset');
+    }
+    this.timeline.push({ ...asset.toJSON(), overlayStart: start });
+  }
+
+  /**
+   * Generates a Streaming URL for the Timeline object
+   * @returns An await URL to the timeline stream
+   */
+  async generateStream(): Promise<string> {
+    const reqData = this.getRequestData();
+    const streamDataRes = await this.#vhttp.post<
+      GenerateStreamResponse,
+      object
+    >([timeline], reqData);
+
+    this.streamUrl = streamDataRes.data.stream_url;
+    this.playerUrl = streamDataRes.data.player_url;
+    return this.streamUrl;
+  }
+}

@@ -1,9 +1,10 @@
 import { ApiPath, ResponseStatus } from '@/constants';
 import { Video } from '@/core/video';
-import type { VideoBase } from '@/interfaces/core';
+import type { AudioBase, VideoBase } from '@/interfaces/core';
 import type { SyncUploadConfig } from '@/types/collection';
 import type { IndexConfig, IndexType } from '@/types/index';
 import type {
+  AudioResponse,
   NoDataResponse,
   SyncJobResponse,
   TranscriptResponse,
@@ -11,13 +12,14 @@ import type {
 } from '@/types/response';
 import type { JobErrorCallback, JobSuccessCallback } from '@/types/utils';
 import type { Transcript } from '@/types/video';
-import { fromSnakeToCamel } from '.';
+import { fromSnakeToCamel, isMediaAudio } from '.';
 import {
   AuthenticationError,
   InvalidRequestError,
   VideodbError,
 } from './error';
 import { HttpClient } from './httpClient';
+import { Audio } from '..';
 
 const { in_progress, processing } = ResponseStatus;
 const { video, transcription, collection, upload, index } = ApiPath;
@@ -193,7 +195,11 @@ export class TranscriptJob extends Job<TranscriptResponse, Transcript> {
  * @remarks
  * Uses the base Job class to implement a backoff to get the uploaded video data.
  */
-export class UploadJob extends Job<VideoResponse, VideoBase, Video> {
+export class UploadJob extends Job<
+  VideoResponse | AudioResponse,
+  VideoBase | AudioBase,
+  Video | Audio
+> {
   public uploadData: SyncUploadConfig;
   public collectionId: string;
   constructor(data: SyncUploadConfig, collectionId: string, http: HttpClient) {
@@ -221,10 +227,13 @@ export class UploadJob extends Job<VideoResponse, VideoBase, Video> {
 
   /**
    * Initializes a new video object with the returned data
-   * @param data - Video data returned from the API and converted to camelCase
+   * @param data - Media data returned from the API and converted to camelCase
    * @returns a new Video object
    */
-  protected beforeSuccess = (data: VideoBase) => {
+  protected beforeSuccess = (data: VideoBase | AudioBase) => {
+    if (isMediaAudio(data)) {
+      return new Audio(this.vhttp, data);
+    }
     return new Video(this.vhttp, data);
   };
 }

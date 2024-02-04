@@ -1,6 +1,6 @@
 {
   "name": "videodb",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A NodeJS wrapper for VideoDB's API written in TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,9 +20,6 @@
     "docs:del": "rm -rf ./docs",
     "prepublishOnly": "npm run build"
   },
-  "publishConfig": {
-    "@Spext:registry": "https://npm.pkg.github.com"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/video-db/videodb-node.git"
@@ -38,7 +35,7 @@
   "bugs": {
     "url": "https://github.com/video-db/videodb-node/issues"
   },
-  "homepage": "https://github.com/video-db/videodb-node#readme",
+  "homepage": "https://videodb.io",
   "devDependencies": {
     "@types/jest": "^29.5.11",
     "@types/lodash": "^4.14.202",
