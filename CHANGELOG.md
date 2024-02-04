@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+- Concept of Audio Files 🔈
+- Concept of MediaAsset : VideoAsset, AudioAsset 💼
+- Concept of Timeline for editing workflows ✂️
+- Minor updates in readme & package.json
+
+
 ## [0.0.2]() (2024-01-24)
 
 ### Added
