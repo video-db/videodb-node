@@ -63,4 +63,4 @@ jobs:
       - name: Show PR link
         if: ${{ steps.cpr.outputs.pull-request-url }}
         run: |
-          echo "testnpm Release v${{ steps.package-version.outputs.current-version}}' pull request - ${{ steps.cpr.outputs.pull-request-url }}"
+          echo "Release v${{ steps.package-version.outputs.current-version}}' pull request - ${{ steps.cpr.outputs.pull-request-url }}"
