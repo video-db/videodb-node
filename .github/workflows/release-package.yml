@@ -19,7 +19,7 @@ jobs:
       - run: npm ci
 
   publish-gpr:
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.head.label == 'videodb:release')
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.head.label == 'video-db:release')
     needs: build
     runs-on: ubuntu-latest
     permissions:
