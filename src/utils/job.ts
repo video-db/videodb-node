@@ -135,6 +135,9 @@ export abstract class Job<
         // TODO: remove the ignore comment after server update
         // @ts-ignore
         if ('response' in res && res.response) {
+          if (res.response.success === false) {
+            throw new VideodbError(res.response.message);
+          }
           this._handleSuccess(res.response.data);
         } else {
           this._handleSuccess(res.data);
@@ -258,11 +261,15 @@ export class IndexJob extends Job<NoDataResponse, NoDataResponse> {
   public start = async () => {
     const transcriptJob = new TranscriptJob(this.vhttp, this.videoId);
     transcriptJob.on('success', async () => {
-      const res = await this.vhttp.post<NoDataResponse, IndexConfig>(
-        [video, this.videoId, index],
-        this.indexConfig
-      );
-      this._handleSuccess(res);
+      try {
+        const res = await this.vhttp.post<NoDataResponse, IndexConfig>(
+          [video, this.videoId, index],
+          this.indexConfig
+        );
+        this._handleSuccess(res);
+      } catch (err) {
+        this._handleError(err);
+      }
     });
     transcriptJob.on('error', err => {
       this._handleError(err);

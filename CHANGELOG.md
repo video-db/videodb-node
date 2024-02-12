@@ -1,10 +1,25 @@
 # Changelog
 
 ## [Unreleased]
+
+### Added
 - Concept of Audio Files 🔈
 - Concept of MediaAsset : VideoAsset, AudioAsset 💼
 - Concept of Timeline for editing workflows ✂️
+- Export `VideodbError` 
 - Minor updates in readme & package.json
+
+### Changed 
+- Http client timeout 30s -> 60s
+
+### Fixed
+- Better Error handling
+- Param validation in 
+  - `Coll.getVideo()`
+  - `Coll.getAudio()`
+  - `Coll.getVideo()`
+  - `Coll.deleteAudio()`
+
 
 
 ## [0.0.2]() (2024-01-24)
