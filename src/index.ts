@@ -25,6 +25,7 @@ export { Video } from './core/video';
 export { Audio } from './core/audio';
 export { Shot } from './core/shot';
 export { IndexJob, UploadJob, TranscriptJob } from './utils/job';
+export { VideodbError } from './utils/error';
 
 export { playStream, waitForJob } from './utils/index';
 export { connect };

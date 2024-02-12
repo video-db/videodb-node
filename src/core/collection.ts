@@ -19,6 +19,7 @@ import { uploadToServer } from '@/utils/upload';
 import { SearchFactory } from './search';
 import { Video } from './video';
 import { Audio } from './audio';
+import { VideodbError } from '@/utils/error';
 
 const { video, audio } = ApiPath;
 
@@ -56,6 +57,9 @@ export class Collection implements ICollection {
    * @throws an error if the request fails
    */
   public getVideo = async (videoId: string) => {
+    if (!videoId.trim()) {
+      throw new VideodbError('Video ID cannot be empty');
+    }
     const res = await this.#vhttp.get<VideoResponse>([video, videoId]);
     const data = fromSnakeToCamel(res.data) as VideoBase;
     return new Video(this.#vhttp, data);
@@ -68,6 +72,9 @@ export class Collection implements ICollection {
    * @throws an error if the request fails
    */
   public deleteVideo = async (videoId: string) => {
+    if (!videoId.trim()) {
+      throw new VideodbError('Video ID cannot be empty');
+    }
     return await this.#vhttp.delete<Record<string, never>>([video, videoId]);
   };
 
@@ -91,6 +98,9 @@ export class Collection implements ICollection {
    * @throws an error if the request fails
    */
   public getAudio = async (audioId: string) => {
+    if (!audioId.trim()) {
+      throw new VideodbError('Audio ID cannot be empty');
+    }
     const res = await this.#vhttp.get<AudioResponse>([audio, audioId]);
     const data = fromSnakeToCamel(res.data) as AudioBase;
     return new Audio(this.#vhttp, data);
@@ -103,6 +113,9 @@ export class Collection implements ICollection {
    * @throws an error if the request fails
    */
   public deleteAudio = async (audioId: string) => {
+    if (!audioId.trim()) {
+      throw new VideodbError('Audio ID cannot be empty');
+    }
     return await this.#vhttp.delete<Record<string, never>>([audio, audioId]);
   };
 

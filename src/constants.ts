@@ -35,7 +35,7 @@ export const ResponseStatus = {
 
 export const HttpClientDefaultValues = {
   max_retries: 3,
-  timeout: 30 * 1000,
+  timeout: 60 * 1000,
   backoff_factor: 0.1,
 } as const;
 

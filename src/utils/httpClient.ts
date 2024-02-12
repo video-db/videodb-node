@@ -42,15 +42,27 @@ export class HttpClient {
     return this.#db
       .request<ResponseOf<R>, AxiosResponse<ResponseOf<R>, D>, D>(options)
       .then(successResponse => {
-        return successResponse.data;
+        return this.parseResponse(successResponse.data);
       })
       .catch(
         (
-          error: AxiosError<ErrorResponse | undefined, AxiosRequestConfig<D>>
+          error:
+            | AxiosError<ErrorResponse | undefined, AxiosRequestConfig<D>>
+            | VideodbError
         ) => {
+          if (error instanceof VideodbError) {
+            throw error;
+          }
           throw this.#getPlausibleError(error);
         }
       );
+  };
+
+  parseResponse = <D>(data: ResponseOf<D>) => {
+    if (data.success === false) {
+      throw new VideodbError(data.message);
+    }
+    return data;
   };
 
   /**
