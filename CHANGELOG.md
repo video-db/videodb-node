@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.0.3]() (2024-02-13)
 
 ### Added
 - Concept of Audio Files 🔈
