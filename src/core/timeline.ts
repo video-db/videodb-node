@@ -2,7 +2,7 @@ import { ApiPath } from '@/constants';
 import { GenerateStreamResponse } from '@/types/response';
 import { fromCamelToSnake } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
-import { AudioAsset, VideoAsset } from './asset';
+import { AudioAsset, VideoAsset, ImageAsset, TextAsset } from './asset';
 import { Connection } from './connection';
 import { ITimeline } from '@/interfaces/core';
 
@@ -48,11 +48,17 @@ export class Timeline implements ITimeline {
   /**
    * Adds a AudioAsset to the timeline in overlay position
    * @param start - Start time of the overlay w.r.t Base Timline
-   * @param asset - AudioAsset object. Can be created using [[AudioAsset]]
+   * @param asset - AudioAsset, ImageAsset or TextAsset object.
    */
-  addOverlay(start: number, asset: AudioAsset): void {
-    if (!(asset instanceof AudioAsset)) {
-      throw new Error('Asset is not an AudioAsset');
+  addOverlay(start: number, asset: AudioAsset | ImageAsset | TextAsset): void {
+    if (
+      !(asset instanceof AudioAsset) &&
+      !(asset instanceof ImageAsset) &&
+      !(asset instanceof TextAsset)
+    ) {
+      throw new Error(
+        'asset must be of type AudioAsset, ImageAsset or TextAsset'
+      );
     }
     this.timeline.push({ ...asset.toJSON(), overlayStart: start });
   }

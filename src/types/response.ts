@@ -63,6 +63,12 @@ export type AudioResponse = {
   user_id: string;
 };
 
+export type ImageResponse = {
+  collection_id: string;
+  id: string;
+  name: string;
+};
+
 export type CollectionResponse = {
   id: string;
   name: string;
@@ -87,6 +93,10 @@ export type GetVideos = {
 
 export type GetAudios = {
   audios: AudioResponse[];
+};
+
+export type GetImages = {
+  images: ImageResponse[];
 };
 
 export type GenerateStreamResponse = {
@@ -122,3 +132,5 @@ export type SearchResponse = {
     video_id: string;
   }[];
 };
+
+export type MediaResponse = VideoResponse | AudioResponse | ImageResponse;

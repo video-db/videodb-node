@@ -1,10 +1,11 @@
 import { SearchResult } from '@/core/search/searchResult';
 import { Video } from '@/core/video';
-import type { IndexType, SearchType } from '@/types';
+import type { IndexType } from '@/types';
+import type { SearchType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { StreamableURL, Timeline, Transcript } from '@/types/video';
 import { IndexJob, TranscriptJob, UploadJob } from '@/utils/job';
-import { AudioAsset, VideoAsset } from '..';
+import { AudioAsset, SubtitleStyle, VideoAsset } from '..';
 
 /**
  * Base type for all collection objects
@@ -51,10 +52,10 @@ export interface IVideo {
   generateStream: (timeline: Timeline) => Promise<string>;
   play: () => string;
   getTranscript: (forceCreate?: boolean) => Transcript | TranscriptJob;
-  index: (indexType: IndexType) => IndexJob;
+  indexSpokenWords: (indexType: IndexType) => IndexJob;
   search: (query: string, type?: SearchType) => Promise<SearchResult>;
   generateThumbnail: () => Promise<string>;
-  addSubtitle: () => Promise<string>;
+  addSubtitle: (config: SubtitleStyle) => Promise<string>;
 }
 
 /**
@@ -74,6 +75,22 @@ export interface AudioBase {
  */
 export interface IAudio {
   meta: AudioBase;
+}
+
+/**
+ * Base type for all Image objects
+ */
+export interface ImageBase {
+  collectionId: string;
+  id: string;
+  name: string;
+}
+
+/**
+ * Image class interface for reference
+ */
+export interface IImage {
+  meta: ImageBase;
 }
 
 /**

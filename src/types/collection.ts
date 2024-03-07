@@ -2,7 +2,7 @@ export interface CommonUploadConfig {
   name?: string;
   description?: string;
   callbackUrl?: string;
-  mediaType?: 'audio' | 'video';
+  mediaType?: 'audio' | 'video' | 'image';
 }
 
 export interface FileUploadConfig extends CommonUploadConfig {
