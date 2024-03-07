@@ -1,5 +1,12 @@
 import { MaxSupported } from '@/constants';
-import { AudioAssetConfig, VideoAssetConfig } from '@/types/assets';
+import {
+  AudioAssetConfig,
+  VideoAssetConfig,
+  ImageAssetConfig,
+  TextAssetConfig,
+} from '@/types/config';
+import { TextStyle } from './config';
+import { v4 as uuidv4 } from 'uuid';
 
 const validateMaxSupport = (
   duration: number,
@@ -32,7 +39,7 @@ class MediaAsset {
  */
 export class VideoAsset extends MediaAsset {
   public start: number;
-  public end?: number;
+  public end: number | null;
 
   /**
    * Initializes a AudioAsset instance
@@ -41,7 +48,7 @@ export class VideoAsset extends MediaAsset {
    * @returns A new AudioAsset instance.
    */
   constructor(assetId: string, config?: Partial<VideoAssetConfig>) {
-    const { start = 0, end } = config || {};
+    const { start = 0, end = null } = config || {};
     super(assetId);
     this.start = start;
     this.end = end;
@@ -51,7 +58,7 @@ export class VideoAsset extends MediaAsset {
     return {
       assetId: this.assetId,
       start: this.start,
-      ...(this.end !== undefined && { end: this.end }),
+      end: this.end,
     };
   }
 }
@@ -61,7 +68,7 @@ export class VideoAsset extends MediaAsset {
  */
 export class AudioAsset extends MediaAsset {
   public start: number;
-  public end?: number;
+  public end: number | null;
   public disableOtherTracks: boolean;
   public fadeInDuration: number;
   public fadeOutDuration: number;
@@ -75,7 +82,7 @@ export class AudioAsset extends MediaAsset {
   constructor(assetId: string, config?: Partial<AudioAssetConfig>) {
     const {
       start = 0,
-      end,
+      end = null,
       disableOtherTracks = true,
       fadeInDuration = 0,
       fadeOutDuration = 0,
@@ -100,10 +107,73 @@ export class AudioAsset extends MediaAsset {
     return {
       assetId: this.assetId,
       start: this.start,
-      ...(this.end !== undefined && { end: this.end }),
       disableOtherTracks: this.disableOtherTracks,
       fadeInDuration: this.fadeInDuration,
       fadeOutDuration: this.fadeOutDuration,
+      end: this.end,
+    };
+  }
+}
+
+export class ImageAsset extends MediaAsset {
+  public width: number | string;
+  public height: number | string;
+  public x: number | string;
+  public y: number | string;
+  public duration: number | null;
+
+  constructor(assetId: string, config?: Partial<ImageAssetConfig>) {
+    const {
+      width = 100,
+      height = 100,
+      x = 80,
+      y = 20,
+      duration = null,
+    } = config || {};
+    super(assetId);
+    this.width = width;
+    this.height = height;
+    this.x = x;
+    this.y = y;
+    this.duration = duration;
+  }
+
+  toJSON() {
+    return {
+      assetId: this.assetId,
+      width: this.width,
+      height: this.height,
+      x: this.x,
+      y: this.y,
+      duration: this.duration,
+    };
+  }
+}
+
+export class TextAsset extends MediaAsset {
+  public text: string;
+  public duration: number | null;
+  public style: TextStyle;
+
+  constructor(config?: Partial<TextAssetConfig>) {
+    const {
+      text = '',
+      style = new TextStyle(),
+      duration = null,
+    } = config || {};
+    const assetId: string = `txt-${uuidv4()}`;
+    super(assetId);
+    this.text = text;
+    this.duration = duration;
+    this.style = style;
+  }
+
+  toJSON() {
+    return {
+      assetId: this.assetId,
+      text: this.text,
+      style: this.style.toJSON(),
+      duration: this.duration,
     };
   }
 }

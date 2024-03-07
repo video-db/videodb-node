@@ -4,14 +4,17 @@ import type {
   ICollection,
   VideoBase,
   AudioBase,
+  ImageBase,
 } from '@/interfaces/core';
-import { SearchType } from '@/types';
+import { SearchType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type {
   GetVideos,
   GetAudios,
+  GetImages,
   VideoResponse,
   AudioResponse,
+  ImageResponse,
 } from '@/types/response';
 import { fromSnakeToCamel } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
@@ -19,9 +22,10 @@ import { uploadToServer } from '@/utils/upload';
 import { SearchFactory } from './search';
 import { Video } from './video';
 import { Audio } from './audio';
+import { Image } from './image';
 import { VideodbError } from '@/utils/error';
 
-const { video, audio } = ApiPath;
+const { video, audio, image } = ApiPath;
 
 /**
  * The base VideoDB class
@@ -119,6 +123,47 @@ export class Collection implements ICollection {
     return await this.#vhttp.delete<Record<string, never>>([audio, audioId]);
   };
 
+  /** * Get all images from the collection
+   * @returns A list of objects of the Image class
+   * @throws an error if the request fails
+   */
+  public getImages = async () => {
+    const res = await this.#vhttp.get<GetImages>([image]);
+    const images = res.data.images;
+    return images.map(audio => {
+      const data = fromSnakeToCamel(audio) as ImageBase;
+      return new Image(this.#vhttp, data);
+    });
+  };
+
+  /**
+   * Get all the information for a specific image
+   * @param imageId- Unique ID of the image.
+   * @returns An object of the Image class
+   * @throws an error if the request fails
+   */
+  public getImage = async (imageId: string) => {
+    if (!imageId.trim()) {
+      throw new VideodbError('Image ID cannot be empty');
+    }
+    const res = await this.#vhttp.get<ImageResponse>([image, imageId]);
+    const data = fromSnakeToCamel(res.data) as ImageBase;
+    return new Image(this.#vhttp, data);
+  };
+
+  /**
+   *
+   * @param imageId- Id of the image to be deleted
+   * @returns A promise that resolves when delete is successful
+   * @throws an error if the request fails
+   */
+  public deleteImage = async (imageId: string) => {
+    if (!imageId.trim()) {
+      throw new VideodbError('Image ID cannot be empty');
+    }
+    return await this.#vhttp.delete<Record<string, never>>([image, imageId]);
+  };
+
   /**
    * @param filePath - absolute path to a file
    * @param callbackUrl- [optional] A url that will be called once upload is finished
@@ -149,18 +194,18 @@ export class Collection implements ICollection {
 
   /**
    * @param query - Search query
-   * @param type - [optional] Type of search to be performed
+   * @param searchType - [optional] Type of search to be performed
    * @param resultThreshold - [optional] Result Threshold
    * @param scoreThreshold - [optional] Score Threshold
    */
   public search = async (
     query: string,
-    type?: SearchType,
+    searchType?: SearchType,
     resultThreshold?: number,
     scoreThreshold?: number
   ) => {
     const s = new SearchFactory(this.#vhttp);
-    const searchFunc = s.getSearch(type ?? DefaultSearchType);
+    const searchFunc = s.getSearch(searchType ?? DefaultSearchType);
 
     const results = await searchFunc.searchInsideCollection({
       collectionId: this.meta.id,

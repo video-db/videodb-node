@@ -20,12 +20,14 @@ function connect(apiKey?: string, baseURL = VIDEO_DB_API) {
 
 export { Collection } from './core/collection';
 export { Timeline } from './core/timeline';
-export { AudioAsset, VideoAsset } from './core/asset';
 export { Video } from './core/video';
 export { Audio } from './core/audio';
-export { Shot } from './core/shot';
+export { Image } from './core/image';
+export { VideoAsset, AudioAsset, ImageAsset, TextAsset } from './core/asset';
+export { SubtitleStyle, TextStyle } from './core/config';
 export { IndexJob, UploadJob, TranscriptJob } from './utils/job';
+export { Shot } from './core/shot';
 export { VideodbError } from './utils/error';
 
 export { playStream, waitForJob } from './utils/index';
-export { connect };
+export { connect, Connection };

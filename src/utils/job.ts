@@ -1,25 +1,25 @@
 import { ApiPath, ResponseStatus } from '@/constants';
 import { Video } from '@/core/video';
-import type { AudioBase, VideoBase } from '@/interfaces/core';
+import { Audio } from '@/core/audio';
+import { Image } from '@/core/image';
+import type { AudioBase, ImageBase, VideoBase } from '@/interfaces/core';
 import type { SyncUploadConfig } from '@/types/collection';
-import type { IndexConfig, IndexType } from '@/types/index';
+import type { IndexConfig, IndexType, MediaBase } from '@/types/index';
 import type {
-  AudioResponse,
   NoDataResponse,
   SyncJobResponse,
   TranscriptResponse,
-  VideoResponse,
+  MediaResponse,
 } from '@/types/response';
 import type { JobErrorCallback, JobSuccessCallback } from '@/types/utils';
 import type { Transcript } from '@/types/video';
-import { fromSnakeToCamel, isMediaAudio } from '.';
+import { fromSnakeToCamel } from '.';
 import {
   AuthenticationError,
   InvalidRequestError,
   VideodbError,
 } from './error';
 import { HttpClient } from './httpClient';
-import { Audio } from '..';
 
 const { in_progress, processing } = ResponseStatus;
 const { video, transcription, collection, upload, index } = ApiPath;
@@ -199,9 +199,9 @@ export class TranscriptJob extends Job<TranscriptResponse, Transcript> {
  * Uses the base Job class to implement a backoff to get the uploaded video data.
  */
 export class UploadJob extends Job<
-  VideoResponse | AudioResponse,
-  VideoBase | AudioBase,
-  Video | Audio
+  MediaResponse,
+  MediaBase,
+  Video | Audio | Image
 > {
   public uploadData: SyncUploadConfig;
   public collectionId: string;
@@ -233,11 +233,14 @@ export class UploadJob extends Job<
    * @param data - Media data returned from the API and converted to camelCase
    * @returns a new Video object
    */
-  protected beforeSuccess = (data: VideoBase | AudioBase) => {
-    if (isMediaAudio(data)) {
-      return new Audio(this.vhttp, data);
+  protected beforeSuccess = (data: MediaBase) => {
+    const mediaId = data.id;
+    if (mediaId.startsWith('img-')) {
+      return new Image(this.vhttp, data as ImageBase);
+    } else if (mediaId.startsWith('a-')) {
+      return new Audio(this.vhttp, data as AudioBase);
     }
-    return new Video(this.vhttp, data);
+    return new Video(this.vhttp, data as VideoBase);
   };
 }
 

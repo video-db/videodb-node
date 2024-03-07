@@ -12,17 +12,3 @@ export type JobErrorCallback = (
 ) => unknown;
 
 export type URLSeries = string[];
-
-export type SemanticSearchBase = {
-  query: string;
-  resultThreshold?: number;
-  scoreThreshold?: number;
-};
-
-export type SemanticVideoSearch = {
-  videoId: string;
-} & SemanticSearchBase;
-
-export type SemanticCollectionSearch = {
-  collectionId: string;
-} & SemanticSearchBase;

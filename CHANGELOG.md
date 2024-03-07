@@ -1,5 +1,37 @@
 # Changelog
 
+
+## [0.0.4]() (2024-03-07)
+
+### Added
+- `Image` class
+  - Upload image using `Collection.upload()`
+  - Get an image using `Collection.getImage()`
+  - Get all images using `Colection.getImages()`
+  - Delete image using `Collection.deleteImage()` or `Image.delete()`
+- `ImageAsset` class
+  - Create a `ImageAsset` using `ImageAsset()` class
+  - Overlay `ImageAsset` in timeline using `Timeline.addOverlay()`
+- `TextAsset` & `TextStyle` class
+  - Create a `TextAsset` using `TextAsset()` class 
+  - Configure styling of `TextAsset` using `TextStyle()`
+- `SubtitleStyle`
+  - Configure subtitle styling by passing a `SubtitleStyle` in `Video.addSubtitle()`
+- Keyword Search
+  Search using Keyword in Video using `Video.search()` (pass searchType = "keyword")
+> Note: Collection Keyword Search is not available 
+
+### Changed
+  - `Video.index()` -> `Video.indexSpokenWords()`
+  - param `type` -> `searchType` in `Video.search()` 
+  - param `type` -> `searchType` in `Collection.search()` 
+
+### Fixed
+  -  Pass undefined params as `null` to VideoDB Server API
+
+
+
+
 ## [0.0.3]() (2024-02-13)
 
 ### Added

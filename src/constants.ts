@@ -8,6 +8,13 @@ export const SemanticSearchDefaultValues = {
   namespace: 'dev',
 } as const;
 
+export const KeywordSearchDefaultValues = {
+  resultThreshold: 50,
+  scoreThreshold: 0.2,
+  dynamicScorePercentage: 30,
+  namespace: 'dev',
+} as const;
+
 export const Workflows = {
   addSubtitles: 'add_subtitles',
 };
@@ -17,6 +24,7 @@ export const ApiPath = {
   upload: 'upload',
   video: 'video',
   audio: 'audio',
+  image: 'image',
   stream: 'stream',
   thumbnail: 'thumbnail',
   upload_url: 'upload_url',

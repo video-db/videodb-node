@@ -5,13 +5,15 @@ import {
   Workflows,
 } from '@/constants';
 import type { IVideo, VideoBase } from '@/interfaces/core';
-import { IndexType, SearchType } from '@/types';
+import { IndexType } from '@/types';
+import { SearchType } from '@/types/search';
 import type { GenerateStreamResponse } from '@/types/response';
 import type { Timeline, Transcript } from '@/types/video';
-import { playStream } from '@/utils';
+import { fromCamelToSnake, playStream } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import { IndexJob, TranscriptJob } from '@/utils/job';
 import { SearchFactory } from './search';
+import { SubtitleStyle } from './config';
 
 const { video, stream, thumbnail, workflow } = ApiPath;
 
@@ -37,18 +39,18 @@ export class Video implements IVideo {
 
   /**
    * @param query - Search query
-   * @param type - [optional] Type of search to be performed
+   * @param searchType- [optional] Type of search to be performed
    * @param resultThreshold - [optional] Result Threshold
    * @param scoreThreshold - [optional] Score Threshold
    */
   public search = async (
     query: string,
-    type?: SearchType,
+    searchType?: SearchType,
     resultThreshold?: number,
     scoreThreshold?: number
   ) => {
     const s = new SearchFactory(this.#vhttp);
-    const searchFunc = s.getSearch(type ?? DefaultSearchType);
+    const searchFunc = s.getSearch(searchType ?? DefaultSearchType);
     const results = await searchFunc.searchInsideVideo({
       videoId: this.meta.id,
       query: query,
@@ -129,7 +131,7 @@ export class Video implements IVideo {
    * @returns an awaited boolean signifying whether the process
    * was successful or not
    */
-  public index = (indexType?: IndexType) => {
+  public indexSpokenWords = (indexType?: IndexType) => {
     const indexJob = new IndexJob(
       this.#vhttp,
       this.meta.id,
@@ -142,12 +144,14 @@ export class Video implements IVideo {
    * Overlays subtitles on top of a video
    * @returns an awaited stream url for subtitled overlayed video
    */
-  public addSubtitle = async () => {
+  public addSubtitle = async (config: SubtitleStyle = new SubtitleStyle()) => {
+    const subtitlePayload = fromCamelToSnake({
+      type: Workflows.addSubtitles,
+      subtitleStyle: config.toJSON(),
+    });
     const res = await this.#vhttp.post<GenerateStreamResponse, object>(
       [video, this.meta.id, workflow],
-      {
-        type: Workflows.addSubtitles,
-      }
+      subtitlePayload
     );
     return res.data.stream_url;
   };
