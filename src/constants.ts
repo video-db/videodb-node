@@ -1,6 +1,3 @@
-export const DefaultSearchType = 'semantic';
-export const DefaultIndexType = 'semantic';
-
 export const SemanticSearchDefaultValues = {
   resultThreshold: 50,
   scoreThreshold: 0.2,
@@ -33,6 +30,7 @@ export const ApiPath = {
   search: 'search',
   compile: 'compile',
   workflow: 'workflow',
+  delete: 'delete',
   timeline: 'timeline',
 } as const;
 

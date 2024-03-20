@@ -4,9 +4,10 @@ import {
   VideoAssetConfig,
   ImageAssetConfig,
   TextAssetConfig,
+  TextStyleProps,
 } from '@/types/config';
-import { TextStyle } from './config';
 import { v4 as uuidv4 } from 'uuid';
+import { TextStyleDefaultValues } from './config';
 
 const validateMaxSupport = (
   duration: number,
@@ -153,26 +154,22 @@ export class ImageAsset extends MediaAsset {
 export class TextAsset extends MediaAsset {
   public text: string;
   public duration: number | null;
-  public style: TextStyle;
+  public style: Partial<TextStyleProps>;
 
   constructor(config?: Partial<TextAssetConfig>) {
-    const {
-      text = '',
-      style = new TextStyle(),
-      duration = null,
-    } = config || {};
+    const { text = '', style = {}, duration = null } = config || {};
     const assetId: string = `txt-${uuidv4()}`;
     super(assetId);
     this.text = text;
     this.duration = duration;
-    this.style = style;
+    this.style = Object.assign({}, TextStyleDefaultValues, style);
   }
 
   toJSON() {
     return {
       assetId: this.assetId,
       text: this.text,
-      style: this.style.toJSON(),
+      style: { ...this.style },
       duration: this.duration,
     };
   }

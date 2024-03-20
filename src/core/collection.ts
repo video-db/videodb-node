@@ -1,4 +1,4 @@
-import { ApiPath, DefaultSearchType } from '@/constants';
+import { ApiPath } from '@/constants';
 import type {
   CollectionBase,
   ICollection,
@@ -19,7 +19,7 @@ import type {
 import { fromSnakeToCamel } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
-import { SearchFactory } from './search';
+import { SearchFactory, DefaultSearchType } from './search';
 import { Video } from './video';
 import { Audio } from './audio';
 import { Image } from './image';

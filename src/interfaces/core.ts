@@ -1,11 +1,12 @@
 import { SearchResult } from '@/core/search/searchResult';
 import { Video } from '@/core/video';
-import type { IndexType } from '@/types';
 import type { SearchType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { StreamableURL, Timeline, Transcript } from '@/types/video';
 import { IndexJob, TranscriptJob, UploadJob } from '@/utils/job';
-import { AudioAsset, SubtitleStyle, VideoAsset } from '..';
+import { AudioAsset, VideoAsset } from '..';
+import { SearchTypeValues } from '@/core/search';
+import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
 
 /**
  * Base type for all collection objects
@@ -25,7 +26,7 @@ export interface ICollection {
   deleteVideo: (videoId: string) => Promise<object>;
   uploadFile: (data: FileUploadConfig) => Promise<void | UploadJob>;
   uploadURL: (data: URLUploadConfig) => Promise<void | UploadJob>;
-  search: (query: string, type?: SearchType) => Promise<SearchResult>;
+  search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
 }
 
 /**
@@ -52,10 +53,14 @@ export interface IVideo {
   generateStream: (timeline: Timeline) => Promise<string>;
   play: () => string;
   getTranscript: (forceCreate?: boolean) => Transcript | TranscriptJob;
-  indexSpokenWords: (indexType: IndexType) => IndexJob;
-  search: (query: string, type?: SearchType) => Promise<SearchResult>;
+  indexSpokenWords: () => IndexJob;
+  indexScenes: (config: IndexSceneConfig) => IndexJob;
+  search: (
+    query: string,
+    searchType?: SearchTypeValues
+  ) => Promise<SearchResult>;
   generateThumbnail: () => Promise<string>;
-  addSubtitle: (config: SubtitleStyle) => Promise<string>;
+  addSubtitle: (config: SubtitleStyleProps) => Promise<string>;
 }
 
 /**

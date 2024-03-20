@@ -4,7 +4,9 @@ import { Audio } from '@/core/audio';
 import { Image } from '@/core/image';
 import type { AudioBase, ImageBase, VideoBase } from '@/interfaces/core';
 import type { SyncUploadConfig } from '@/types/collection';
-import type { IndexConfig, IndexType, MediaBase } from '@/types/index';
+import type { MediaBase } from '@/types/index';
+import type { IndexConfig } from '@/types/config';
+import type { IndexType } from '@/types/search';
 import type {
   NoDataResponse,
   SyncJobResponse,
@@ -13,13 +15,15 @@ import type {
 } from '@/types/response';
 import type { JobErrorCallback, JobSuccessCallback } from '@/types/utils';
 import type { Transcript } from '@/types/video';
-import { fromSnakeToCamel } from '.';
+import { fromCamelToSnake, fromSnakeToCamel } from '.';
 import {
   AuthenticationError,
   InvalidRequestError,
   VideodbError,
 } from './error';
 import { HttpClient } from './httpClient';
+import { IndexSceneConfig } from '@/types/config';
+import { IndexTypeValues } from '@/core/search';
 
 const { in_progress, processing } = ResponseStatus;
 const { video, transcription, collection, upload, index } = ApiPath;
@@ -248,11 +252,17 @@ export class IndexJob extends Job<NoDataResponse, NoDataResponse> {
   videoId: string;
   indexConfig: IndexConfig;
 
-  constructor(http: HttpClient, videoId: string, indexType: IndexType) {
+  constructor(
+    http: HttpClient,
+    videoId: string,
+    indexType: IndexType,
+    additionalConfig: IndexSceneConfig = {}
+  ) {
     super(http);
     this.videoId = videoId;
     this.indexConfig = {
-      index_type: indexType,
+      indexType: indexType,
+      ...additionalConfig,
     };
     this.jobTitle = 'Index Job';
   }
@@ -262,22 +272,38 @@ export class IndexJob extends Job<NoDataResponse, NoDataResponse> {
    * On sucess, it calls the index endpoint
    */
   public start = async () => {
-    const transcriptJob = new TranscriptJob(this.vhttp, this.videoId);
-    transcriptJob.on('success', async () => {
+    if (this.indexConfig.indexType === IndexTypeValues.semantic) {
+      const transcriptJob = new TranscriptJob(this.vhttp, this.videoId);
+      const reqData = fromCamelToSnake(this.indexConfig);
+      transcriptJob.on('success', async () => {
+        try {
+          const res = await this.vhttp.post<NoDataResponse, IndexConfig>(
+            [video, this.videoId, index],
+            reqData
+          );
+          this._handleSuccess(res);
+        } catch (err) {
+          this._handleError(err);
+        }
+      });
+      transcriptJob.on('error', err => {
+        this._handleError(err);
+      });
+      await transcriptJob.start();
+    }
+    if (this.indexConfig.indexType === IndexTypeValues.scene) {
       try {
-        const res = await this.vhttp.post<NoDataResponse, IndexConfig>(
+        const reqData = fromCamelToSnake(this.indexConfig);
+        const res = await this.vhttp.post<SyncJobResponse, IndexConfig>(
           [video, this.videoId, index],
-          this.indexConfig
+          reqData
         );
-        this._handleSuccess(res);
+
+        void this._initiateBackoff(res.data.output_url);
       } catch (err) {
         this._handleError(err);
       }
-    });
-    transcriptJob.on('error', err => {
-      this._handleError(err);
-    });
-    await transcriptJob.start();
+    }
   };
 
   protected beforeSuccess = (data: NoDataResponse) => {
