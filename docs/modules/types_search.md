@@ -26,7 +26,7 @@
 
 #### Defined in
 
-[src/types/search.ts:4](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L4)
+[src/types/search.ts:4](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L4)
 
 ___
 
@@ -36,7 +36,7 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:44](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L44)
+[src/types/search.ts:44](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L44)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:34](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L34)
+[src/types/search.ts:34](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L34)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:40](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L40)
+[src/types/search.ts:40](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L40)
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:16](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L16)
+[src/types/search.ts:16](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L16)
 
 ___
 
@@ -92,7 +92,7 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:6](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L6)
+[src/types/search.ts:6](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L6)
 
 ___
 
@@ -102,7 +102,7 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:12](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L12)
+[src/types/search.ts:12](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L12)
 
 ___
 
@@ -112,7 +112,7 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:3](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L3)
+[src/types/search.ts:3](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L3)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:30](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L30)
+[src/types/search.ts:30](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L30)
 
 ___
 
@@ -140,7 +140,7 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:20](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L20)
+[src/types/search.ts:20](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L20)
 
 ___
 
@@ -150,4 +150,4 @@ ___
 
 #### Defined in
 
-[src/types/search.ts:26](https://github.com/video-db/videodb-node/blob/583396d/src/types/search.ts#L26)
+[src/types/search.ts:26](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/search.ts#L26)

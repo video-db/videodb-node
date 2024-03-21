@@ -48,7 +48,7 @@ Timeline object
 
 #### Defined in
 
-[src/core/timeline.ts:22](https://github.com/video-db/videodb-node/blob/583396d/src/core/timeline.ts#L22)
+[src/core/timeline.ts:22](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/timeline.ts#L22)
 
 ## Properties
 
@@ -62,7 +62,7 @@ Timeline object
 
 #### Defined in
 
-[src/core/timeline.ts:15](https://github.com/video-db/videodb-node/blob/583396d/src/core/timeline.ts#L15)
+[src/core/timeline.ts:15](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/timeline.ts#L15)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-[src/core/timeline.ts:14](https://github.com/video-db/videodb-node/blob/583396d/src/core/timeline.ts#L14)
+[src/core/timeline.ts:14](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/timeline.ts#L14)
 
 ___
 
@@ -90,7 +90,7 @@ ___
 
 #### Defined in
 
-[src/core/timeline.ts:13](https://github.com/video-db/videodb-node/blob/583396d/src/core/timeline.ts#L13)
+[src/core/timeline.ts:13](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/timeline.ts#L13)
 
 ## Methods
 
@@ -116,7 +116,7 @@ Adds a VideoAsset to the timeline in inline position
 
 #### Defined in
 
-[src/core/timeline.ts:41](https://github.com/video-db/videodb-node/blob/583396d/src/core/timeline.ts#L41)
+[src/core/timeline.ts:41](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/timeline.ts#L41)
 
 ___
 
@@ -143,7 +143,7 @@ Adds a AudioAsset to the timeline in overlay position
 
 #### Defined in
 
-[src/core/timeline.ts:53](https://github.com/video-db/videodb-node/blob/583396d/src/core/timeline.ts#L53)
+[src/core/timeline.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/timeline.ts#L53)
 
 ___
 
@@ -165,4 +165,4 @@ An await URL to the timeline stream
 
 #### Defined in
 
-[src/core/timeline.ts:70](https://github.com/video-db/videodb-node/blob/583396d/src/core/timeline.ts#L70)
+[src/core/timeline.ts:70](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/timeline.ts#L70)

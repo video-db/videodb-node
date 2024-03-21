@@ -40,7 +40,7 @@ with the returned URL for the video to be saved.
 
 #### Defined in
 
-[src/utils/upload.ts:21](https://github.com/video-db/videodb-node/blob/583396d/src/utils/upload.ts#L21)
+[src/utils/upload.ts:21](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/upload.ts#L21)
 
 ___
 
@@ -62,4 +62,4 @@ ___
 
 #### Defined in
 
-[src/utils/upload.ts:38](https://github.com/video-db/videodb-node/blob/583396d/src/utils/upload.ts#L38)
+[src/utils/upload.ts:38](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/upload.ts#L38)

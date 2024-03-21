@@ -52,7 +52,7 @@ MediaAsset.constructor
 
 #### Defined in
 
-[src/core/asset.ts:126](https://github.com/video-db/videodb-node/blob/583396d/src/core/asset.ts#L126)
+[src/core/asset.ts:126](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L126)
 
 ## Properties
 
@@ -66,7 +66,7 @@ MediaAsset.assetId
 
 #### Defined in
 
-[src/core/asset.ts:31](https://github.com/video-db/videodb-node/blob/583396d/src/core/asset.ts#L31)
+[src/core/asset.ts:31](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L31)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:124](https://github.com/video-db/videodb-node/blob/583396d/src/core/asset.ts#L124)
+[src/core/asset.ts:124](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L124)
 
 ___
 
@@ -86,7 +86,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:121](https://github.com/video-db/videodb-node/blob/583396d/src/core/asset.ts#L121)
+[src/core/asset.ts:121](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L121)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:120](https://github.com/video-db/videodb-node/blob/583396d/src/core/asset.ts#L120)
+[src/core/asset.ts:120](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L120)
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:122](https://github.com/video-db/videodb-node/blob/583396d/src/core/asset.ts#L122)
+[src/core/asset.ts:122](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L122)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:123](https://github.com/video-db/videodb-node/blob/583396d/src/core/asset.ts#L123)
+[src/core/asset.ts:123](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L123)
 
 ## Methods
 
@@ -139,4 +139,4 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:142](https://github.com/video-db/videodb-node/blob/583396d/src/core/asset.ts#L142)
+[src/core/asset.ts:142](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L142)

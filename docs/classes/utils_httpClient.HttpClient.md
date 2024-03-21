@@ -42,7 +42,7 @@ internally.
 
 #### Defined in
 
-[src/utils/httpClient.ts:27](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L27)
+[src/utils/httpClient.ts:27](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/httpClient.ts#L27)
 
 ## Methods
 
@@ -69,7 +69,7 @@ internally.
 
 #### Defined in
 
-[src/utils/httpClient.ts:107](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L107)
+[src/utils/httpClient.ts:107](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/httpClient.ts#L107)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[src/utils/httpClient.ts:96](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L96)
+[src/utils/httpClient.ts:96](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/httpClient.ts#L96)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 #### Defined in
 
-[src/utils/httpClient.ts:61](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L61)
+[src/utils/httpClient.ts:61](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/httpClient.ts#L61)
 
 ___
 
@@ -151,7 +151,7 @@ ___
 
 #### Defined in
 
-[src/utils/httpClient.ts:152](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L152)
+[src/utils/httpClient.ts:152](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/httpClient.ts#L152)
 
 ___
 
@@ -180,7 +180,7 @@ ___
 
 #### Defined in
 
-[src/utils/httpClient.ts:118](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L118)
+[src/utils/httpClient.ts:118](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/httpClient.ts#L118)
 
 ___
 
@@ -209,4 +209,4 @@ ___
 
 #### Defined in
 
-[src/utils/httpClient.ts:135](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L135)
+[src/utils/httpClient.ts:135](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/httpClient.ts#L135)

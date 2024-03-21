@@ -26,7 +26,7 @@
 
 #### Defined in
 
-[src/core/search/index.ts:34](https://github.com/video-db/videodb-node/blob/583396d/src/core/search/index.ts#L34)
+[src/core/search/index.ts:34](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/index.ts#L34)
 
 ___
 
@@ -36,4 +36,4 @@ ___
 
 #### Defined in
 
-[src/core/search/index.ts:33](https://github.com/video-db/videodb-node/blob/583396d/src/core/search/index.ts#L33)
+[src/core/search/index.ts:33](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/index.ts#L33)

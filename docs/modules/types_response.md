@@ -46,7 +46,7 @@
 
 #### Defined in
 
-[src/types/response.ts:57](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L57)
+[src/types/response.ts:57](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L57)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:72](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L72)
+[src/types/response.ts:72](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L72)
 
 ___
 
@@ -84,7 +84,7 @@ All error responses sent by the server are of this type
 
 #### Defined in
 
-[src/types/response.ts:13](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L13)
+[src/types/response.ts:13](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L13)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:109](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L109)
+[src/types/response.ts:109](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L109)
 
 ___
 
@@ -117,7 +117,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:94](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L94)
+[src/types/response.ts:94](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L94)
 
 ___
 
@@ -133,7 +133,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:98](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L98)
+[src/types/response.ts:98](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L98)
 
 ___
 
@@ -143,7 +143,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:107](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L107)
+[src/types/response.ts:107](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L107)
 
 ___
 
@@ -159,7 +159,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:86](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L86)
+[src/types/response.ts:86](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L86)
 
 ___
 
@@ -175,7 +175,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:90](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L90)
+[src/types/response.ts:90](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L90)
 
 ___
 
@@ -193,7 +193,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:66](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L66)
+[src/types/response.ts:66](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L66)
 
 ___
 
@@ -203,7 +203,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:143](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L143)
+[src/types/response.ts:143](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L143)
 
 ___
 
@@ -220,7 +220,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:40](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L40)
+[src/types/response.ts:40](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L40)
 
 ___
 
@@ -249,7 +249,7 @@ All sucessfull responses are wrapped by this type
 
 #### Defined in
 
-[src/types/response.ts:25](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L25)
+[src/types/response.ts:25](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L25)
 
 ___
 
@@ -267,7 +267,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:102](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L102)
+[src/types/response.ts:102](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L102)
 
 ___
 
@@ -283,7 +283,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:123](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L123)
+[src/types/response.ts:123](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L123)
 
 ___
 
@@ -299,7 +299,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:82](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L82)
+[src/types/response.ts:82](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L82)
 
 ___
 
@@ -316,7 +316,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:114](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L114)
+[src/types/response.ts:114](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L114)
 
 ___
 
@@ -332,7 +332,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:78](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L78)
+[src/types/response.ts:78](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L78)
 
 ___
 
@@ -350,7 +350,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:34](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L34)
+[src/types/response.ts:34](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L34)
 
 ___
 
@@ -373,4 +373,4 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:45](https://github.com/video-db/videodb-node/blob/583396d/src/types/response.ts#L45)
+[src/types/response.ts:45](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L45)

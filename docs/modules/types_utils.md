@@ -33,7 +33,7 @@
 
 #### Defined in
 
-[src/types/utils.ts:10](https://github.com/video-db/videodb-node/blob/583396d/src/types/utils.ts#L10)
+[src/types/utils.ts:10](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/utils.ts#L10)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[src/types/utils.ts:9](https://github.com/video-db/videodb-node/blob/583396d/src/types/utils.ts#L9)
+[src/types/utils.ts:9](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/utils.ts#L9)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 #### Defined in
 
-[src/types/utils.ts:7](https://github.com/video-db/videodb-node/blob/583396d/src/types/utils.ts#L7)
+[src/types/utils.ts:7](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/utils.ts#L7)
 
 ___
 
@@ -83,4 +83,4 @@ ___
 
 #### Defined in
 
-[src/types/utils.ts:14](https://github.com/video-db/videodb-node/blob/583396d/src/types/utils.ts#L14)
+[src/types/utils.ts:14](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/utils.ts#L14)

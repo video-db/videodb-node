@@ -33,7 +33,7 @@
 
 #### Defined in
 
-[src/types/config.ts:56](https://github.com/video-db/videodb-node/blob/583396d/src/types/config.ts#L56)
+[src/types/config.ts:56](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L56)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:69](https://github.com/video-db/videodb-node/blob/583396d/src/types/config.ts#L69)
+[src/types/config.ts:69](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L69)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:89](https://github.com/video-db/videodb-node/blob/583396d/src/types/config.ts#L89)
+[src/types/config.ts:89](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L89)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:83](https://github.com/video-db/videodb-node/blob/583396d/src/types/config.ts#L83)
+[src/types/config.ts:83](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L83)
 
 ___
 
@@ -117,7 +117,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:4](https://github.com/video-db/videodb-node/blob/583396d/src/types/config.ts#L4)
+[src/types/config.ts:4](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L4)
 
 ___
 
@@ -135,7 +135,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:77](https://github.com/video-db/videodb-node/blob/583396d/src/types/config.ts#L77)
+[src/types/config.ts:77](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L77)
 
 ___
 
@@ -175,7 +175,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:28](https://github.com/video-db/videodb-node/blob/583396d/src/types/config.ts#L28)
+[src/types/config.ts:28](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L28)
 
 ___
 
@@ -192,4 +192,4 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:64](https://github.com/video-db/videodb-node/blob/583396d/src/types/config.ts#L64)
+[src/types/config.ts:64](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L64)

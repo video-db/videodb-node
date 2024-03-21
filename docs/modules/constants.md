@@ -44,7 +44,7 @@
 
 #### Defined in
 
-[src/constants.ts:19](https://github.com/video-db/videodb-node/blob/583396d/src/constants.ts#L19)
+[src/constants.ts:19](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L19)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:42](https://github.com/video-db/videodb-node/blob/583396d/src/constants.ts#L42)
+[src/constants.ts:42](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L42)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:8](https://github.com/video-db/videodb-node/blob/583396d/src/constants.ts#L8)
+[src/constants.ts:8](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L8)
 
 ___
 
@@ -97,7 +97,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:48](https://github.com/video-db/videodb-node/blob/583396d/src/constants.ts#L48)
+[src/constants.ts:48](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L48)
 
 ___
 
@@ -107,7 +107,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:53](https://github.com/video-db/videodb-node/blob/583396d/src/constants.ts#L53)
+[src/constants.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L53)
 
 ___
 
@@ -124,7 +124,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:37](https://github.com/video-db/videodb-node/blob/583396d/src/constants.ts#L37)
+[src/constants.ts:37](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L37)
 
 ___
 
@@ -143,7 +143,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:1](https://github.com/video-db/videodb-node/blob/583396d/src/constants.ts#L1)
+[src/constants.ts:1](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L1)
 
 ___
 
@@ -153,7 +153,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:52](https://github.com/video-db/videodb-node/blob/583396d/src/constants.ts#L52)
+[src/constants.ts:52](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L52)
 
 ___
 
@@ -169,4 +169,4 @@ ___
 
 #### Defined in
 
-[src/constants.ts:15](https://github.com/video-db/videodb-node/blob/583396d/src/constants.ts#L15)
+[src/constants.ts:15](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L15)

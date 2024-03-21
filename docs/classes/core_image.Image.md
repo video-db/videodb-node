@@ -49,7 +49,7 @@ Initializes a VideoDB Instance
 
 #### Defined in
 
-[src/core/image.ts:21](https://github.com/video-db/videodb-node/blob/583396d/src/core/image.ts#L21)
+[src/core/image.ts:21](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/image.ts#L21)
 
 ## Properties
 
@@ -63,7 +63,7 @@ Initializes a VideoDB Instance
 
 #### Defined in
 
-[src/core/image.ts:13](https://github.com/video-db/videodb-node/blob/583396d/src/core/image.ts#L13)
+[src/core/image.ts:13](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/image.ts#L13)
 
 ## Methods
 
@@ -85,4 +85,4 @@ an InvalidRequestError if the request fails
 
 #### Defined in
 
-[src/core/image.ts:31](https://github.com/video-db/videodb-node/blob/583396d/src/core/image.ts#L31)
+[src/core/image.ts:31](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/image.ts#L31)

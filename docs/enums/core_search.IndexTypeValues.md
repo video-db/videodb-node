@@ -19,7 +19,7 @@
 
 #### Defined in
 
-[src/core/search/index.ts:30](https://github.com/video-db/videodb-node/blob/583396d/src/core/search/index.ts#L30)
+[src/core/search/index.ts:30](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/index.ts#L30)
 
 ___
 
@@ -29,4 +29,4 @@ ___
 
 #### Defined in
 
-[src/core/search/index.ts:29](https://github.com/video-db/videodb-node/blob/583396d/src/core/search/index.ts#L29)
+[src/core/search/index.ts:29](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/index.ts#L29)

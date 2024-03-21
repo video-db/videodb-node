@@ -30,7 +30,7 @@
 
 #### Defined in
 
-[src/interfaces/core.ts:139](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L139)
+[src/interfaces/core.ts:139](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L139)
 
 ___
 
@@ -40,7 +40,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:138](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L138)
+[src/interfaces/core.ts:138](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L138)
 
 ___
 
@@ -50,7 +50,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:137](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L137)
+[src/interfaces/core.ts:137](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L137)
 
 ## Methods
 
@@ -70,7 +70,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:140](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L140)
+[src/interfaces/core.ts:140](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L140)
 
 ___
 
@@ -91,7 +91,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:141](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L141)
+[src/interfaces/core.ts:141](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L141)
 
 ___
 
@@ -105,4 +105,4 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:142](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L142)
+[src/interfaces/core.ts:142](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L142)

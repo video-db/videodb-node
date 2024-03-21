@@ -16,4 +16,4 @@
 
 #### Defined in
 
-[src/types/index.ts:3](https://github.com/video-db/videodb-node/blob/583396d/src/types/index.ts#L3)
+[src/types/index.ts:3](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/index.ts#L3)

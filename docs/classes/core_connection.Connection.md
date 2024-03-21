@@ -43,7 +43,7 @@ primary collection.
 
 #### Defined in
 
-[src/core/connection.ts:22](https://github.com/video-db/videodb-node/blob/583396d/src/core/connection.ts#L22)
+[src/core/connection.ts:22](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L22)
 
 ## Properties
 
@@ -53,7 +53,7 @@ primary collection.
 
 #### Defined in
 
-[src/core/connection.ts:21](https://github.com/video-db/videodb-node/blob/583396d/src/core/connection.ts#L21)
+[src/core/connection.ts:21](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L21)
 
 ## Methods
 
@@ -78,7 +78,7 @@ else returns the default collection.
 
 #### Defined in
 
-[src/core/connection.ts:33](https://github.com/video-db/videodb-node/blob/583396d/src/core/connection.ts#L33)
+[src/core/connection.ts:33](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L33)
 
 ___
 
@@ -104,7 +104,7 @@ will return a Job object (TODO: Implement proper type for this condition)
 
 #### Defined in
 
-[src/core/connection.ts:50](https://github.com/video-db/videodb-node/blob/583396d/src/core/connection.ts#L50)
+[src/core/connection.ts:50](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L50)
 
 ___
 
@@ -130,4 +130,4 @@ will return a Job object (TODO: Implement proper type for this condition)
 
 #### Defined in
 
-[src/core/connection.ts:67](https://github.com/video-db/videodb-node/blob/583396d/src/core/connection.ts#L67)
+[src/core/connection.ts:67](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L67)

@@ -60,7 +60,7 @@ Initializes a videoDB Instance
 
 #### Defined in
 
-[src/core/video.ts:30](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L30)
+[src/core/video.ts:30](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L30)
 
 ## Properties
 
@@ -74,7 +74,7 @@ Initializes a videoDB Instance
 
 #### Defined in
 
-[src/core/video.ts:21](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L21)
+[src/core/video.ts:21](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L21)
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 #### Defined in
 
-[src/core/video.ts:22](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L22)
+[src/core/video.ts:22](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L22)
 
 ## Methods
 
@@ -116,7 +116,7 @@ an awaited stream url for subtitled overlayed video
 
 #### Defined in
 
-[src/core/video.ts:183](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L183)
+[src/core/video.ts:183](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L183)
 
 ___
 
@@ -138,7 +138,7 @@ an InvalidRequestError if the request fails
 
 #### Defined in
 
-[src/core/video.ts:63](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L63)
+[src/core/video.ts:63](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L63)
 
 ___
 
@@ -152,7 +152,7 @@ ___
 
 #### Defined in
 
-[src/core/video.ts:167](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L167)
+[src/core/video.ts:167](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L167)
 
 ___
 
@@ -180,7 +180,7 @@ a streaming URL
 
 #### Defined in
 
-[src/core/video.ts:75](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L75)
+[src/core/video.ts:75](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L75)
 
 ___
 
@@ -202,7 +202,7 @@ An awaited URL to the video's thumbnail
 
 #### Defined in
 
-[src/core/video.ts:97](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L97)
+[src/core/video.ts:97](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L97)
 
 ___
 
@@ -216,7 +216,7 @@ ___
 
 #### Defined in
 
-[src/core/video.ts:152](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L152)
+[src/core/video.ts:152](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L152)
 
 ___
 
@@ -248,7 +248,7 @@ A promise of -
 
 #### Defined in
 
-[src/core/video.ts:117](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L117)
+[src/core/video.ts:117](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L117)
 
 ___
 
@@ -277,7 +277,7 @@ was successful or not
 
 #### Defined in
 
-[src/core/video.ts:142](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L142)
+[src/core/video.ts:142](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L142)
 
 ___
 
@@ -300,7 +300,7 @@ was successful or not
 
 #### Defined in
 
-[src/core/video.ts:128](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L128)
+[src/core/video.ts:128](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L128)
 
 ___
 
@@ -322,7 +322,7 @@ a URL that can be opened in browser
 
 #### Defined in
 
-[src/core/video.ts:199](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L199)
+[src/core/video.ts:199](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L199)
 
 ___
 
@@ -349,4 +349,4 @@ ___
 
 #### Defined in
 
-[src/core/video.ts:41](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L41)
+[src/core/video.ts:41](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L41)

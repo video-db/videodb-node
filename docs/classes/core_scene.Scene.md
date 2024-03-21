@@ -36,7 +36,7 @@
 
 #### Defined in
 
-[src/core/scene.ts:6](https://github.com/video-db/videodb-node/blob/583396d/src/core/scene.ts#L6)
+[src/core/scene.ts:6](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/scene.ts#L6)
 
 ## Properties
 
@@ -46,7 +46,7 @@
 
 #### Defined in
 
-[src/core/scene.ts:4](https://github.com/video-db/videodb-node/blob/583396d/src/core/scene.ts#L4)
+[src/core/scene.ts:4](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/scene.ts#L4)
 
 ___
 
@@ -56,7 +56,7 @@ ___
 
 #### Defined in
 
-[src/core/scene.ts:2](https://github.com/video-db/videodb-node/blob/583396d/src/core/scene.ts#L2)
+[src/core/scene.ts:2](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/scene.ts#L2)
 
 ___
 
@@ -66,4 +66,4 @@ ___
 
 #### Defined in
 
-[src/core/scene.ts:3](https://github.com/video-db/videodb-node/blob/583396d/src/core/scene.ts#L3)
+[src/core/scene.ts:3](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/scene.ts#L3)

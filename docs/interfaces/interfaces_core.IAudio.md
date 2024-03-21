@@ -24,4 +24,4 @@ Audio class interface for reference
 
 #### Defined in
 
-[src/interfaces/core.ts:82](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L82)
+[src/interfaces/core.ts:82](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L82)

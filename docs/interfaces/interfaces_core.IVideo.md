@@ -47,7 +47,7 @@ Video class interface for reference
 
 #### Defined in
 
-[src/interfaces/core.ts:63](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L63)
+[src/interfaces/core.ts:63](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L63)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:53](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L53)
+[src/interfaces/core.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L53)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:62](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L62)
+[src/interfaces/core.ts:62](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L62)
 
 ___
 
@@ -113,7 +113,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:55](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L55)
+[src/interfaces/core.ts:55](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L55)
 
 ___
 
@@ -137,7 +137,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:57](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L57)
+[src/interfaces/core.ts:57](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L57)
 
 ___
 
@@ -155,7 +155,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:56](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L56)
+[src/interfaces/core.ts:56](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L56)
 
 ___
 
@@ -165,7 +165,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:51](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L51)
+[src/interfaces/core.ts:51](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L51)
 
 ___
 
@@ -183,7 +183,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:54](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L54)
+[src/interfaces/core.ts:54](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L54)
 
 ___
 
@@ -208,7 +208,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:58](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L58)
+[src/interfaces/core.ts:58](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L58)
 
 ___
 
@@ -218,4 +218,4 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:52](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L52)
+[src/interfaces/core.ts:52](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L52)

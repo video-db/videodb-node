@@ -22,7 +22,7 @@ Base type for all Image objects
 
 #### Defined in
 
-[src/interfaces/core.ts:89](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L89)
+[src/interfaces/core.ts:89](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L89)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:90](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L90)
+[src/interfaces/core.ts:90](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L90)
 
 ___
 
@@ -42,4 +42,4 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:91](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L91)
+[src/interfaces/core.ts:91](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L91)

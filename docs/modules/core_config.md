@@ -22,7 +22,7 @@
 
 #### Defined in
 
-[src/core/config.ts:21](https://github.com/video-db/videodb-node/blob/583396d/src/core/config.ts#L21)
+[src/core/config.ts:21](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L21)
 
 ___
 
@@ -32,4 +32,4 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:45](https://github.com/video-db/videodb-node/blob/583396d/src/core/config.ts#L45)
+[src/core/config.ts:45](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L45)

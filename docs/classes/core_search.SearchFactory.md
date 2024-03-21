@@ -32,7 +32,7 @@
 
 #### Defined in
 
-[src/core/search/index.ts:154](https://github.com/video-db/videodb-node/blob/583396d/src/core/search/index.ts#L154)
+[src/core/search/index.ts:154](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/index.ts#L154)
 
 ## Methods
 
@@ -52,4 +52,4 @@
 
 #### Defined in
 
-[src/core/search/index.ts:157](https://github.com/video-db/videodb-node/blob/583396d/src/core/search/index.ts#L157)
+[src/core/search/index.ts:157](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/index.ts#L157)

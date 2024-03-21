@@ -24,4 +24,4 @@ Image class interface for reference
 
 #### Defined in
 
-[src/interfaces/core.ts:98](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L98)
+[src/interfaces/core.ts:98](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L98)

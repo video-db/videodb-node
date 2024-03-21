@@ -58,7 +58,7 @@ The base class through which all videodb actions are possible
 
 #### Defined in
 
-[src/core/collection.ts:39](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L39)
+[src/core/collection.ts:39](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L39)
 
 ## Properties
 
@@ -72,7 +72,7 @@ The base class through which all videodb actions are possible
 
 #### Defined in
 
-[src/core/collection.ts:36](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L36)
+[src/core/collection.ts:36](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L36)
 
 ## Methods
 
@@ -98,7 +98,7 @@ an error if the request fails
 
 #### Defined in
 
-[src/core/collection.ts:119](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L119)
+[src/core/collection.ts:119](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L119)
 
 ___
 
@@ -124,7 +124,7 @@ an error if the request fails
 
 #### Defined in
 
-[src/core/collection.ts:160](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L160)
+[src/core/collection.ts:160](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L160)
 
 ___
 
@@ -154,7 +154,7 @@ an error if the request fails
 
 #### Defined in
 
-[src/core/collection.ts:78](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L78)
+[src/core/collection.ts:78](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L78)
 
 ___
 
@@ -182,7 +182,7 @@ an error if the request fails
 
 #### Defined in
 
-[src/core/collection.ts:104](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L104)
+[src/core/collection.ts:104](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L104)
 
 ___
 
@@ -204,7 +204,7 @@ an error if the request fails
 
 #### Defined in
 
-[src/core/collection.ts:89](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L89)
+[src/core/collection.ts:89](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L89)
 
 ___
 
@@ -232,7 +232,7 @@ an error if the request fails
 
 #### Defined in
 
-[src/core/collection.ts:145](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L145)
+[src/core/collection.ts:145](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L145)
 
 ___
 
@@ -254,7 +254,7 @@ an error if the request fails
 
 #### Defined in
 
-[src/core/collection.ts:130](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L130)
+[src/core/collection.ts:130](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L130)
 
 ___
 
@@ -286,7 +286,7 @@ an error if the request fails
 
 #### Defined in
 
-[src/core/collection.ts:63](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L63)
+[src/core/collection.ts:63](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L63)
 
 ___
 
@@ -312,7 +312,7 @@ an error if the request fails
 
 #### Defined in
 
-[src/core/collection.ts:48](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L48)
+[src/core/collection.ts:48](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L48)
 
 ___
 
@@ -339,7 +339,7 @@ ___
 
 #### Defined in
 
-[src/core/collection.ts:201](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L201)
+[src/core/collection.ts:201](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L201)
 
 ___
 
@@ -368,7 +368,7 @@ will return a Job object (TODO: Implement proper type for this condition)
 
 #### Defined in
 
-[src/core/collection.ts:177](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L177)
+[src/core/collection.ts:177](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L177)
 
 ___
 
@@ -397,4 +397,4 @@ will return a Job object (TODO: Implement proper type for this condition)
 
 #### Defined in
 
-[src/core/collection.ts:191](https://github.com/video-db/videodb-node/blob/583396d/src/core/collection.ts#L191)
+[src/core/collection.ts:191](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/collection.ts#L191)

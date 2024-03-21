@@ -84,10 +84,10 @@ Or using `async`/`await`
 
 ## Working with a single video
 
-### ⬆️ Upload Video
+#### ⬆️ Upload Video
 
 Now that you have established a connection to VideoDB, you can upload your videos using `coll.uploadURL()` or `coll.uploadFile()`.  
-You can directly upload from `youtube`, `any public url`, `S3 bucket` or a `local file path`. A default collection is created when you create your first connection.
+You can directly upload files from `youtube`, `any public url`, `S3 bucket` or a `local file path`. A default collection is created when you create your first connection.
 
 ```ts
 // upload to the default collection using url which returns an upload job
@@ -107,7 +107,7 @@ uploadJob.on('error', err => {
 uploadJob.start();
 ```
 
-### 📺 View your Video
+#### 📺 View your Video
 
 Once uploaded, your video is immediately available for viewing in 720p resolution. ⚡️
 
@@ -123,7 +123,7 @@ const playerUrl = await video.play();
 console.log('Video Preview : ', playerUrl);
 ```
 
-### ⛓️ Stream Sections of videos
+#### ⛓️ Stream Sections of videos
 
 You can easily clip specific sections of a video by passing a timeline of the start and end timestamps (in seconds) as a parameter.
 For example, this will generate a streaming URL for a compilation of the fist `10 seconds`, and the part between the `120th` and the `140th` second.
@@ -140,16 +140,47 @@ const streamPreview = playStream(streamLink);
 console.log('Clipped Video Preview : ', streamPreview);
 ```
 
-### 🔍 Searching inside a video
+#### 🗂️ Indexing a Video
 
-To search bits inside a video, you have to `index` the video first. This can be done by a simple command.  
-_P.S. Indexing may take some time for longer videos._
+To search bits inside a video, you have to first index the video. This can be done by a invoking the index function on the `Video`. VideoDB offers two type of indexes currently.
+
+1. `indexSpokenWords`: Indexes spoken words in the video. It automatically generate the transcript and makes it ready for search.
+2. `indexScenes`: Indexes visual concepts and events of the video.
+
+> (Note: This feature is currently available only for beta users, join our [discord](https://discord.com/invite/py9P639jGz) for early access)
 
 ```ts
-const indexJob = video.index();
+// best for podcasts, elearning, news, etc.
+const job1 = video.indexSpokenWords();
+job1.start();
+
+// best for camera feeds, moderation usecases etc.
+const job2 = video.indexScenes();
+job2.start();
+```
+
+> In future you can also index videos using:
+>
+> 1.  Faces : Upload image of the person and find them in a video.
+> 2.  Specific domain Index like Football, Baseball, Drone footage, Cricket etc.
+>
+> ⏱️ Indexing may take some time for longer videos, structure it as a batch job in your application.
+
+#### 🔍 Searching inside a video
+
+Search the segments inside a video. While searching you have options to choose the type of search. VideoDB offers following type of search :
+
+- `semantic`: Perfect for question answer kind of queries. This is also the default type of search.
+
+- `keyword`: It matches the exact occurance of word or sentence you pass in the query parameter of the search function. keyword search is only available to use with single videos.
+
+- `scene` : It search the visual information of the video, Always Index the videousing index_scenes function before using this search.
+
+```ts
+const indexJob = video.indexSpokenWords();
 
 indexJob.on('success', async () => {
-  const results = await video.search('Morning Sunlight');
+  const results = await video.search('Morning Sunlight', 'semantic');
   const resultsUrl = await results.play();
   console.log('Search results preview : ', resultsUrl);
 });
@@ -157,59 +188,54 @@ indexJob.on('success', async () => {
 indexJob.start();
 ```
 
-`Videodb` is launching more indexing options in upcoming versions. As of now you can try the `semantic` index - Index by spoken words.
+Similarly, you can index and search from scenes using `Video.indexScenes()`
 
-In the future you'll be able to index videos using:
-
-1. **Scene** - Visual concepts and events.
-2. **Faces**.
-3. **Specific domain Index** like Football, Baseball, Drone footage, Cricket etc.
-
-### Viewing Search Results :
+#### Viewing Search Results :
 
 `video.search()` will return a `SearchResult` object, which contains the sections or as we call them, `shots` of videos which semantically match your search query.
 
 - `result.shots` Returns a list of `Shot`(s) that matched the search query. You can call `generateStream()` on each shot to get the corresponding streaming URL.
 - `result.play()` Compiles and returns a playable url for the compiled shots (similar to `video.play()`). You can open this link in the browser, or embed it into your website using an iframe.
 
----
-
 ## RAG: Search inside Multiple Videos
 
 `VideoDB` can store and search inside multiple videos with ease. By default, videos are uploaded to your default collection.
 
-### 🔄 Using Collection to Upload Multiple Videos
+#### 🔄 Using Collection to Upload Multiple Videos
 
 ```ts
-const uploadJobHandler = (video) => {
+const uploadJobHandler = video => {
   console.log(`Video uploaded :${video.meta.name}`);
 };
 
 // Upload Video1 to VideoDB
 const job1 = await coll.uploadURL({
-  url: "https://www.youtube.com/watch?v=lsODSDmY4CY",
+  url: 'https://www.youtube.com/watch?v=lsODSDmY4CY',
 });
-job1.on("success", uploadJobHandler);
+job1.on('success', uploadJobHandler);
 job1.start();
 
 // Upload Video2 to VideoDB
 const job2 = await coll.uploadURL({
-  url: "https://www.youtube.com/watch?v=vZ4kOr38JhY",
+  url: 'https://www.youtube.com/watch?v=vZ4kOr38JhY',
 });
-job2.on("success", uploadJobHandler);
+job2.on('success', uploadJobHandler);
 job2.start();
 
 // Upload Video3 to VideoDB
 const job3 = await coll.uploadURL({
-  url: "https://www.youtube.com/watch?v=uak_dXHh6s4",
+  url: 'https://www.youtube.com/watch?v=uak_dXHh6s4',
 });
-job3.on("success", uploadJobHandler);
+job3.on('success', uploadJobHandler);
 job3.start();
 ```
 
-### 📂 Search Inside Collection
+- `Connection.getCollection()` : Returns Collection object, the default collection
+- `Collection.getVideo()` : Returns list of Video, all videos in collections
+- `Collection.getVideo(videoId)`: Returns Video, respective video object from given `videoId`
+- `Collection.deleteVideo(videoId)`: Deletes the video from Collection
 
-**Index All Videos**
+#### 📂 Search inside multiple videos in a collection
 
 You can simply Index all the videos in a collection and use the search method to find relevant results. Here we are indexing the spoken content of a collection and performing semantic search.
 
@@ -222,13 +248,13 @@ const videos = await coll.getVideos();
 console.log('Total videos', videos.length);
 
 for (let video of videos) {
-  const indexJob = await video.index();
+  const indexJob = await video.indexSpokenWords();
   indexJob.on('success', indexJobHandler);
   indexJob.start();
 }
 ```
 
-**Search Inside Collection**
+**Semantic Search in the collection**
 
 ```ts
 const searchRes = await coll.search('What is dopamine');
@@ -239,7 +265,99 @@ console.log('Search Result Preview : ', resultsUrl);
 
 The result here has all the matching bits in a single stream from your collection. You can use these results in your application right away.
 
-### 🌟 More on `Video` object
+> As you can see VideoDB fundamentally removes the limitation of files and gives you power to access and stream videos in a very seamless way. Stay tuned for exciting features in our upcoming version and keep building awesome stuff with VideoDB 🤘
+
+## 🎞 Timeline And Assets
+
+**Timeline and Assets** lets you create programmatic compilation streams with audio, image and text overlays using your video data in VideoDB.
+
+### Understanding Assets
+
+Assets are objects that you can use in your video timeline. These Assets have lots of configurable setting available.
+
+### Creating Assets
+
+To define any asset, you must provide the identifier of the media and specify the segment of the media with start and end parameters, some assets have lots of other configurable settings available.
+
+#### VideoAsset
+
+A Video Asset can be created by calling [`VideoAsset()`](https://github.com/video-db/videodb-node/blob/main/docs/classes/core_asset.VideoAsset.md#constructor)
+
+```ts
+import { VideoAsset } from 'videodb';
+
+const videoAsset = new VideoAsset('MEDIA_ID', { start: 0, end: 20 });
+```
+
+#### AudioAsset
+
+An Audio Asset can be created by calling [`AudioAsset()`](https://github.com/video-db/videodb-node/blob/main/docs/classes/core_asset.AudioAsset.md#constructor)
+
+```ts
+import { AudioAsset } from 'videodb';
+
+const audioAsset = new AudioAsset('MEDIA_ID', { start: 0, end: 10 });
+```
+
+#### ImageAsset
+
+An Image Asset can be created by calling [`ImageAsset()`](https://github.com/video-db/videodb-node/blob/main/docs/classes/core_asset.ImageAsset.md#constructor)
+
+```ts
+import { ImageAsset } from 'videodb';
+
+const imageAsset = new ImageAsset('MEDIA_ID', { x: 10, y: 10, duration: 5 });
+```
+
+#### TextAsset
+
+A Text Asset can be created by calling [`TextAsset()`](https://github.com/video-db/videodb-node/blob/main/docs/classes/core_asset.TextAsset.md#constructor)
+
+```ts
+import { TextAsset } from 'videodb';
+
+// Defult Style
+const textAsset1 = new TextAsset({ text: 'Hello World!' });
+
+// Configured Style
+const textAsset2 = new TextAsset({
+  text: 'Hello World!',
+  style: { fontsize: 16, alpha: 0.8 },
+});
+```
+
+### Understanding Timeline
+
+`Timeline` let's you add your organise your asset in a Video Timeline and generate stream for your timeline.
+
+### Creating Timeline
+
+Timeline can be created by calling [`Timeline()`](https://github.com/video-db/videodb-node/blob/main/docs/classes/core_timeline.Timeline.md) constructor
+
+The `Timeline` object provides you with following methods:
+
+- [`addInline()`](https://github.com/video-db/videodb-node/blob/main/docs/classes/core_timeline.Timeline.md#addinline) : adds `VideoAsset` inline
+- [`addOverlay()`](https://github.com/video-db/videodb-node/blob/main/docs/classes/core_timeline.Timeline.md#addOverlay): adds `AudioAsset`, `ImageAsset` and `TextAsset` as overlay
+- [`generateStream()`](https://github.com/video-db/videodb-node/blob/main/docs/classes/core_timeline.Timeline.md#generateStream): generates stream for your timeline
+
+```ts
+import { Timeline, playStream } from 'videodb';
+
+// Create a Timeline 
+const timeline = Timeline(conn);
+
+// Add VideoAsset inline
+timeline.addInline(videoAsset);
+
+// Add AudioAsset overlay
+timeline.addOverlay(0, audioAsset);
+
+// Generate and play stream
+const streamUrl = timeline.generateStream();
+console.log(playStream(streamUrl));
+```
+
+## 🌟 More on `Video` object
 
 There are multiple useful functions available on a `Video` Object:
 
@@ -264,8 +382,15 @@ console.log(thumbnail);
 #### Overlay Subtitle on video
 
 ```ts
-const subtitle = await video.addSubtitle();
-const playerUrl = await playStream(subtitle);
+let subtitleStream = await video.addSubtitle();
+let playerUrl = playStream(subtitleStream);
+console.log(playerUrl);
+```
+Subtitles Can be styled by passing a Object of Type [`Partial<SubtitleStyleProps>`](https://github.com/video-db/videodb-node/blob/main/docs/modules/types_config.md#subtitlestyleprops) in `Video.addSubtitle()`
+
+```ts
+subtitleStream = await video.addSubtitle({fontSize: 12});
+playerUrl = await playStream(subtitleStream);
 console.log(playerUrl);
 ```
 
@@ -275,7 +400,7 @@ console.log(playerUrl);
 // Delete the video from the collection
 await video.delete();
 ```
- 
+
 ### 🌟 More on `Collection` object
 
 #### Get all videos

@@ -25,7 +25,7 @@ Base type for all audio objects
 
 #### Defined in
 
-[src/interfaces/core.ts:70](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L70)
+[src/interfaces/core.ts:70](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L70)
 
 ___
 
@@ -35,7 +35,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:71](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L71)
+[src/interfaces/core.ts:71](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L71)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:72](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L72)
+[src/interfaces/core.ts:72](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L72)
 
 ___
 
@@ -55,7 +55,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:73](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L73)
+[src/interfaces/core.ts:73](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L73)
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:74](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L74)
+[src/interfaces/core.ts:74](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L74)
 
 ___
 
@@ -75,4 +75,4 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:75](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L75)
+[src/interfaces/core.ts:75](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L75)

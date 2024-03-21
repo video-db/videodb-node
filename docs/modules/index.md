@@ -202,4 +202,4 @@ A Connection instance that can be used to fetch any collection
 
 #### Defined in
 
-[src/index.ts:11](https://github.com/video-db/videodb-node/blob/583396d/src/index.ts#L11)
+[src/index.ts:11](https://github.com/video-db/videodb-node/blob/4dc9a20/src/index.ts#L11)

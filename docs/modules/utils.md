@@ -34,7 +34,7 @@ Return type for function fromSnakeToCamel
 
 #### Defined in
 
-[src/utils/index.ts:18](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L18)
+[src/utils/index.ts:18](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/index.ts#L18)
 
 ___
 
@@ -52,7 +52,7 @@ TS Interpretation of snake_case to camelCase conversion for better readability
 
 #### Defined in
 
-[src/utils/index.ts:9](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L9)
+[src/utils/index.ts:9](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/index.ts#L9)
 
 ## Functions
 
@@ -78,7 +78,7 @@ TS Interpretation of snake_case to camelCase conversion for better readability
 
 #### Defined in
 
-[src/utils/index.ts:55](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L55)
+[src/utils/index.ts:55](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/index.ts#L55)
 
 ___
 
@@ -115,7 +115,7 @@ large objects with a lot of values.
 
 #### Defined in
 
-[src/utils/index.ts:37](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L37)
+[src/utils/index.ts:37](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/index.ts#L37)
 
 ___
 
@@ -135,7 +135,7 @@ media is AudioBase
 
 #### Defined in
 
-[src/utils/index.ts:95](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L95)
+[src/utils/index.ts:95](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/index.ts#L95)
 
 ___
 
@@ -155,7 +155,7 @@ ___
 
 #### Defined in
 
-[src/utils/index.ts:73](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L73)
+[src/utils/index.ts:73](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/index.ts#L73)
 
 ___
 
@@ -175,4 +175,4 @@ ___
 
 #### Defined in
 
-[src/utils/index.ts:75](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L75)
+[src/utils/index.ts:75](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/index.ts#L75)
