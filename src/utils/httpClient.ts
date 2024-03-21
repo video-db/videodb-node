@@ -99,7 +99,7 @@ export class HttpClient {
   ) => {
     return await this.#makeRequest<R>({
       method: 'GET',
-      url: urlSeries.join('/') + '/',
+      url: urlSeries.join('/'),
       ...options,
     });
   };

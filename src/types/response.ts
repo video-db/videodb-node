@@ -101,8 +101,8 @@ export type GetImages = {
 
 export type SceneBase = {
   response: string;
-  start: string;
-  end: string;
+  start: number;
+  end: number;
 };
 export type GetScenes = SceneBase[];
 

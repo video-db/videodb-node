@@ -157,9 +157,7 @@ export class Video implements IVideo {
     });
     const scenes: Scene[] = [];
     for (const scene of res.data) {
-      scenes.push(
-        new Scene(scene.response, Number(scene.start), Number(scene.end))
-      );
+      scenes.push(new Scene(scene.response, scene.start, scene.end));
     }
     return scenes;
   };
