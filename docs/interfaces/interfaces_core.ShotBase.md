@@ -27,7 +27,7 @@ Base type for all Shot objects
 
 #### Defined in
 
-src/interfaces/core.ts:67
+[src/interfaces/core.ts:109](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L109)
 
 ___
 
@@ -37,7 +37,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:69
+[src/interfaces/core.ts:111](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L111)
 
 ___
 
@@ -47,7 +47,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:66
+[src/interfaces/core.ts:108](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L108)
 
 ___
 
@@ -57,7 +57,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:70
+[src/interfaces/core.ts:112](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L112)
 
 ___
 
@@ -67,7 +67,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:68
+[src/interfaces/core.ts:110](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L110)
 
 ___
 
@@ -77,7 +77,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:63
+[src/interfaces/core.ts:105](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L105)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:64
+[src/interfaces/core.ts:106](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L106)
 
 ___
 
@@ -97,4 +97,4 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:65
+[src/interfaces/core.ts:107](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L107)

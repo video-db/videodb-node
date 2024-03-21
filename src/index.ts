@@ -24,10 +24,17 @@ export { Video } from './core/video';
 export { Audio } from './core/audio';
 export { Image } from './core/image';
 export { VideoAsset, AudioAsset, ImageAsset, TextAsset } from './core/asset';
-export { SubtitleStyle, TextStyle } from './core/config';
+export {
+  ImageAssetConfig,
+  TextAssetConfig,
+  VideoAssetConfig,
+  AudioAssetConfig,
+} from './types/config';
+export { SubtitleAlignment, SubtitleBorderStyle } from './core/config';
 export { IndexJob, UploadJob, TranscriptJob } from './utils/job';
 export { Shot } from './core/shot';
 export { VideodbError } from './utils/error';
+export { SearchResult } from './core/search/searchResult';
 
 export { playStream, waitForJob } from './utils/index';
 export { connect, Connection };

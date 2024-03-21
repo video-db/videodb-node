@@ -7,7 +7,15 @@ export enum SubtitleBorderStyle {
 }
 
 export enum SubtitleAlignment {
+  bottomLeft = 1,
   bottomCenter = 2,
+  bottomRight = 3,
+  middleLeft = 4,
+  middleCenter = 5,
+  middleRight = 6,
+  topLeft = 7,
+  topCenter = 8,
+  topRight = 9,
 }
 
 export const SubtitleStyleDefaultValues: SubtitleStyleProps = {
@@ -33,20 +41,6 @@ export const SubtitleStyleDefaultValues: SubtitleStyleProps = {
   marginR: 10,
   marginV: 10,
 };
-
-export class SubtitleStyle {
-  subtitleStyleProps: SubtitleStyleProps = SubtitleStyleDefaultValues;
-
-  constructor(config: Partial<SubtitleStyleProps> = {}) {
-    Object.assign(this.subtitleStyleProps, SubtitleStyleDefaultValues, config);
-  }
-
-  toJSON() {
-    return {
-      ...this.subtitleStyleProps,
-    };
-  }
-}
 
 export const TextStyleDefaultValues: TextStyleProps = {
   fontsize: 24,
@@ -75,17 +69,3 @@ export const TextStyleDefaultValues: TextStyleProps = {
   x: '(main_w-text_w)/2',
   y: '(main_h-text_h)/2',
 };
-
-export class TextStyle {
-  textStyleProps: TextStyleProps = TextStyleDefaultValues;
-
-  constructor(config: Partial<TextStyleProps> = {}) {
-    Object.assign(this.textStyleProps, TextStyleDefaultValues, config);
-  }
-
-  toJSON() {
-    return {
-      ...this.textStyleProps,
-    };
-  }
-}

@@ -99,6 +99,13 @@ export type GetImages = {
   images: ImageResponse[];
 };
 
+export type SceneBase = {
+  response: string;
+  start: number;
+  end: number;
+};
+export type GetScenes = SceneBase[];
+
 export type GenerateStreamResponse = {
   player_url: string;
   stream_url: string;

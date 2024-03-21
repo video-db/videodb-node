@@ -32,24 +32,24 @@
 
 #### Defined in
 
-src/core/search/index.ts:64
+[src/core/search/index.ts:154](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/index.ts#L154)
 
 ## Methods
 
 ### getSearch
 
-▸ **getSearch**(`type`): `SemanticSearch`
+▸ **getSearch**(`type`): `SceneSearch` \| `SemanticSearch` \| `KeywordSearch`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `type` | ``"semantic"`` |
+| `type` | ``"semantic"`` \| ``"keyword"`` \| ``"scene"`` |
 
 #### Returns
 
-`SemanticSearch`
+`SceneSearch` \| `SemanticSearch` \| `KeywordSearch`
 
 #### Defined in
 
-src/core/search/index.ts:67
+[src/core/search/index.ts:157](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/index.ts#L157)

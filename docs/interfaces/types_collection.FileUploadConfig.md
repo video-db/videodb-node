@@ -17,6 +17,7 @@
 - [callbackUrl](types_collection.FileUploadConfig.md#callbackurl)
 - [description](types_collection.FileUploadConfig.md#description)
 - [filePath](types_collection.FileUploadConfig.md#filepath)
+- [mediaType](types_collection.FileUploadConfig.md#mediatype)
 - [name](types_collection.FileUploadConfig.md#name)
 
 ## Properties
@@ -31,7 +32,7 @@
 
 #### Defined in
 
-src/types/collection.ts:4
+[src/types/collection.ts:4](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/collection.ts#L4)
 
 ___
 
@@ -45,7 +46,7 @@ ___
 
 #### Defined in
 
-src/types/collection.ts:3
+[src/types/collection.ts:3](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/collection.ts#L3)
 
 ___
 
@@ -55,7 +56,21 @@ ___
 
 #### Defined in
 
-src/types/collection.ts:8
+[src/types/collection.ts:9](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/collection.ts#L9)
+
+___
+
+### mediaType
+
+• `Optional` **mediaType**: ``"video"`` \| ``"audio"`` \| ``"image"``
+
+#### Inherited from
+
+[CommonUploadConfig](types_collection.CommonUploadConfig.md).[mediaType](types_collection.CommonUploadConfig.md#mediatype)
+
+#### Defined in
+
+[src/types/collection.ts:5](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/collection.ts#L5)
 
 ___
 
@@ -69,4 +84,4 @@ ___
 
 #### Defined in
 
-src/types/collection.ts:2
+[src/types/collection.ts:2](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/collection.ts#L2)

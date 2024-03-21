@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Scene Search
+  - Index Videos on Scene using `Video.indexScenes()`
+  - Get Scenes Data using `Video.getScenes()`
+  - Search in Video using `Video.search()` on basis of scenes (pass `searchType` = `"scene"`)
+> Note: Collection Scene Search is not available 
+
+### Changed
+- Depercate `TextStyle` with `TextStyleProps`
+  - Instead of a accepting Instance of `TextStyle` class, `TextAsset` now accepts an object of type `Partial<TextStyleProps>`
+- Depercate `SubtitleStyle` with `SubtitleStyleProps`
+  - Instead of a accepting Instance of `SubtitleStyle` class, `Video.addSubtitle` now accepts an object of type `Partial<SubtitleStyleProps>`
+- Depercate `indexType` param in `Video.indexSpokenWords()`
+
+
 
 ## [0.0.4]() (2024-03-07)
 

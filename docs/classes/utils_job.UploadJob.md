@@ -12,7 +12,7 @@ Uses the base Job class to implement a backoff to get the uploaded video data.
 
 ## Hierarchy
 
-- [`Job`](utils_job.Job.md)\<[`VideoResponse`](../modules/types_response.md#videoresponse), [`VideoBase`](../interfaces/interfaces_core.VideoBase.md), [`Video`](core_video.Video.md)\>
+- [`Job`](utils_job.Job.md)\<[`MediaResponse`](../modules/types_response.md#mediaresponse), [`MediaBase`](../modules/types.md#mediabase), [`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md) \| [`Image`](core_image.Image.md)\>
 
   ↳ **`UploadJob`**
 
@@ -63,7 +63,7 @@ Uses the base Job class to implement a backoff to get the uploaded video data.
 
 #### Defined in
 
-src/utils/job.ts:199
+[src/utils/job.ts:212](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L212)
 
 ## Properties
 
@@ -73,7 +73,7 @@ src/utils/job.ts:199
 
 #### Defined in
 
-src/utils/job.ts:198
+[src/utils/job.ts:211](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L211)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:48
+[src/utils/job.ts:54](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L54)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:49
+[src/utils/job.ts:55](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L55)
 
 ___
 
@@ -111,7 +111,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:197
+[src/utils/job.ts:210](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L210)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:47
+[src/utils/job.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L53)
 
 ## Methods
 
@@ -149,7 +149,7 @@ src/utils/job.ts:47
 
 #### Defined in
 
-src/utils/job.ts:78
+[src/utils/job.ts:84](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L84)
 
 ___
 
@@ -173,7 +173,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:94
+[src/utils/job.ts:100](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L100)
 
 ___
 
@@ -203,13 +203,13 @@ success or error listener depending on the status.
 
 #### Defined in
 
-src/utils/job.ts:116
+[src/utils/job.ts:122](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L122)
 
 ___
 
 ### beforeSuccess
 
-▸ **beforeSuccess**(`data`): [`Video`](core_video.Video.md)
+▸ **beforeSuccess**(`data`): [`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md) \| [`Image`](core_image.Image.md)
 
 Initializes a new video object with the returned data
 
@@ -217,11 +217,11 @@ Initializes a new video object with the returned data
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `data` | [`VideoBase`](../interfaces/interfaces_core.VideoBase.md) | Video data returned from the API and converted to camelCase |
+| `data` | [`MediaBase`](../modules/types.md#mediabase) | Media data returned from the API and converted to camelCase |
 
 #### Returns
 
-[`Video`](core_video.Video.md)
+[`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md) \| [`Image`](core_image.Image.md)
 
 a new Video object
 
@@ -231,7 +231,7 @@ Job.beforeSuccess
 
 #### Defined in
 
-src/utils/job.ts:227
+[src/utils/job.ts:240](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L240)
 
 ___
 
@@ -244,7 +244,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `option` | ``"success"`` |
-| `method` | [`JobSuccessCallback`](../modules/types_utils.md#jobsuccesscallback)\<[`Video`](core_video.Video.md)\> |
+| `method` | [`JobSuccessCallback`](../modules/types_utils.md#jobsuccesscallback)\<[`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md) \| [`Image`](core_image.Image.md)\> |
 
 #### Returns
 
@@ -256,7 +256,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:61
+[src/utils/job.ts:67](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L67)
 
 ▸ **on**(`option`, `method`): `void`
 
@@ -277,7 +277,7 @@ src/utils/job.ts:61
 
 #### Defined in
 
-src/utils/job.ts:62
+[src/utils/job.ts:68](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L68)
 
 ___
 
@@ -297,4 +297,4 @@ Job.start
 
 #### Defined in
 
-src/utils/job.ts:209
+[src/utils/job.ts:222](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L222)

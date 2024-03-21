@@ -63,7 +63,7 @@
 
 #### Defined in
 
-src/utils/error.ts:12
+[src/utils/error.ts:12](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/error.ts#L12)
 
 ## Properties
 

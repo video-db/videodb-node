@@ -6,12 +6,28 @@
 
 ### References
 
+- [Audio](index.md#audio)
+- [AudioAsset](index.md#audioasset)
+- [AudioAssetConfig](index.md#audioassetconfig)
 - [Collection](index.md#collection)
+- [Connection](index.md#connection)
+- [Image](index.md#image)
+- [ImageAsset](index.md#imageasset)
+- [ImageAssetConfig](index.md#imageassetconfig)
 - [IndexJob](index.md#indexjob)
+- [SearchResult](index.md#searchresult)
 - [Shot](index.md#shot)
+- [SubtitleAlignment](index.md#subtitlealignment)
+- [SubtitleBorderStyle](index.md#subtitleborderstyle)
+- [TextAsset](index.md#textasset)
+- [TextAssetConfig](index.md#textassetconfig)
+- [Timeline](index.md#timeline)
 - [TranscriptJob](index.md#transcriptjob)
 - [UploadJob](index.md#uploadjob)
 - [Video](index.md#video)
+- [VideoAsset](index.md#videoasset)
+- [VideoAssetConfig](index.md#videoassetconfig)
+- [VideodbError](index.md#videodberror)
 - [playStream](index.md#playstream)
 - [waitForJob](index.md#waitforjob)
 
@@ -21,9 +37,51 @@
 
 ## References
 
+### Audio
+
+Re-exports [Audio](../classes/core_audio.Audio.md)
+
+___
+
+### AudioAsset
+
+Re-exports [AudioAsset](../classes/core_asset.AudioAsset.md)
+
+___
+
+### AudioAssetConfig
+
+Re-exports [AudioAssetConfig](types_config.md#audioassetconfig)
+
+___
+
 ### Collection
 
 Re-exports [Collection](../classes/core_collection.Collection.md)
+
+___
+
+### Connection
+
+Re-exports [Connection](../classes/core_connection.Connection.md)
+
+___
+
+### Image
+
+Re-exports [Image](../classes/core_image.Image.md)
+
+___
+
+### ImageAsset
+
+Re-exports [ImageAsset](../classes/core_asset.ImageAsset.md)
+
+___
+
+### ImageAssetConfig
+
+Re-exports [ImageAssetConfig](types_config.md#imageassetconfig)
 
 ___
 
@@ -33,9 +91,45 @@ Re-exports [IndexJob](../classes/utils_job.IndexJob.md)
 
 ___
 
+### SearchResult
+
+Re-exports [SearchResult](../classes/core_search_searchResult.SearchResult.md)
+
+___
+
 ### Shot
 
 Re-exports [Shot](../classes/core_shot.Shot.md)
+
+___
+
+### SubtitleAlignment
+
+Re-exports [SubtitleAlignment](../enums/core_config.SubtitleAlignment.md)
+
+___
+
+### SubtitleBorderStyle
+
+Re-exports [SubtitleBorderStyle](../enums/core_config.SubtitleBorderStyle.md)
+
+___
+
+### TextAsset
+
+Re-exports [TextAsset](../classes/core_asset.TextAsset.md)
+
+___
+
+### TextAssetConfig
+
+Re-exports [TextAssetConfig](types_config.md#textassetconfig)
+
+___
+
+### Timeline
+
+Re-exports [Timeline](../classes/core_timeline.Timeline.md)
 
 ___
 
@@ -54,6 +148,24 @@ ___
 ### Video
 
 Re-exports [Video](../classes/core_video.Video.md)
+
+___
+
+### VideoAsset
+
+Re-exports [VideoAsset](../classes/core_asset.VideoAsset.md)
+
+___
+
+### VideoAssetConfig
+
+Re-exports [VideoAssetConfig](types_config.md#videoassetconfig)
+
+___
+
+### VideodbError
+
+Re-exports [VideodbError](../classes/utils_error.VideodbError.md)
 
 ___
 
@@ -90,4 +202,4 @@ A Connection instance that can be used to fetch any collection
 
 #### Defined in
 
-src/index.ts:11
+[src/index.ts:11](https://github.com/video-db/videodb-node/blob/4dc9a20/src/index.ts#L11)

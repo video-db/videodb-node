@@ -63,7 +63,7 @@ Uses the base Job class to implement a backoff to get the transcript
 
 #### Defined in
 
-src/utils/job.ts:156
+[src/utils/job.ts:165](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L165)
 
 ## Properties
 
@@ -77,7 +77,7 @@ src/utils/job.ts:156
 
 #### Defined in
 
-src/utils/job.ts:48
+[src/utils/job.ts:54](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L54)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:155
+[src/utils/job.ts:164](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L164)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:49
+[src/utils/job.ts:55](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L55)
 
 ___
 
@@ -115,7 +115,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:47
+[src/utils/job.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L53)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:154
+[src/utils/job.ts:163](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L163)
 
 ## Methods
 
@@ -149,7 +149,7 @@ src/utils/job.ts:154
 
 #### Defined in
 
-src/utils/job.ts:78
+[src/utils/job.ts:84](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L84)
 
 ___
 
@@ -173,7 +173,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:94
+[src/utils/job.ts:100](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L100)
 
 ___
 
@@ -203,7 +203,7 @@ success or error listener depending on the status.
 
 #### Defined in
 
-src/utils/job.ts:116
+[src/utils/job.ts:122](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L122)
 
 ___
 
@@ -227,7 +227,7 @@ Job.beforeSuccess
 
 #### Defined in
 
-src/utils/job.ts:187
+[src/utils/job.ts:196](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L196)
 
 ___
 
@@ -252,7 +252,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:61
+[src/utils/job.ts:67](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L67)
 
 ▸ **on**(`option`, `method`): `void`
 
@@ -273,7 +273,7 @@ src/utils/job.ts:61
 
 #### Defined in
 
-src/utils/job.ts:62
+[src/utils/job.ts:68](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L68)
 
 ___
 
@@ -295,4 +295,4 @@ Job.start
 
 #### Defined in
 
-src/utils/job.ts:167
+[src/utils/job.ts:176](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L176)

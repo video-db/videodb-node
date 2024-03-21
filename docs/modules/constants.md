@@ -7,9 +7,9 @@
 ### Variables
 
 - [ApiPath](constants.md#apipath)
-- [DefaultIndexType](constants.md#defaultindextype)
-- [DefaultSearchType](constants.md#defaultsearchtype)
 - [HttpClientDefaultValues](constants.md#httpclientdefaultvalues)
+- [KeywordSearchDefaultValues](constants.md#keywordsearchdefaultvalues)
+- [MaxSupported](constants.md#maxsupported)
 - [PLAYER\_URL](constants.md#player_url)
 - [ResponseStatus](constants.md#responsestatus)
 - [SemanticSearchDefaultValues](constants.md#semanticsearchdefaultvalues)
@@ -26,12 +26,16 @@
 
 | Name | Type |
 | :------ | :------ |
+| `audio` | ``"audio"`` |
 | `collection` | ``"collection"`` |
 | `compile` | ``"compile"`` |
+| `delete` | ``"delete"`` |
+| `image` | ``"image"`` |
 | `index` | ``"index"`` |
 | `search` | ``"search"`` |
 | `stream` | ``"stream"`` |
 | `thumbnail` | ``"thumbnail"`` |
+| `timeline` | ``"timeline"`` |
 | `transcription` | ``"transcription"`` |
 | `upload` | ``"upload"`` |
 | `upload_url` | ``"upload_url"`` |
@@ -40,27 +44,7 @@
 
 #### Defined in
 
-src/constants.ts:15
-
-___
-
-### DefaultIndexType
-
-• `Const` **DefaultIndexType**: ``"semantic"``
-
-#### Defined in
-
-src/constants.ts:2
-
-___
-
-### DefaultSearchType
-
-• `Const` **DefaultSearchType**: ``"semantic"``
-
-#### Defined in
-
-src/constants.ts:1
+[src/constants.ts:19](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L19)
 
 ___
 
@@ -78,7 +62,42 @@ ___
 
 #### Defined in
 
-src/constants.ts:34
+[src/constants.ts:42](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L42)
+
+___
+
+### KeywordSearchDefaultValues
+
+• `Const` **KeywordSearchDefaultValues**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `dynamicScorePercentage` | ``30`` |
+| `namespace` | ``"dev"`` |
+| `resultThreshold` | ``50`` |
+| `scoreThreshold` | ``0.2`` |
+
+#### Defined in
+
+[src/constants.ts:8](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L8)
+
+___
+
+### MaxSupported
+
+• `Const` **MaxSupported**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `fadeDuration` | `number` |
+
+#### Defined in
+
+[src/constants.ts:48](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L48)
 
 ___
 
@@ -88,7 +107,7 @@ ___
 
 #### Defined in
 
-src/constants.ts:41
+[src/constants.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L53)
 
 ___
 
@@ -105,7 +124,7 @@ ___
 
 #### Defined in
 
-src/constants.ts:29
+[src/constants.ts:37](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L37)
 
 ___
 
@@ -124,7 +143,7 @@ ___
 
 #### Defined in
 
-src/constants.ts:4
+[src/constants.ts:1](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L1)
 
 ___
 
@@ -134,7 +153,7 @@ ___
 
 #### Defined in
 
-src/constants.ts:40
+[src/constants.ts:52](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L52)
 
 ___
 
@@ -150,4 +169,4 @@ ___
 
 #### Defined in
 
-src/constants.ts:11
+[src/constants.ts:15](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L15)

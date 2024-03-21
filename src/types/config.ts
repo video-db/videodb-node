@@ -1,8 +1,5 @@
-import {
-  SubtitleBorderStyle,
-  SubtitleAlignment,
-  TextStyle,
-} from '@/core/config';
+import { IndexType } from '@/types/search';
+import { SubtitleBorderStyle, SubtitleAlignment } from '@/core/config';
 
 export type SubtitleStyleProps = {
   fontName: string;
@@ -58,7 +55,7 @@ export type TextStyleProps = {
 
 export type AudioAssetConfig = {
   start: number;
-  end: number;
+  end: number | null;
   fadeInDuration: number;
   fadeOutDuration: number;
   disableOtherTracks: boolean;
@@ -74,11 +71,21 @@ export type ImageAssetConfig = {
   height: number | string;
   x: number | string;
   y: number | string;
-  duration?: number;
+  duration: number | null;
 };
 
 export type TextAssetConfig = {
   text: string;
-  style: TextStyle;
+  style: Partial<TextStyleProps>;
   duration?: number;
 };
+
+export type IndexSceneConfig = {
+  force?: boolean;
+  prompt?: string | null;
+  callbackUrl?: string | null;
+};
+
+export type IndexConfig = {
+  indexType: IndexType;
+} & IndexSceneConfig;

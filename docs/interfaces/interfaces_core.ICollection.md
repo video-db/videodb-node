@@ -44,7 +44,7 @@ Collection class interface for reference
 
 #### Defined in
 
-src/interfaces/core.ts:23
+[src/interfaces/core.ts:26](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L26)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:22
+[src/interfaces/core.ts:25](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L25)
 
 ___
 
@@ -86,7 +86,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:21
+[src/interfaces/core.ts:24](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L24)
 
 ___
 
@@ -96,24 +96,24 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:20
+[src/interfaces/core.ts:23](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L23)
 
 ___
 
 ### search
 
-• **search**: (`query`: `string`, `type?`: ``"semantic"``) => `Promise`\<[`SearchResult`](../classes/core_search_searchResult.SearchResult.md)\>
+• **search**: (`query`: `string`, `searchType?`: ``"semantic"`` \| ``"keyword"`` \| ``"scene"``) => `Promise`\<[`SearchResult`](../classes/core_search_searchResult.SearchResult.md)\>
 
 #### Type declaration
 
-▸ (`query`, `type?`): `Promise`\<[`SearchResult`](../classes/core_search_searchResult.SearchResult.md)\>
+▸ (`query`, `searchType?`): `Promise`\<[`SearchResult`](../classes/core_search_searchResult.SearchResult.md)\>
 
 ##### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `query` | `string` |
-| `type?` | ``"semantic"`` |
+| `searchType?` | ``"semantic"`` \| ``"keyword"`` \| ``"scene"`` |
 
 ##### Returns
 
@@ -121,7 +121,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:26
+[src/interfaces/core.ts:29](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L29)
 
 ___
 
@@ -145,7 +145,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:24
+[src/interfaces/core.ts:27](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L27)
 
 ___
 
@@ -169,4 +169,4 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:25
+[src/interfaces/core.ts:28](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L28)

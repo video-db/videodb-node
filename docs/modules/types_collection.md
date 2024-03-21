@@ -23,7 +23,7 @@
 
 #### Defined in
 
-src/types/collection.ts:17
+[src/types/collection.ts:18](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/collection.ts#L18)
 
 ___
 
@@ -33,4 +33,4 @@ ___
 
 #### Defined in
 
-src/types/collection.ts:15
+[src/types/collection.ts:16](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/collection.ts#L16)

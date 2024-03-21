@@ -22,7 +22,7 @@ Base type for all collection objects
 
 #### Defined in
 
-src/interfaces/core.ts:14
+[src/interfaces/core.ts:17](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L17)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:12
+[src/interfaces/core.ts:15](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L15)
 
 ___
 
@@ -42,4 +42,4 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:13
+[src/interfaces/core.ts:16](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L16)

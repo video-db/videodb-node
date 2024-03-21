@@ -1,21 +1,16 @@
-import {
-  ApiPath,
-  DefaultIndexType,
-  DefaultSearchType,
-  Workflows,
-} from '@/constants';
+import { ApiPath, Workflows } from '@/constants';
 import type { IVideo, VideoBase } from '@/interfaces/core';
-import { IndexType } from '@/types';
-import { SearchType } from '@/types/search';
-import type { GenerateStreamResponse } from '@/types/response';
+import { GetScenes, type GenerateStreamResponse } from '@/types/response';
 import type { Timeline, Transcript } from '@/types/video';
 import { fromCamelToSnake, playStream } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import { IndexJob, TranscriptJob } from '@/utils/job';
-import { SearchFactory } from './search';
-import { SubtitleStyle } from './config';
+import { SearchFactory, IndexTypeValues, DefaultSearchType } from './search';
+import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
+import { SearchType } from '@/types/search';
+import { Scene } from './scene';
 
-const { video, stream, thumbnail, workflow } = ApiPath;
+const { video, stream, thumbnail, workflow, index } = ApiPath;
 
 /**
  * The base Video class
@@ -126,28 +121,67 @@ export class Video implements IVideo {
   };
 
   /**
-   * Indexs the video with the given indexType
-   * @param indexType - The type used to index the video
+   * Indexs the video semantically
    * @returns an awaited boolean signifying whether the process
    * was successful or not
    */
-  public indexSpokenWords = (indexType?: IndexType) => {
+  public indexSpokenWords = () => {
     const indexJob = new IndexJob(
       this.#vhttp,
       this.meta.id,
-      indexType ?? DefaultIndexType
+      IndexTypeValues.semantic
     );
     return indexJob;
   };
 
   /**
+   * Indexs the video with scenes
+   * @returns an awaited boolean signifying whether the process
+   * was successful or not
+   */
+  public indexScenes = (config: Partial<IndexSceneConfig> = {}) => {
+    const indexJob = new IndexJob(
+      this.#vhttp,
+      this.meta.id,
+      IndexTypeValues.scene,
+      config
+    );
+    return indexJob;
+  };
+
+  public getScenes = async () => {
+    const res = await this.#vhttp.get<GetScenes>([video, this.meta.id, index], {
+      params: {
+        index_type: IndexTypeValues.scene,
+      },
+    });
+    const scenes: Scene[] = [];
+    for (const scene of res.data) {
+      scenes.push(new Scene(scene.response, scene.start, scene.end));
+    }
+    return scenes;
+  };
+
+  public deleteSceneIndex = async () => {
+    const deleteScenesPayload = fromCamelToSnake({
+      indexType: IndexTypeValues.scene,
+    });
+    const res = await this.#vhttp.post<object, object>(
+      [video, this.meta.id, index, ApiPath.delete],
+      deleteScenesPayload
+    );
+    return res;
+  };
+
+  /**
    * Overlays subtitles on top of a video
    * @returns an awaited stream url for subtitled overlayed video
+   *
    */
-  public addSubtitle = async (config: SubtitleStyle = new SubtitleStyle()) => {
+  public addSubtitle = async (config?: Partial<SubtitleStyleProps>) => {
     const subtitlePayload = fromCamelToSnake({
       type: Workflows.addSubtitles,
-      subtitleStyle: config.toJSON(),
+      subtitleStyle: { ...config },
     });
     const res = await this.#vhttp.post<GenerateStreamResponse, object>(
       [video, this.meta.id, workflow],

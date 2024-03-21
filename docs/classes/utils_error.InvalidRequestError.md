@@ -65,7 +65,7 @@
 
 #### Defined in
 
-src/utils/error.ts:19
+[src/utils/error.ts:19](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/error.ts#L19)
 
 ## Properties
 
@@ -117,7 +117,7 @@ ___
 
 #### Defined in
 
-src/utils/error.ts:18
+[src/utils/error.ts:18](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/error.ts#L18)
 
 ___
 
