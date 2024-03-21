@@ -275,7 +275,7 @@ console.log(playerUrl);
 // Delete the video from the collection
 await video.delete();
 ```
-
+ 
 ### 🌟 More on `Collection` object
 
 #### Get all videos

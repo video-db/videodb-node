@@ -18,6 +18,7 @@ internally.
 
 - [delete](utils_httpClient.HttpClient.md#delete)
 - [get](utils_httpClient.HttpClient.md#get)
+- [parseResponse](utils_httpClient.HttpClient.md#parseresponse)
 - [patch](utils_httpClient.HttpClient.md#patch)
 - [post](utils_httpClient.HttpClient.md#post)
 - [put](utils_httpClient.HttpClient.md#put)
@@ -41,7 +42,7 @@ internally.
 
 #### Defined in
 
-src/utils/httpClient.ts:27
+[src/utils/httpClient.ts:27](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L27)
 
 ## Methods
 
@@ -68,7 +69,7 @@ src/utils/httpClient.ts:27
 
 #### Defined in
 
-src/utils/httpClient.ts:95
+[src/utils/httpClient.ts:107](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L107)
 
 ___
 
@@ -95,7 +96,33 @@ ___
 
 #### Defined in
 
-src/utils/httpClient.ts:84
+[src/utils/httpClient.ts:96](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L96)
+
+___
+
+### parseResponse
+
+▸ **parseResponse**\<`D`\>(`data`): [`ResponseOf`](../modules/types_response.md#responseof)\<`D`\>
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `D` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `data` | [`ResponseOf`](../modules/types_response.md#responseof)\<`D`\> |
+
+#### Returns
+
+[`ResponseOf`](../modules/types_response.md#responseof)\<`D`\>
+
+#### Defined in
+
+[src/utils/httpClient.ts:61](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L61)
 
 ___
 
@@ -124,7 +151,7 @@ ___
 
 #### Defined in
 
-src/utils/httpClient.ts:140
+[src/utils/httpClient.ts:152](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L152)
 
 ___
 
@@ -153,7 +180,7 @@ ___
 
 #### Defined in
 
-src/utils/httpClient.ts:106
+[src/utils/httpClient.ts:118](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L118)
 
 ___
 
@@ -182,4 +209,4 @@ ___
 
 #### Defined in
 
-src/utils/httpClient.ts:123
+[src/utils/httpClient.ts:135](https://github.com/video-db/videodb-node/blob/583396d/src/utils/httpClient.ts#L135)

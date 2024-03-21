@@ -11,7 +11,9 @@
 
 ### Functions
 
+- [fromCamelToSnake](utils.md#fromcameltosnake)
 - [fromSnakeToCamel](utils.md#fromsnaketocamel)
+- [isMediaAudio](utils.md#ismediaaudio)
 - [playStream](utils.md#playstream)
 - [waitForJob](utils.md#waitforjob)
 
@@ -32,7 +34,7 @@ Return type for function fromSnakeToCamel
 
 #### Defined in
 
-src/utils/index.ts:17
+[src/utils/index.ts:18](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L18)
 
 ___
 
@@ -50,9 +52,35 @@ TS Interpretation of snake_case to camelCase conversion for better readability
 
 #### Defined in
 
-src/utils/index.ts:8
+[src/utils/index.ts:9](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L9)
 
 ## Functions
+
+### fromCamelToSnake
+
+▸ **fromCamelToSnake**\<`O`\>(`data`): [`SnakeKeysToCamelCase`](utils.md#snakekeystocamelcase)\<`O`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `O` | extends `object` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `data` | `O` |
+
+#### Returns
+
+[`SnakeKeysToCamelCase`](utils.md#snakekeystocamelcase)\<`O`\>
+
+#### Defined in
+
+[src/utils/index.ts:55](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L55)
+
+___
 
 ### fromSnakeToCamel
 
@@ -87,7 +115,27 @@ large objects with a lot of values.
 
 #### Defined in
 
-src/utils/index.ts:36
+[src/utils/index.ts:37](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L37)
+
+___
+
+### isMediaAudio
+
+▸ **isMediaAudio**(`media`): media is AudioBase
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `media` | [`VideoBase`](../interfaces/interfaces_core.VideoBase.md) \| [`AudioBase`](../interfaces/interfaces_core.AudioBase.md) |
+
+#### Returns
+
+media is AudioBase
+
+#### Defined in
+
+[src/utils/index.ts:95](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L95)
 
 ___
 
@@ -107,7 +155,7 @@ ___
 
 #### Defined in
 
-src/utils/index.ts:54
+[src/utils/index.ts:73](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L73)
 
 ___
 
@@ -127,4 +175,4 @@ ___
 
 #### Defined in
 
-src/utils/index.ts:56
+[src/utils/index.ts:75](https://github.com/video-db/videodb-node/blob/583396d/src/utils/index.ts#L75)

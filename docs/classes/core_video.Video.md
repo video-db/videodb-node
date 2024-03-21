@@ -29,10 +29,13 @@ Use this to initialize a video stored in videoDB
 
 - [addSubtitle](core_video.Video.md#addsubtitle)
 - [delete](core_video.Video.md#delete)
+- [deleteSceneIndex](core_video.Video.md#deletesceneindex)
 - [generateStream](core_video.Video.md#generatestream)
 - [generateThumbnail](core_video.Video.md#generatethumbnail)
+- [getScenes](core_video.Video.md#getscenes)
 - [getTranscript](core_video.Video.md#gettranscript)
-- [index](core_video.Video.md#index)
+- [indexScenes](core_video.Video.md#indexscenes)
+- [indexSpokenWords](core_video.Video.md#indexspokenwords)
 - [play](core_video.Video.md#play)
 - [search](core_video.Video.md#search)
 
@@ -57,7 +60,7 @@ Initializes a videoDB Instance
 
 #### Defined in
 
-src/core/video.ts:33
+[src/core/video.ts:30](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L30)
 
 ## Properties
 
@@ -71,7 +74,7 @@ src/core/video.ts:33
 
 #### Defined in
 
-src/core/video.ts:24
+[src/core/video.ts:21](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L21)
 
 ___
 
@@ -85,15 +88,21 @@ ___
 
 #### Defined in
 
-src/core/video.ts:25
+[src/core/video.ts:22](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L22)
 
 ## Methods
 
 ### addSubtitle
 
-▸ **addSubtitle**(): `Promise`\<`string`\>
+▸ **addSubtitle**(`config?`): `Promise`\<`string`\>
 
 Overlays subtitles on top of a video
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config?` | `Partial`\<[`SubtitleStyleProps`](../modules/types_config.md#subtitlestyleprops)\> |
 
 #### Returns
 
@@ -107,7 +116,7 @@ an awaited stream url for subtitled overlayed video
 
 #### Defined in
 
-src/core/video.ts:145
+[src/core/video.ts:183](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L183)
 
 ___
 
@@ -129,7 +138,21 @@ an InvalidRequestError if the request fails
 
 #### Defined in
 
-src/core/video.ts:66
+[src/core/video.ts:63](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L63)
+
+___
+
+### deleteSceneIndex
+
+▸ **deleteSceneIndex**(): `Promise`\<[`ResponseOf`](../modules/types_response.md#responseof)\<`object`\>\>
+
+#### Returns
+
+`Promise`\<[`ResponseOf`](../modules/types_response.md#responseof)\<`object`\>\>
+
+#### Defined in
+
+[src/core/video.ts:167](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L167)
 
 ___
 
@@ -157,7 +180,7 @@ a streaming URL
 
 #### Defined in
 
-src/core/video.ts:78
+[src/core/video.ts:75](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L75)
 
 ___
 
@@ -179,7 +202,21 @@ An awaited URL to the video's thumbnail
 
 #### Defined in
 
-src/core/video.ts:100
+[src/core/video.ts:97](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L97)
+
+___
+
+### getScenes
+
+▸ **getScenes**(): `Promise`\<[`Scene`](core_scene.Scene.md)[]\>
+
+#### Returns
+
+`Promise`\<[`Scene`](core_scene.Scene.md)[]\>
+
+#### Defined in
+
+[src/core/video.ts:152](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L152)
 
 ___
 
@@ -211,21 +248,21 @@ A promise of -
 
 #### Defined in
 
-src/core/video.ts:120
+[src/core/video.ts:117](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L117)
 
 ___
 
-### index
+### indexScenes
 
-▸ **index**(`indexType?`): [`IndexJob`](utils_job.IndexJob.md)
+▸ **indexScenes**(`config?`): [`IndexJob`](utils_job.IndexJob.md)
 
-Indexs the video with the given indexType
+Indexs the video with scenes
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `indexType?` | ``"semantic"`` | The type used to index the video |
+| Name | Type |
+| :------ | :------ |
+| `config` | `Partial`\<[`IndexSceneConfig`](../modules/types_config.md#indexsceneconfig)\> |
 
 #### Returns
 
@@ -236,11 +273,34 @@ was successful or not
 
 #### Implementation of
 
-[IVideo](../interfaces/interfaces_core.IVideo.md).[index](../interfaces/interfaces_core.IVideo.md#index)
+[IVideo](../interfaces/interfaces_core.IVideo.md).[indexScenes](../interfaces/interfaces_core.IVideo.md#indexscenes)
 
 #### Defined in
 
-src/core/video.ts:132
+[src/core/video.ts:142](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L142)
+
+___
+
+### indexSpokenWords
+
+▸ **indexSpokenWords**(): [`IndexJob`](utils_job.IndexJob.md)
+
+Indexs the video semantically
+
+#### Returns
+
+[`IndexJob`](utils_job.IndexJob.md)
+
+an awaited boolean signifying whether the process
+was successful or not
+
+#### Implementation of
+
+[IVideo](../interfaces/interfaces_core.IVideo.md).[indexSpokenWords](../interfaces/interfaces_core.IVideo.md#indexspokenwords)
+
+#### Defined in
+
+[src/core/video.ts:128](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L128)
 
 ___
 
@@ -262,20 +322,20 @@ a URL that can be opened in browser
 
 #### Defined in
 
-src/core/video.ts:159
+[src/core/video.ts:199](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L199)
 
 ___
 
 ### search
 
-▸ **search**(`query`, `type?`, `resultThreshold?`, `scoreThreshold?`): `Promise`\<[`SearchResult`](core_search_searchResult.SearchResult.md)\>
+▸ **search**(`query`, `searchType?`, `resultThreshold?`, `scoreThreshold?`): `Promise`\<[`SearchResult`](core_search_searchResult.SearchResult.md)\>
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `query` | `string` | Search query |
-| `type?` | ``"semantic"`` | [optional] Type of search to be performed |
+| `searchType?` | ``"semantic"`` \| ``"keyword"`` \| ``"scene"`` | - |
 | `resultThreshold?` | `number` | [optional] Result Threshold |
 | `scoreThreshold?` | `number` | [optional] Score Threshold |
 
@@ -289,4 +349,4 @@ ___
 
 #### Defined in
 
-src/core/video.ts:44
+[src/core/video.ts:41](https://github.com/video-db/videodb-node/blob/583396d/src/core/video.ts#L41)

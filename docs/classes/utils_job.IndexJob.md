@@ -49,7 +49,7 @@ This class accepts 3 type params
 
 ### constructor
 
-• **new IndexJob**(`http`, `videoId`, `indexType`): [`IndexJob`](utils_job.IndexJob.md)
+• **new IndexJob**(`http`, `videoId`, `indexType`, `additionalConfig?`): [`IndexJob`](utils_job.IndexJob.md)
 
 #### Parameters
 
@@ -57,7 +57,8 @@ This class accepts 3 type params
 | :------ | :------ |
 | `http` | [`HttpClient`](utils_httpClient.HttpClient.md) |
 | `videoId` | `string` |
-| `indexType` | ``"semantic"`` |
+| `indexType` | ``"semantic"`` \| ``"scene"`` |
+| `additionalConfig` | [`IndexSceneConfig`](../modules/types_config.md#indexsceneconfig) |
 
 #### Returns
 
@@ -69,7 +70,7 @@ This class accepts 3 type params
 
 #### Defined in
 
-src/utils/job.ts:236
+[src/utils/job.ts:255](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L255)
 
 ## Properties
 
@@ -83,17 +84,17 @@ src/utils/job.ts:236
 
 #### Defined in
 
-src/utils/job.ts:48
+[src/utils/job.ts:54](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L54)
 
 ___
 
 ### indexConfig
 
-• **indexConfig**: [`IndexConfig`](../modules/types.md#indexconfig)
+• **indexConfig**: [`IndexConfig`](../modules/types_config.md#indexconfig)
 
 #### Defined in
 
-src/utils/job.ts:234
+[src/utils/job.ts:253](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L253)
 
 ___
 
@@ -107,7 +108,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:49
+[src/utils/job.ts:55](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L55)
 
 ___
 
@@ -121,7 +122,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:47
+[src/utils/job.ts:53](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L53)
 
 ___
 
@@ -131,7 +132,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:233
+[src/utils/job.ts:252](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L252)
 
 ## Methods
 
@@ -155,7 +156,7 @@ src/utils/job.ts:233
 
 #### Defined in
 
-src/utils/job.ts:78
+[src/utils/job.ts:84](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L84)
 
 ___
 
@@ -179,7 +180,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:94
+[src/utils/job.ts:100](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L100)
 
 ___
 
@@ -209,7 +210,7 @@ success or error listener depending on the status.
 
 #### Defined in
 
-src/utils/job.ts:116
+[src/utils/job.ts:122](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L122)
 
 ___
 
@@ -233,7 +234,7 @@ Job.beforeSuccess
 
 #### Defined in
 
-src/utils/job.ts:264
+[src/utils/job.ts:309](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L309)
 
 ___
 
@@ -258,7 +259,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:61
+[src/utils/job.ts:67](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L67)
 
 ▸ **on**(`option`, `method`): `void`
 
@@ -279,7 +280,7 @@ src/utils/job.ts:61
 
 #### Defined in
 
-src/utils/job.ts:62
+[src/utils/job.ts:68](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L68)
 
 ___
 
@@ -300,4 +301,4 @@ Job.start
 
 #### Defined in
 
-src/utils/job.ts:249
+[src/utils/job.ts:274](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L274)

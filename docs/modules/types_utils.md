@@ -9,9 +9,6 @@
 - [JobErrorCallback](types_utils.md#joberrorcallback)
 - [JobSuccessCallback](types_utils.md#jobsuccesscallback)
 - [JobType](types_utils.md#jobtype)
-- [SemanticCollectionSearch](types_utils.md#semanticcollectionsearch)
-- [SemanticSearchBase](types_utils.md#semanticsearchbase)
-- [SemanticVideoSearch](types_utils.md#semanticvideosearch)
 - [URLSeries](types_utils.md#urlseries)
 
 ## Type Aliases
@@ -36,7 +33,7 @@
 
 #### Defined in
 
-src/types/utils.ts:10
+[src/types/utils.ts:10](https://github.com/video-db/videodb-node/blob/583396d/src/types/utils.ts#L10)
 
 ___
 
@@ -66,7 +63,7 @@ ___
 
 #### Defined in
 
-src/types/utils.ts:9
+[src/types/utils.ts:9](https://github.com/video-db/videodb-node/blob/583396d/src/types/utils.ts#L9)
 
 ___
 
@@ -76,45 +73,7 @@ ___
 
 #### Defined in
 
-src/types/utils.ts:7
-
-___
-
-### SemanticCollectionSearch
-
-Ƭ **SemanticCollectionSearch**: \{ `collectionId`: `string`  } & [`SemanticSearchBase`](types_utils.md#semanticsearchbase)
-
-#### Defined in
-
-src/types/utils.ts:26
-
-___
-
-### SemanticSearchBase
-
-Ƭ **SemanticSearchBase**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `query` | `string` |
-| `resultThreshold?` | `number` |
-| `scoreThreshold?` | `number` |
-
-#### Defined in
-
-src/types/utils.ts:16
-
-___
-
-### SemanticVideoSearch
-
-Ƭ **SemanticVideoSearch**: \{ `videoId`: `string`  } & [`SemanticSearchBase`](types_utils.md#semanticsearchbase)
-
-#### Defined in
-
-src/types/utils.ts:22
+[src/types/utils.ts:7](https://github.com/video-db/videodb-node/blob/583396d/src/types/utils.ts#L7)
 
 ___
 
@@ -124,4 +83,4 @@ ___
 
 #### Defined in
 
-src/types/utils.ts:14
+[src/types/utils.ts:14](https://github.com/video-db/videodb-node/blob/583396d/src/types/utils.ts#L14)

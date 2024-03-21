@@ -81,7 +81,7 @@ This class accepts 3 type params
 
 #### Defined in
 
-src/utils/job.ts:54
+[src/utils/job.ts:60](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L60)
 
 ## Properties
 
@@ -105,7 +105,7 @@ src/utils/job.ts:54
 
 #### Defined in
 
-src/utils/job.ts:58
+[src/utils/job.ts:64](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L64)
 
 ___
 
@@ -115,7 +115,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:48
+[src/utils/job.ts:54](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L54)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:49
+[src/utils/job.ts:55](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L55)
 
 ___
 
@@ -143,7 +143,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:59
+[src/utils/job.ts:65](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L65)
 
 ___
 
@@ -153,7 +153,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:47
+[src/utils/job.ts:53](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L53)
 
 ## Methods
 
@@ -173,7 +173,7 @@ src/utils/job.ts:47
 
 #### Defined in
 
-src/utils/job.ts:78
+[src/utils/job.ts:84](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L84)
 
 ___
 
@@ -193,7 +193,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:94
+[src/utils/job.ts:100](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L100)
 
 ___
 
@@ -219,7 +219,7 @@ success or error listener depending on the status.
 
 #### Defined in
 
-src/utils/job.ts:116
+[src/utils/job.ts:122](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L122)
 
 ___
 
@@ -240,7 +240,7 @@ ___
 
 #### Defined in
 
-src/utils/job.ts:61
+[src/utils/job.ts:67](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L67)
 
 ▸ **on**(`option`, `method`): `void`
 
@@ -257,4 +257,4 @@ src/utils/job.ts:61
 
 #### Defined in
 
-src/utils/job.ts:62
+[src/utils/job.ts:68](https://github.com/video-db/videodb-node/blob/583396d/src/utils/job.ts#L68)

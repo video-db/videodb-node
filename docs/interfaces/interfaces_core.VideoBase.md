@@ -28,7 +28,7 @@ Base type for all video objects
 
 #### Defined in
 
-src/interfaces/core.ts:33
+[src/interfaces/core.ts:36](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L36)
 
 ___
 
@@ -38,7 +38,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:34
+[src/interfaces/core.ts:37](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L37)
 
 ___
 
@@ -48,7 +48,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:35
+[src/interfaces/core.ts:38](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L38)
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:36
+[src/interfaces/core.ts:39](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L39)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:40
+[src/interfaces/core.ts:43](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L43)
 
 ___
 
@@ -78,7 +78,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:37
+[src/interfaces/core.ts:40](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L40)
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:38
+[src/interfaces/core.ts:41](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L41)
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:41
+[src/interfaces/core.ts:44](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L44)
 
 ___
 
@@ -108,4 +108,4 @@ ___
 
 #### Defined in
 
-src/interfaces/core.ts:39
+[src/interfaces/core.ts:42](https://github.com/video-db/videodb-node/blob/583396d/src/interfaces/core.ts#L42)

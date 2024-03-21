@@ -43,7 +43,7 @@ A shot is a clip of a specific video
 
 #### Defined in
 
-src/core/shot.ts:15
+[src/core/shot.ts:15](https://github.com/video-db/videodb-node/blob/583396d/src/core/shot.ts#L15)
 
 ## Properties
 
@@ -57,7 +57,7 @@ src/core/shot.ts:15
 
 #### Defined in
 
-src/core/shot.ts:13
+[src/core/shot.ts:13](https://github.com/video-db/videodb-node/blob/583396d/src/core/shot.ts#L13)
 
 ## Methods
 
@@ -79,4 +79,4 @@ A streaming URL for the shot
 
 #### Defined in
 
-src/core/shot.ts:24
+[src/core/shot.ts:24](https://github.com/video-db/videodb-node/blob/583396d/src/core/shot.ts#L24)

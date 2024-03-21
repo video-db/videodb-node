@@ -64,7 +64,7 @@
 
 #### Defined in
 
-src/utils/error.ts:6
+[src/utils/error.ts:6](https://github.com/video-db/videodb-node/blob/583396d/src/utils/error.ts#L6)
 
 ## Properties
 

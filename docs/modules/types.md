@@ -4,69 +4,16 @@
 
 ## Table of contents
 
-### Enumerations
-
-- [IndexTypeValues](../enums/types.IndexTypeValues.md)
-- [SearchTypeValues](../enums/types.SearchTypeValues.md)
-
 ### Type Aliases
 
-- [IndexConfig](types.md#indexconfig)
-- [IndexType](types.md#indextype)
-- [SearchConfig](types.md#searchconfig)
-- [SearchType](types.md#searchtype)
+- [MediaBase](types.md#mediabase)
 
 ## Type Aliases
 
-### IndexConfig
+### MediaBase
 
-Ƭ **IndexConfig**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `index_type` | [`IndexType`](types.md#indextype) |
+Ƭ **MediaBase**: [`VideoBase`](../interfaces/interfaces_core.VideoBase.md) \| [`AudioBase`](../interfaces/interfaces_core.AudioBase.md) \| [`ImageBase`](../interfaces/interfaces_core.ImageBase.md)
 
 #### Defined in
 
-src/types/index.ts:18
-
-___
-
-### IndexType
-
-Ƭ **IndexType**: keyof typeof [`IndexTypeValues`](../enums/types.IndexTypeValues.md)
-
-#### Defined in
-
-src/types/index.ts:9
-
-___
-
-### SearchConfig
-
-Ƭ **SearchConfig**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `query` | `string` |
-| `resultThreshold?` | `number` |
-| `scoreThreshold?` | `number` |
-| `type?` | [`SearchType`](types.md#searchtype) |
-
-#### Defined in
-
-src/types/index.ts:11
-
-___
-
-### SearchType
-
-Ƭ **SearchType**: keyof typeof [`SearchTypeValues`](../enums/types.SearchTypeValues.md)
-
-#### Defined in
-
-src/types/index.ts:4
+[src/types/index.ts:3](https://github.com/video-db/videodb-node/blob/583396d/src/types/index.ts#L3)
