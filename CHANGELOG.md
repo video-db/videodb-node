@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Support for Multiple Collections
+  - `Connection.createCollection()`
+  - `Conection.getCollections()`
+  - `Conection.getCollection()`
+  - `Conection.updateCollection()`
+
+
 ## [0.1.0]() (2024-03-21)
 
 ### Added

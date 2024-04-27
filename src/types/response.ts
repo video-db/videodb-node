@@ -75,6 +75,11 @@ export type CollectionResponse = {
   description: string;
 };
 
+export type GetCollections = {
+  collections: CollectionResponse[];
+  default_collection: string;
+};
+
 export type TranscriptionResponse = {
   output_url: string;
 };

@@ -46,7 +46,9 @@ export class Collection implements ICollection {
    * @throws an error if the request fails
    */
   public getVideos = async () => {
-    const res = await this.#vhttp.get<GetVideos>([video]);
+    const res = await this.#vhttp.get<GetVideos>([video], {
+      params: { collection_id: this.meta.id },
+    });
     const videos = res.data.videos;
     return videos.map(vid => {
       const data = fromSnakeToCamel(vid) as VideoBase;
@@ -64,7 +66,9 @@ export class Collection implements ICollection {
     if (!videoId.trim()) {
       throw new VideodbError('Video ID cannot be empty');
     }
-    const res = await this.#vhttp.get<VideoResponse>([video, videoId]);
+    const res = await this.#vhttp.get<VideoResponse>([video, videoId], {
+      params: { collection_id: this.meta.id },
+    });
     const data = fromSnakeToCamel(res.data) as VideoBase;
     return new Video(this.#vhttp, data);
   };
@@ -79,7 +83,9 @@ export class Collection implements ICollection {
     if (!videoId.trim()) {
       throw new VideodbError('Video ID cannot be empty');
     }
-    return await this.#vhttp.delete<Record<string, never>>([video, videoId]);
+    return await this.#vhttp.delete<Record<string, never>>([video, videoId], {
+      params: { collection_id: this.meta.id },
+    });
   };
 
   /** * Get all audios from the collection
@@ -87,7 +93,9 @@ export class Collection implements ICollection {
    * @throws an error if the request fails
    */
   public getAudios = async () => {
-    const res = await this.#vhttp.get<GetAudios>([audio]);
+    const res = await this.#vhttp.get<GetAudios>([audio], {
+      params: { collection_id: this.meta.id },
+    });
     const audios = res.data.audios;
     return audios.map(audio => {
       const data = fromSnakeToCamel(audio) as AudioBase;
@@ -105,7 +113,9 @@ export class Collection implements ICollection {
     if (!audioId.trim()) {
       throw new VideodbError('Audio ID cannot be empty');
     }
-    const res = await this.#vhttp.get<AudioResponse>([audio, audioId]);
+    const res = await this.#vhttp.get<AudioResponse>([audio, audioId], {
+      params: { collection_id: this.meta.id },
+    });
     const data = fromSnakeToCamel(res.data) as AudioBase;
     return new Audio(this.#vhttp, data);
   };
@@ -120,7 +130,9 @@ export class Collection implements ICollection {
     if (!audioId.trim()) {
       throw new VideodbError('Audio ID cannot be empty');
     }
-    return await this.#vhttp.delete<Record<string, never>>([audio, audioId]);
+    return await this.#vhttp.delete<Record<string, never>>([audio, audioId], {
+      params: { collection_id: this.meta.id },
+    });
   };
 
   /** * Get all images from the collection
@@ -128,7 +140,9 @@ export class Collection implements ICollection {
    * @throws an error if the request fails
    */
   public getImages = async () => {
-    const res = await this.#vhttp.get<GetImages>([image]);
+    const res = await this.#vhttp.get<GetImages>([image], {
+      params: { collection_id: this.meta.id },
+    });
     const images = res.data.images;
     return images.map(audio => {
       const data = fromSnakeToCamel(audio) as ImageBase;
@@ -146,7 +160,9 @@ export class Collection implements ICollection {
     if (!imageId.trim()) {
       throw new VideodbError('Image ID cannot be empty');
     }
-    const res = await this.#vhttp.get<ImageResponse>([image, imageId]);
+    const res = await this.#vhttp.get<ImageResponse>([image, imageId], {
+      params: { collection_id: this.meta.id },
+    });
     const data = fromSnakeToCamel(res.data) as ImageBase;
     return new Image(this.#vhttp, data);
   };
@@ -161,7 +177,9 @@ export class Collection implements ICollection {
     if (!imageId.trim()) {
       throw new VideodbError('Image ID cannot be empty');
     }
-    return await this.#vhttp.delete<Record<string, never>>([image, imageId]);
+    return await this.#vhttp.delete<Record<string, never>>([image, imageId], {
+      params: { collection_id: this.meta.id },
+    });
   };
 
   /**
