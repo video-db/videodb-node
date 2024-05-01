@@ -4,10 +4,10 @@
 
 ### Added
 - Support for Multiple Collections
-  - `Connection.createCollection()`
-  - `Conection.getCollections()`
-  - `Conection.getCollection()`
-  - `Conection.updateCollection()`
+  - Create New Collection : `Connection.createCollection()`
+  - Get all Collections : `Connection.getCollections()`
+  - Get a Collection :  `Connection.getCollection()`
+  - Update a Collection : `Connection.updateCollection()`
 
 
 ## [0.1.0]() (2024-03-21)

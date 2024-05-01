@@ -30,11 +30,53 @@
   </p>
 </p>
 
+
 <!-- ABOUT THE PROJECT -->
 
 # VideoDB Node.js SDK
 
 VideoDB Node.js SDK allows you to interact with the VideoDB serverless database. Manage videos as intelligent data, not files. It's scalable, cost efficient & optimized for AI applications and LLM integration.
+
+
+<!-- TABLE OF CONTENTS -->
+# Table of Contents
+
+- [About The Project](#videoDB-nodejs-sdk)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  * [Creating a Connection](#creating-a-connection)
+  * [Getting a Connection](#getting-a-collection)
+- [Working with a single video](#working-with-a-single-video)
+  * [⬆️ Upload Video](#⬆️-upload-video)
+  * [📺 View your Video](#📺-view-your-video)
+  * [⛓️ Stream Sections of videos](#⛓️-stream-sections-of-videos)
+  * [🗂️ Indexing a Video](#🗂️-indexing-a-video)
+  * [🔍 Searching inside a video](#🔍-searching-inside-a-video)
+  * [Viewing Search Results](#viewing-search-results)
+- [RAG: Search inside Multiple Videos](#rag-search-inside-multiple-videos)
+  * [🔄 Using Collection to Upload Multiple Videos](#🔄-using-collection-to-upload-multiple-videos)
+  * [📂 Search inside multiple videos in a collection](#📂-search-inside-multiple-videos-in-a-collection)
+- [Timeline And Assets](#timeline-and-assets)
+  * [Understanding Assets](#understanding-assets)
+  * [Creating Assets](#creating-assets)
+    * [VideoAsset](#videoasset)
+    * [AudioAsset](#audioasset)
+    * [ImageAsset](#imageasset)
+    * [TextAsset](#textasset)
+  * [Understanding Timeline](#understanding-timeline)
+  * [Creating Timeline](#creating-timeline)
+- [More on `Video` object](#more-on-video-object)
+  * [Get the video's transcript](#get-the-videos-transcript)
+  * [Get the video's thumbnail](#get-the-videos-thumbnail)
+  * [Overlay Subtitle on video](#overlay-subtitle-on-video)
+  * [Delete the video](#delete-the-video)
+- [More on `Collection` object](#more-on-collection-object)
+  * [Get all videos](#get-all-videos)
+  * [Get a video given videoId](#get-a-video-given-videoid)
+  * [Delete a video](#delete-a-video)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
 
 <!-- Installation -->
 
