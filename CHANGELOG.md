@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.1.1]() (2024-04-02)
 
 ### Added
 - Support for Multiple Collections
