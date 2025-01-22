@@ -1,36 +1,43 @@
 # Changelog
 
+## [0.1.2]() (2025-01-22)
+
+### Added
+
+- Support for Scene Index
+
 ## [0.1.1]() (2024-04-02)
 
 ### Added
+
 - Support for Multiple Collections
   - Create New Collection : `Connection.createCollection()`
   - Get all Collections : `Connection.getCollections()`
-  - Get a Collection :  `Connection.getCollection()`
+  - Get a Collection : `Connection.getCollection()`
   - Update a Collection : `Connection.updateCollection()`
-
 
 ## [0.1.0]() (2024-03-21)
 
 ### Added
+
 - Scene Search
   - Index Videos on Scene using `Video.indexScenes()`
   - Get Scenes Data using `Video.getScenes()`
   - Search in Video using `Video.search()` on basis of scenes (pass `searchType` = `"scene"`)
-> Note: Collection Scene Search is not available 
+    > Note: Collection Scene Search is not available
 
 ### Changed
+
 - Deprecate `TextStyle` with `TextStyleProps`
   - Instead of a accepting Instance of `TextStyle` class, `TextAsset` now accepts an object of type `Partial<TextStyleProps>`
 - Deprecate `SubtitleStyle` with `SubtitleStyleProps`
   - Instead of a accepting Instance of `SubtitleStyle` class, `Video.addSubtitle` now accepts an object of type `Partial<SubtitleStyleProps>`
 - Deprecate `indexType` param in `Video.indexSpokenWords()`
 
-
-
 ## [0.0.4]() (2024-03-07)
 
 ### Added
+
 - `Image` class
   - Upload image using `Collection.upload()`
   - Get an image using `Collection.getImage()`
@@ -40,46 +47,46 @@
   - Create a `ImageAsset` using `ImageAsset()` class
   - Overlay `ImageAsset` in timeline using `Timeline.addOverlay()`
 - `TextAsset` & `TextStyle` class
-  - Create a `TextAsset` using `TextAsset()` class 
+  - Create a `TextAsset` using `TextAsset()` class
   - Configure styling of `TextAsset` using `TextStyle()`
 - `SubtitleStyle`
   - Configure subtitle styling by passing a `SubtitleStyle` in `Video.addSubtitle()`
 - Keyword Search
   Search using Keyword in Video using `Video.search()` (pass searchType = "keyword")
-> Note: Collection Keyword Search is not available 
+  > Note: Collection Keyword Search is not available
 
 ### Changed
-  - `Video.index()` -> `Video.indexSpokenWords()`
-  - param `type` -> `searchType` in `Video.search()` 
-  - param `type` -> `searchType` in `Collection.search()` 
+
+- `Video.index()` -> `Video.indexSpokenWords()`
+- param `type` -> `searchType` in `Video.search()`
+- param `type` -> `searchType` in `Collection.search()`
 
 ### Fixed
-  -  Pass undefined params as `null` to VideoDB Server API
 
-
-
+- Pass undefined params as `null` to VideoDB Server API
 
 ## [0.0.3]() (2024-02-13)
 
 ### Added
+
 - Concept of Audio Files 🔈
 - Concept of MediaAsset : VideoAsset, AudioAsset 💼
 - Concept of Timeline for editing workflows ✂️
-- Export `VideodbError` 
+- Export `VideodbError`
 - Minor updates in readme & package.json
 
-### Changed 
+### Changed
+
 - Http client timeout 30s -> 60s
 
 ### Fixed
+
 - Better Error handling
-- Param validation in 
+- Param validation in
   - `Coll.getVideo()`
   - `Coll.getAudio()`
   - `Coll.getVideo()`
   - `Coll.deleteAudio()`
-
-
 
 ## [0.0.2]() (2024-01-24)
 
