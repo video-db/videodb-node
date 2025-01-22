@@ -50,7 +50,7 @@ export abstract class Job<
     error?: JobErrorCallback;
   } = {};
   private readonly _delayMultiplier = 2;
-  private readonly _maxDelay = 500000;
+  private readonly _maxDelay = 1000000;
   private currentDelaySeconds = 2000;
   protected vhttp: HttpClient;
   protected convertResponseToCamelCase = true;

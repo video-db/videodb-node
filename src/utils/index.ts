@@ -59,7 +59,13 @@ export const fromCamelToSnake = <O extends object>(
     .mapKeys((__, k) => _.snakeCase(k))
     .mapValues(v => {
       if (_.isArray(v)) {
-        return v.map(item => fromCamelToSnake(item));
+        const array = v.map(item => {
+          if (_.isObject(item)) return fromCamelToSnake(item);
+          // @ts-ignore
+          return item;
+        });
+        // @ts-ignore
+        return array;
       } else if (_.isObject(v)) {
         return fromCamelToSnake(v);
       } else {
