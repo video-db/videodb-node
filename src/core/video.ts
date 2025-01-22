@@ -1,16 +1,27 @@
+import { fromSnakeToCamel } from './../utils/index';
 import { ApiPath, Workflows } from '@/constants';
 import type { IVideo, VideoBase } from '@/interfaces/core';
-import { GetScenes, type GenerateStreamResponse } from '@/types/response';
+import {
+  ListSceneIndex,
+  IndexScenesResponse,
+  type GenerateStreamResponse,
+} from '@/types/response';
 import type { Timeline, Transcript } from '@/types/video';
 import { fromCamelToSnake, playStream } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
-import { IndexJob, TranscriptJob } from '@/utils/job';
-import { SearchFactory, IndexTypeValues, DefaultSearchType } from './search';
+import {
+  DefaultIndexType,
+  DefaultSearchType,
+  IndexTypeValues,
+  SceneExtractionType,
+} from '@/core/config';
+import { IndexJob, TranscriptJob, SceneIndexJob } from '@/utils/job';
+import { SearchFactory } from './search';
 import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
-import { SearchType } from '@/types/search';
-import { Scene } from './scene';
+import { SearchType, IndexType } from '@/types/search';
+import { SceneIndexRecords, SceneIndexes } from '@/types';
 
-const { video, stream, thumbnail, workflow, index } = ApiPath;
+const { video, stream, thumbnail, workflow, index, scene, scenes } = ApiPath;
 
 /**
  * The base Video class
@@ -35,12 +46,14 @@ export class Video implements IVideo {
   /**
    * @param query - Search query
    * @param searchType- [optional] Type of search to be performed
+   * @param indexType- [optional] Index Type
    * @param resultThreshold - [optional] Result Threshold
    * @param scoreThreshold - [optional] Score Threshold
    */
   public search = async (
     query: string,
     searchType?: SearchType,
+    indexType?: IndexType,
     resultThreshold?: number,
     scoreThreshold?: number
   ) => {
@@ -49,6 +62,8 @@ export class Video implements IVideo {
     const results = await searchFunc.searchInsideVideo({
       videoId: this.meta.id,
       query: query,
+      searchType: searchType ?? DefaultSearchType,
+      indexType: indexType ?? DefaultIndexType,
       resultThreshold: resultThreshold,
       scoreThreshold: scoreThreshold,
     });
@@ -129,7 +144,7 @@ export class Video implements IVideo {
     const indexJob = new IndexJob(
       this.#vhttp,
       this.meta.id,
-      IndexTypeValues.semantic
+      IndexTypeValues.spoken
     );
     return indexJob;
   };
@@ -139,37 +154,66 @@ export class Video implements IVideo {
    * @returns an awaited boolean signifying whether the process
    * was successful or not
    */
-  public indexScenes = (config: Partial<IndexSceneConfig> = {}) => {
-    const indexJob = new IndexJob(
+  public indexScenes = async (config: Partial<IndexSceneConfig> = {}) => {
+    const defaultConfig = {
+      extractionType: SceneExtractionType.shotBased,
+      extractionConfig: {},
+    };
+    const indexScenesPayload = fromCamelToSnake(
+      Object.assign({}, defaultConfig, config)
+    );
+    const res = await this.#vhttp.post<IndexScenesResponse, object>(
+      [video, this.meta.id, index, scene],
+      indexScenesPayload
+    );
+    if (res.data) {
+      return res.data.scene_index_id;
+    }
+  };
+
+  public listSceneIndex = async () => {
+    const res = await this.#vhttp.get<ListSceneIndex>([
+      video,
+      this.meta.id,
+      index,
+      scene,
+    ]);
+    const transformed = fromSnakeToCamel({
+      array: res.data.scene_indexes,
+    }).array;
+    return transformed as SceneIndexes;
+  };
+
+  public getSceneIndex = async (sceneIndexId: string) => {
+    const sceneIndexJob = new SceneIndexJob(
       this.#vhttp,
       this.meta.id,
-      IndexTypeValues.scene,
-      config
+      sceneIndexId
     );
-    return indexJob;
+    return new Promise<SceneIndexRecords>((resolve, reject) => {
+      sceneIndexJob.on('success', data => {
+        resolve(data);
+      });
+      sceneIndexJob.on('error', err => {
+        reject(err);
+      });
+      sceneIndexJob
+        .start()
+        .then(() => {})
+        .catch(err => {
+          reject(err);
+        });
+    });
   };
 
-  public getScenes = async () => {
-    const res = await this.#vhttp.get<GetScenes>([video, this.meta.id, index], {
-      params: {
-        index_type: IndexTypeValues.scene,
-      },
-    });
-    const scenes: Scene[] = [];
-    for (const scene of res.data) {
-      scenes.push(new Scene(scene.response, scene.start, scene.end));
-    }
-    return scenes;
-  };
-
-  public deleteSceneIndex = async () => {
-    const deleteScenesPayload = fromCamelToSnake({
-      indexType: IndexTypeValues.scene,
-    });
-    const res = await this.#vhttp.post<object, object>(
-      [video, this.meta.id, index, ApiPath.delete],
-      deleteScenesPayload
-    );
+  public deleteSceneIndex = async (sceneIndexId: string) => {
+    const res = await this.#vhttp.delete([
+      video,
+      this.meta.id,
+      index,
+      scene,
+      sceneIndexId,
+    ]);
     return res;
   };
 

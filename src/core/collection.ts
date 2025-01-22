@@ -6,7 +6,7 @@ import type {
   AudioBase,
   ImageBase,
 } from '@/interfaces/core';
-import { SearchType } from '@/types/search';
+import { IndexType, SearchType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type {
   GetVideos,
@@ -19,7 +19,8 @@ import type {
 import { fromSnakeToCamel } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
-import { SearchFactory, DefaultSearchType } from './search';
+import { DefaultSearchType, DefaultIndexType } from '@/core/config';
+import { SearchFactory } from './search';
 import { Video } from './video';
 import { Audio } from './audio';
 import { Image } from './image';
@@ -219,6 +220,7 @@ export class Collection implements ICollection {
   public search = async (
     query: string,
     searchType?: SearchType,
+    indexType?: IndexType,
     resultThreshold?: number,
     scoreThreshold?: number
   ) => {
@@ -228,6 +230,8 @@ export class Collection implements ICollection {
     const results = await searchFunc.searchInsideCollection({
       collectionId: this.meta.id,
       query: query,
+      searchType: searchType ?? DefaultSearchType,
+      indexType: indexType ?? DefaultIndexType,
       resultThreshold: resultThreshold,
       scoreThreshold: scoreThreshold,
     });

@@ -69,3 +69,21 @@ export const TextStyleDefaultValues: TextStyleProps = {
   x: '(main_w-text_w)/2',
   y: '(main_h-text_h)/2',
 };
+
+export enum SearchTypeValues {
+  keyword = 'keyword',
+  semantic = 'semantic',
+}
+
+export enum IndexTypeValues {
+  spoken = 'spoken',
+  scene = 'scene',
+}
+
+export const DefaultSearchType = SearchTypeValues.semantic;
+export const DefaultIndexType = IndexTypeValues.spoken;
+
+export const SceneExtractionType = {
+  shotBased: 'shot',
+  timeBased: 'time',
+};

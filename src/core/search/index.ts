@@ -5,66 +5,54 @@ import {
 } from '@/constants';
 import type { Search } from '@/interfaces/core';
 import type { SearchType } from '@/types/search';
+import { SearchTypeValues } from '@/core/config';
 import type { SearchResponse } from '@/types/response';
 import type {
   KeywordCollectionSearch,
   KeywordVideoSearch,
   SemanticCollectionSearch,
   SemanticVideoSearch,
-  SceneCollectionSearch,
-  SceneVideoSearch,
+  // SceneCollectionSearch,
+  // SceneVideoSearch,
 } from '@/types/search';
 import { HttpClient } from '@/utils/httpClient';
 import { SearchResult } from './searchResult';
 
 const { video, search, collection } = ApiPath;
 
-export enum SearchTypeValues {
-  semantic = 'semantic',
-  keyword = 'keyword',
-  scene = 'scene',
-}
+// class SceneSearch implements Search<SceneVideoSearch, SceneCollectionSearch> {
+//   #vhttp: HttpClient;
+//   constructor(http: HttpClient) {
+//     this.#vhttp = http;
+//   }
 
-export enum IndexTypeValues {
-  semantic = 'semantic',
-  scene = 'scene',
-}
+//   private getRequestData = (data: SceneVideoSearch | SceneCollectionSearch) => {
+//     return {
+//       index_type: data.indexType ?? DefaultIndexType,
+//       search_type: data.searchType ?? DefaultSearchType,
+//       query: data.query,
+//       score_threshold:
+//         data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
+//       result_threshold:
+//         data.resultThreshold ?? SemanticSearchDefaultValues.resultThreshold,
+//     };
+//   };
 
-export const DefaultSearchType = SearchTypeValues.semantic 
-export const DefaultIndexType = IndexTypeValues.semantic;
+//   searchInsideVideo = async (data: SemanticVideoSearch) => {
+//     const reqData = this.getRequestData(data);
+//     const res = await this.#vhttp.post<SearchResponse, typeof reqData>(
+//       [video, data.videoId, search],
+//       reqData
+//     );
+//     return new SearchResult(this.#vhttp, res.data);
+//   };
 
-class SceneSearch implements Search<SceneVideoSearch, SceneCollectionSearch> {
-  #vhttp: HttpClient;
-  constructor(http: HttpClient) {
-    this.#vhttp = http;
-  }
-
-  private getRequestData = (data: SceneVideoSearch | SceneCollectionSearch) => {
-    return {
-      index_type: SearchTypeValues.scene,
-      query: data.query,
-      score_threshold:
-        data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
-      result_threshold:
-        data.resultThreshold ?? SemanticSearchDefaultValues.resultThreshold,
-    };
-  };
-
-  searchInsideVideo = async (data: SemanticVideoSearch) => {
-    const reqData = this.getRequestData(data);
-    const res = await this.#vhttp.post<SearchResponse, typeof reqData>(
-      [video, data.videoId, search],
-      reqData
-    );
-    return new SearchResult(this.#vhttp, res.data);
-  };
-
-  searchInsideCollection = async (data: SceneCollectionSearch) => {
-    throw new Error(
-      'Method not implemented. Scene search is not supported for Collection'
-    );
-  };
-}
+//   searchInsideCollection = async (data: SceneCollectionSearch) => {
+//     throw new Error(
+//       'Method not implemented. Scene search is not supported for Collection'
+//     );
+//   };
+// }
 
 class SemanticSearch
   implements Search<SemanticVideoSearch, SemanticCollectionSearch>
@@ -146,7 +134,6 @@ class KeywordSearch
 const searchType = {
   semantic: SemanticSearch,
   keyword: KeywordSearch,
-  scene: SceneSearch,
 };
 
 export class SearchFactory {

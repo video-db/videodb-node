@@ -4,7 +4,7 @@ import { Audio } from '@/core/audio';
 import { Image } from '@/core/image';
 import type { AudioBase, ImageBase, VideoBase } from '@/interfaces/core';
 import type { SyncUploadConfig } from '@/types/collection';
-import type { MediaBase } from '@/types/index';
+import type { MediaBase, SceneIndexRecords } from '@/types/index';
 import type { IndexConfig } from '@/types/config';
 import type { IndexType } from '@/types/search';
 import type {
@@ -12,6 +12,7 @@ import type {
   SyncJobResponse,
   TranscriptResponse,
   MediaResponse,
+  GetSceneIndexResponse,
 } from '@/types/response';
 import type { JobErrorCallback, JobSuccessCallback } from '@/types/utils';
 import type { Transcript } from '@/types/video';
@@ -23,10 +24,11 @@ import {
 } from './error';
 import { HttpClient } from './httpClient';
 import { IndexSceneConfig } from '@/types/config';
-import { IndexTypeValues } from '@/core/search';
+import { IndexTypeValues } from '@/core/config';
 
 const { in_progress, processing } = ResponseStatus;
-const { video, transcription, collection, upload, index } = ApiPath;
+const { video, transcription, collection, upload, index, scene, scenes } =
+  ApiPath;
 
 /**
  * Base Job class used to create different kinds of jobs
@@ -48,7 +50,7 @@ export abstract class Job<
     error?: JobErrorCallback;
   } = {};
   private readonly _delayMultiplier = 2;
-  private readonly _maxDelay = 500000;
+  private readonly _maxDelay = 1000000;
   private currentDelaySeconds = 2000;
   protected vhttp: HttpClient;
   protected convertResponseToCamelCase = true;
@@ -123,10 +125,6 @@ export abstract class Job<
     try {
       const res = await this.vhttp.get<ApiResponse>([callbackUrl]);
       if (res.status === in_progress || res.status === processing) {
-        // Job's not done
-        console.log(
-          `Backoff ${this.jobTitle}; Current delay:  ${this.currentDelaySeconds}/${this._maxDelay}`
-        );
         if (this.currentDelaySeconds >= this._maxDelay) {
           throw new VideodbError('Job timed out');
         }
@@ -272,7 +270,7 @@ export class IndexJob extends Job<NoDataResponse, NoDataResponse> {
    * On sucess, it calls the index endpoint
    */
   public start = async () => {
-    if (this.indexConfig.indexType === IndexTypeValues.semantic) {
+    if (this.indexConfig.indexType === IndexTypeValues.spoken) {
       const transcriptJob = new TranscriptJob(this.vhttp, this.videoId);
       const reqData = fromCamelToSnake(this.indexConfig);
       transcriptJob.on('success', async () => {
@@ -291,19 +289,6 @@ export class IndexJob extends Job<NoDataResponse, NoDataResponse> {
       });
       await transcriptJob.start();
     }
-    if (this.indexConfig.indexType === IndexTypeValues.scene) {
-      try {
-        const reqData = fromCamelToSnake(this.indexConfig);
-        const res = await this.vhttp.post<SyncJobResponse, IndexConfig>(
-          [video, this.videoId, index],
-          reqData
-        );
-
-        void this._initiateBackoff(res.data.output_url);
-      } catch (err) {
-        this._handleError(err);
-      }
-    }
   };
 
   protected beforeSuccess = (data: NoDataResponse) => {
@@ -317,5 +302,58 @@ export class IndexJob extends Job<NoDataResponse, NoDataResponse> {
         message: data.message,
       };
     }
+  };
+}
+
+/**
+ * SceneIndexJob is used to initalize a new video upload.
+ *
+ * @remarks
+ * Uses the base Job class to implement a backoff to get the uploaded video data.
+ */
+export class SceneIndexJob extends Job<
+  GetSceneIndexResponse,
+  GetSceneIndexResponse,
+  SceneIndexRecords
+> {
+  videoId: string;
+  sceneIndexId: string;
+  constructor(http: HttpClient, videoId: string, sceneIndexId: string) {
+    super(http);
+    this.videoId = videoId;
+    this.sceneIndexId = sceneIndexId;
+    this.jobTitle = 'Scene Index Job';
+  }
+
+  /**
+   * Fetches the callbackURL from the server and initiates a backoff
+   */
+  public start = async () => {
+    try {
+      const res = await this.vhttp.get<SyncJobResponse>([
+        video,
+        this.videoId,
+        index,
+        scene,
+        this.sceneIndexId,
+      ]);
+      if (res.status === processing) {
+        void this._initiateBackoff(res.data.output_url);
+      } else {
+        // @ts-ignore
+        this._handleSuccess(res.data);
+      }
+    } catch (err) {
+      this._handleError(err);
+    }
+  };
+
+  /**
+   * Initializes a new video object with the returned data
+   * @param data - Media data returned from the API and converted to camelCase
+   * @returns a new Video object
+   */
+  protected beforeSuccess = (data: GetSceneIndexResponse) => {
+    return data.sceneIndexRecords;
   };
 }

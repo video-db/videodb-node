@@ -80,8 +80,18 @@ export type TextAssetConfig = {
   duration?: number;
 };
 
+export type ExtractSceneConfig = {
+  extractionType?: string;
+  extractionConfig?: object;
+  force: boolean;
+  callbackUrl?: string | null;
+};
+
 export type IndexSceneConfig = {
-  force?: boolean;
+  extractionType?: string;
+  extractionConfig?: object;
+  modelName?: string;
+  modelConfig?: object;
   prompt?: string | null;
   callbackUrl?: string | null;
 };
