@@ -6,6 +6,7 @@
 
 import { ResponseStatus } from '@/constants';
 import type { StreamableURL } from './video';
+import { SceneIndexRecords } from '.';
 
 /**
  * All error responses sent by the server are of this type
@@ -109,8 +110,6 @@ export type SceneBase = {
   start: number;
   end: number;
 };
-export type GetScenes = SceneBase[];
-
 export type GenerateStreamResponse = {
   player_url: string;
   stream_url: string;
@@ -145,4 +144,22 @@ export type SearchResponse = {
   }[];
 };
 
+export type IndexScenesResponse = {
+  scene_index_id: string;
+};
+
 export type MediaResponse = VideoResponse | AudioResponse | ImageResponse;
+
+export type GetSceneIndexResponse = {
+  sceneIndexRecords: SceneIndexRecords;
+};
+
+export type SceneIndex = {
+  name: string;
+  scene_index_id: string;
+  status: string;
+};
+
+export type ListSceneIndex = {
+  scene_indexes: SceneIndex[];
+};

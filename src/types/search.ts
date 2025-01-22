@@ -1,27 +1,17 @@
-import { IndexTypeValues, SearchTypeValues } from '@/core/search';
+import { IndexTypeValues, SearchTypeValues } from '@/core/config';
 
 export type SearchType = keyof typeof SearchTypeValues;
 export type IndexType = keyof typeof IndexTypeValues;
 
-export type SceneSearchBase = {
+export type SearchBase = {
   query: string;
+  searchType: SearchType;
+  indexType: IndexType;
   resultThreshold?: number;
   scoreThreshold?: number;
 };
 
-export type SceneVideoSearch = {
-  videoId: string;
-} & SceneSearchBase;
-
-export type SceneCollectionSearch = {
-  collectionId: string;
-} & SceneSearchBase;
-
-export type SemanticSearchBase = {
-  query: string;
-  resultThreshold?: number;
-  scoreThreshold?: number;
-};
+export type SemanticSearchBase = SearchBase;
 
 export type SemanticVideoSearch = {
   videoId: string;
@@ -31,16 +21,12 @@ export type SemanticCollectionSearch = {
   collectionId: string;
 } & SemanticSearchBase;
 
-export type KeywordSearchBase = {
-  query: string;
-  resultThreshold?: number;
-  scoreThreshold?: number;
-};
+export type KeywordSearchBase = SearchBase;
 
 export type KeywordVideoSearch = {
   videoId: string;
-} & SemanticSearchBase;
+} & KeywordSearchBase;
 
 export type KeywordCollectionSearch = {
   collectionId: string;
-} & SemanticSearchBase;
+} & KeywordSearchBase;

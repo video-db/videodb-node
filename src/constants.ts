@@ -31,12 +31,16 @@ export const ApiPath = {
   compile: 'compile',
   workflow: 'workflow',
   delete: 'delete',
+  describe: 'describe',
+  scene: 'scene',
+  scenes: 'scenes',
   timeline: 'timeline',
 } as const;
 
 export const ResponseStatus = {
   processing: 'processing',
   in_progress: 'in progress',
+  success: 'success',
 } as const;
 
 export const HttpClientDefaultValues = {

@@ -24,6 +24,7 @@ export { Video } from './core/video';
 export { Audio } from './core/audio';
 export { Image } from './core/image';
 export { VideoAsset, AudioAsset, ImageAsset, TextAsset } from './core/asset';
+export { SceneExtractionType } from './core/config';
 export {
   ImageAssetConfig,
   TextAssetConfig,

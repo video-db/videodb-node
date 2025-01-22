@@ -1,11 +1,10 @@
 import { SearchResult } from '@/core/search/searchResult';
 import { Video } from '@/core/video';
-import type { SearchType } from '@/types/search';
+import type { SearchType, IndexType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { StreamableURL, Timeline, Transcript } from '@/types/video';
 import { IndexJob, TranscriptJob, UploadJob } from '@/utils/job';
 import { AudioAsset, VideoAsset } from '..';
-import { SearchTypeValues } from '@/core/search';
 import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
 
 /**
@@ -54,11 +53,8 @@ export interface IVideo {
   play: () => string;
   getTranscript: (forceCreate?: boolean) => Transcript | TranscriptJob;
   indexSpokenWords: () => IndexJob;
-  indexScenes: (config: IndexSceneConfig) => IndexJob;
-  search: (
-    query: string,
-    searchType?: SearchTypeValues
-  ) => Promise<SearchResult>;
+  indexScenes: (config: IndexSceneConfig) => Promise<string | undefined>;
+  search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
   generateThumbnail: () => Promise<string>;
   addSubtitle: (config: SubtitleStyleProps) => Promise<string>;
 }
@@ -94,9 +90,7 @@ export interface ImageBase {
 /**
  * Image class interface for reference
  */
-export interface IImage {
-  meta: ImageBase;
-}
+export interface IImage {}
 
 /**
  * Base type for all Shot objects
