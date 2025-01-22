@@ -5,7 +5,7 @@ import { Image } from '@/core/image';
 import type { AudioBase, ImageBase, VideoBase } from '@/interfaces/core';
 import type { SyncUploadConfig } from '@/types/collection';
 import type { MediaBase, SceneIndexRecords } from '@/types/index';
-import type { ExtractSceneConfig, IndexConfig } from '@/types/config';
+import type { IndexConfig } from '@/types/config';
 import type { IndexType } from '@/types/search';
 import type {
   NoDataResponse,
@@ -355,54 +355,5 @@ export class SceneIndexJob extends Job<
    */
   protected beforeSuccess = (data: GetSceneIndexResponse) => {
     return data.sceneIndexRecords;
-  };
-}
-
-export class ExtractScenesJob extends Job<
-  ExtractSceneResponse,
-  ExtractSceneResponse,
-  SceneCollection
-> {
-  videoId: string;
-  config: Partial<ExtractSceneConfig>;
-  constructor(
-    http: HttpClient,
-    videoId: string,
-    config: Partial<ExtractSceneConfig>
-  ) {
-    super(http);
-    this.videoId = videoId;
-    this.config = config;
-    this.jobTitle = 'Extract Scenes Job';
-  }
-
-  /**
-   * Fetches the callbackURL from the server and initiates a backoff
-   */
-  public start = async () => {
-    try {
-      const res = await this.vhttp.post<
-        SyncJobResponse,
-        Partial<ExtractSceneConfig>
-      >([video, this.videoId, scenes], this.config);
-      if (res.status === processing) {
-        void this._initiateBackoff(res.data.output_url);
-      } else {
-        // @ts-ignore
-        this._handleSuccess(res.data);
-      }
-    } catch (err) {
-      this._handleError(err);
-    }
-  };
-
-  /**
-   * Initializes a new video object with the returned data
-   * @param data - Media data returned from the API and converted to camelCase
-   * @returns a new Video object
-   */
-  //@ts-ignore
-  protected beforeSuccess = (data: ExtractScenesResponse) => {
-    return data;
   };
 }

@@ -15,18 +15,9 @@ import {
   IndexTypeValues,
   SceneExtractionType,
 } from '@/core/config';
-import {
-  IndexJob,
-  TranscriptJob,
-  SceneIndexJob,
-  ExtractScenesJob,
-} from '@/utils/job';
+import { IndexJob, TranscriptJob, SceneIndexJob } from '@/utils/job';
 import { SearchFactory } from './search';
-import {
-  ExtractSceneConfig,
-  IndexSceneConfig,
-  SubtitleStyleProps,
-} from '@/types/config';
+import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
 import { SearchType, IndexType } from '@/types/search';
 import { SceneIndexRecords, SceneIndexes } from '@/types';
 
@@ -156,36 +147,6 @@ export class Video implements IVideo {
       IndexTypeValues.spoken
     );
     return indexJob;
-  };
-
-  public extractScenes = async (config: Partial<ExtractSceneConfig> = {}) => {
-    const defaultConfig = {
-      extractionType: SceneExtractionType.shotBased,
-      extractionConfig: {},
-      force: false,
-    };
-    const extractScenePayload = fromCamelToSnake(
-      Object.assign({}, defaultConfig, config)
-    );
-    const extractScenesJob = new ExtractScenesJob(
-      this.#vhttp,
-      this.meta.id,
-      extractScenePayload
-    );
-    return new Promise<object>((resolve, reject) => {
-      extractScenesJob.on('success', sceneCollection=> {
-        resolve(sceneCollection);
-      });
-      extractScenesJob.on('error', err => {
-        reject(err);
-      });
-      extractScenesJob
-        .start()
-        .then(() => {})
-        .catch(err => {
-          reject(err);
-        });
-    });
   };
 
   /**
