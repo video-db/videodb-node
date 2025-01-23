@@ -7,6 +7,8 @@ import {
   ListSceneIndex,
   IndexScenesResponse,
   type GenerateStreamResponse,
+  ListSceneCollection,
+  SceneCollectionResponse,
 } from '@/types/response';
 import type { Timeline, Transcript } from '@/types/video';
 import { fromCamelToSnake, playStream } from '@/utils';
@@ -225,6 +227,40 @@ export class Video implements IVideo {
           reject(err);
         });
     });
+  };
+
+  public listSceneCollection = async () => {
+    const res = await this.#vhttp.get<ListSceneCollection>([
+      video,
+      this.meta.id,
+      scenes,
+    ]);
+    const transformed = fromSnakeToCamel({
+      array: res.data.scene_collections,
+    }).array;
+    return transformed;
+  };
+
+  public getSceneCollection = async (sceneCollectionId: string) => {
+    const res = await this.#vhttp.get<SceneCollectionResponse>([
+      video,
+      this.meta.id,
+      scenes,
+      sceneCollectionId,
+    ]);
+    const transformed = fromSnakeToCamel(res.data.scene_collection);
+    const sceneCollection = this._formatSceneCollectionData(transformed);
+    return sceneCollection;
+  };
+
+  public deleteSceneCollection = async (sceneCollectionId: string) => {
+    const res = await this.#vhttp.delete([
+      video,
+      this.meta.id,
+      scenes,
+      sceneCollectionId,
+    ]);
+    return res;
   };
 
   /**
