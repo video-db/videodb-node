@@ -163,3 +163,19 @@ export type SceneIndex = {
 export type ListSceneIndex = {
   scene_indexes: SceneIndex[];
 };
+
+export type SceneCollectionResponse = {
+  scene_collection: {
+    config: object;
+    scene_collection_id: string;
+    scenes: object[];
+  };
+};
+
+export type ListSceneCollection = {
+  scene_collections: {
+    config: object;
+    scene_collection_id: string;
+    status: string;
+  }[];
+};

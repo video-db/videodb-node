@@ -1,8 +1,6 @@
 import { ApiPath } from '@/constants';
-import type { ImageBase, IImage } from '@/interfaces/core';
+import type { FrameBase, ImageBase, IImage } from '@/interfaces/core';
 import { HttpClient } from '@/utils/httpClient';
-
-const { image } = ApiPath;
 
 /**
  * The base Image class
@@ -30,8 +28,59 @@ export class Image implements IImage {
    */
   public delete = async () => {
     return await this.#vhttp.delete<Record<string, never>>([
-      image,
+      ApiPath.image,
       this.meta.id,
     ]);
   };
+}
+
+export class Frame extends Image {
+  public videoId: string;
+  public sceneId: string;
+  public frameTime: number;
+  public description: string;
+  #vhttp: HttpClient;
+
+  constructor(http: HttpClient, data: FrameBase) {
+    super(http, {
+      id: data.id,
+      collectionId: undefined,
+      url: data.url,
+    });
+
+    this.videoId = data.videoId;
+    this.sceneId = data.sceneId;
+    this.frameTime = data.frameTime;
+    this.description = data.description;
+    this.#vhttp = http;
+  }
+
+  public getRequestData(): object {
+    return {
+      id: this.meta.id,
+      videoId: this.videoId,
+      sceneId: this.sceneId,
+      url: this.meta.url || '',
+      frameTime: this.frameTime,
+      description: this.description,
+    };
+  }
+
+  public async describe(prompt?: string, modelName?: string): Promise<string> {
+    const response = await this.#vhttp.post<{ description: string }, object>(
+      [
+        ApiPath.video,
+        this.videoId,
+        ApiPath.frame,
+        this.meta.id,
+        ApiPath.describe,
+      ],
+      {
+        prompt,
+        model_name: modelName,
+      }
+    );
+    this.description = response.data.description;
+    return this.description;
+  }
 }
