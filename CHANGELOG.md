@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.3-alpha] (2025-01-23)
+
+### Added
+
+- Scene index playground function
+
 ## [0.1.2]() (2025-01-22)
 
 ### Added
