@@ -1,5 +1,6 @@
 import { IndexType } from '@/types/search';
 import { SubtitleBorderStyle, SubtitleAlignment } from '@/core/config';
+import { Scene } from '@/core/scene';
 
 export type SubtitleStyleProps = {
   fontName: string;
@@ -94,6 +95,7 @@ export type IndexSceneConfig = {
   modelConfig?: object;
   prompt?: string | null;
   callbackUrl?: string | null;
+  scenes?: Scene[];
 };
 
 export type IndexConfig = {

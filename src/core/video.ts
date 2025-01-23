@@ -1,6 +1,8 @@
 import { fromSnakeToCamel } from './../utils/index';
 import { ApiPath, Workflows } from '@/constants';
 import type { IVideo, VideoBase } from '@/interfaces/core';
+import { Frame } from '@/core/image';
+import { Scene, SceneCollection } from '@/core/scene';
 import {
   ListSceneIndex,
   IndexScenesResponse,
@@ -15,9 +17,18 @@ import {
   IndexTypeValues,
   SceneExtractionType,
 } from '@/core/config';
-import { IndexJob, TranscriptJob, SceneIndexJob } from '@/utils/job';
+import {
+  IndexJob,
+  TranscriptJob,
+  SceneIndexJob,
+  ExtractScenesJob,
+} from '@/utils/job';
 import { SearchFactory } from './search';
-import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
+import {
+  ExtractSceneConfig,
+  IndexSceneConfig,
+  SubtitleStyleProps,
+} from '@/types/config';
 import { SearchType, IndexType } from '@/types/search';
 import { SceneIndexRecords, SceneIndexes } from '@/types';
 
@@ -149,6 +160,73 @@ export class Video implements IVideo {
     return indexJob;
   };
 
+  public _formatSceneCollectionData = (
+    sceneCollectionData: any
+  ): SceneCollection => {
+    const scenes: Scene[] = [];
+
+    for (const sceneData of sceneCollectionData.scenes) {
+      const frames: Frame[] = [];
+      for (const frameData of sceneData.frames) {
+        frames.push(
+          new Frame(this.#vhttp, {
+            id: frameData.frameId,
+            videoId: this.meta.id,
+            sceneId: sceneData.sceneId,
+            url: frameData.url,
+            frameTime: frameData.frameTime,
+            description: frameData.description,
+          })
+        );
+      }
+      scenes.push(
+        new Scene(this.#vhttp, {
+          id: sceneData.sceneId,
+          videoId: this.meta.id,
+          start: sceneData.start,
+          end: sceneData.end,
+          frames: frames,
+        })
+      );
+    }
+    return new SceneCollection(this.#vhttp, {
+      id: sceneCollectionData.sceneCollectionId,
+      videoId: this.meta.id,
+      scenes: scenes,
+      config: sceneCollectionData.config,
+    });
+  };
+
+  public extractScenes = async (config: Partial<ExtractSceneConfig> = {}) => {
+    const defaultConfig = {
+      extractionType: SceneExtractionType.shotBased,
+      extractionConfig: {},
+      force: false,
+    };
+    const extractScenePayload = fromCamelToSnake(
+      Object.assign({}, defaultConfig, config)
+    );
+    const extractScenesJob = new ExtractScenesJob(
+      this.#vhttp,
+      this.meta.id,
+      extractScenePayload
+    );
+    return new Promise<SceneCollection>((resolve, reject) => {
+      extractScenesJob.on('success', data => {
+        resolve(this._formatSceneCollectionData(data));
+      });
+      extractScenesJob.on('error', err => {
+        reject(err);
+      });
+      extractScenesJob
+        .start()
+        .then(() => {})
+        .catch(err => {
+          reject(err);
+        });
+    });
+  };
+
   /**
    * Indexs the video with scenes
    * @returns an awaited boolean signifying whether the process
@@ -159,9 +237,14 @@ export class Video implements IVideo {
       extractionType: SceneExtractionType.shotBased,
       extractionConfig: {},
     };
+    if (config.scenes) {
+      //@ts-ignore
+      config.scenes = config.scenes.map(scene => scene.getRequestData());
+    }
     const indexScenesPayload = fromCamelToSnake(
       Object.assign({}, defaultConfig, config)
     );
+    console.log('this is payload', indexScenesPayload);
     const res = await this.#vhttp.post<IndexScenesResponse, object>(
       [video, this.meta.id, index, scene],
       indexScenesPayload

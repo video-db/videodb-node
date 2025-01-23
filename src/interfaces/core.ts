@@ -1,6 +1,6 @@
 import { SearchResult } from '@/core/search/searchResult';
 import { Video } from '@/core/video';
-import type { SearchType, IndexType } from '@/types/search';
+import type { SearchType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { StreamableURL, Timeline, Transcript } from '@/types/video';
 import { IndexJob, TranscriptJob, UploadJob } from '@/utils/job';
@@ -82,9 +82,19 @@ export interface IAudio {
  * Base type for all Image objects
  */
 export interface ImageBase {
-  collectionId: string;
+  collectionId?: string;
   id: string;
-  name: string;
+  name?: string;
+  url?: string;
+}
+
+export interface FrameBase {
+  id: string;
+  videoId: string;
+  sceneId: string;
+  frameTime: number;
+  description: string;
+  url: string;
 }
 
 /**
