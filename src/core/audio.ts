@@ -1,8 +1,8 @@
 import { ApiPath } from '@/constants';
-import type { AudioBase, IAudio } from '@/interfaces/core';
+import type { AudioBase, GenerateUrlResponse, IAudio } from '@/interfaces/core';
 import { HttpClient } from '@/utils/httpClient';
 
-const { audio } = ApiPath;
+const { audio, generate_url } = ApiPath;
 
 /**
  * The base Audio class
@@ -33,5 +33,18 @@ export class Audio implements IAudio {
       audio,
       this.meta.id,
     ]);
+  };
+
+  public generateUrl = async () => {
+    const urlData = await this.#vhttp.post<GenerateUrlResponse, object>(
+      [audio, this.meta.id, generate_url],
+      {},
+      {
+        params: { collection_id: this.meta.collectionId },
+      }
+    );
+
+    const signedUrl = urlData.data.signed_url;
+    return signedUrl;
   };
 }

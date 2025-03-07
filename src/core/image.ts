@@ -1,5 +1,10 @@
 import { ApiPath } from '@/constants';
-import type { FrameBase, ImageBase, IImage } from '@/interfaces/core';
+import type {
+  FrameBase,
+  ImageBase,
+  IImage,
+  GenerateUrlResponse,
+} from '@/interfaces/core';
 import { HttpClient } from '@/utils/httpClient';
 
 /**
@@ -31,6 +36,19 @@ export class Image implements IImage {
       ApiPath.image,
       this.meta.id,
     ]);
+  };
+
+  public generateUrl = async () => {
+    const urlData = await this.#vhttp.post<GenerateUrlResponse, object>(
+      [ApiPath.image, this.meta.id, ApiPath.generate_url],
+      {},
+      {
+        params: { collection_id: this.meta.collectionId },
+      }
+    );
+
+    const signedUrl = urlData.data.signed_url;
+    return signedUrl;
   };
 }
 

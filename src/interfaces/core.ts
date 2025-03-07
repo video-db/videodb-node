@@ -145,3 +145,7 @@ export interface ITimeline {
   addOverlay(start: number, asset: AudioAsset): void;
   generateStream(): Promise<string>;
 }
+
+export interface GenerateUrlResponse {
+  signed_url: string;
+}
