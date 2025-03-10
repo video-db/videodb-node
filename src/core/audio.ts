@@ -35,6 +35,11 @@ export class Audio implements IAudio {
     ]);
   };
 
+  /**
+   * Generates the signed URL of the audio.
+   * @returns A promise that resolves to the signed URL of the audio.
+   * @throws an InvalidRequestError if the request fails
+   */
   public generateUrl = async () => {
     const urlData = await this.#vhttp.post<GenerateUrlResponse, object>(
       [audio, this.meta.id, generate_url],

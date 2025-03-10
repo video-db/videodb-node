@@ -38,6 +38,11 @@ export class Image implements IImage {
     ]);
   };
 
+  /**
+   * Generates the signed URL of the image.
+   * @returns A promise that resolves to the signed URL of the image.
+   * @throws an InvalidRequestError if the request fails
+   */
   public generateUrl = async () => {
     const urlData = await this.#vhttp.post<GenerateUrlResponse, object>(
       [ApiPath.image, this.meta.id, ApiPath.generate_url],
