@@ -270,7 +270,7 @@ export class IndexJob extends Job<NoDataResponse, NoDataResponse> {
    * On sucess, it calls the index endpoint
    */
   public start = async () => {
-    if (this.indexConfig.indexType === IndexTypeValues.spoken) {
+    if (this.indexConfig.indexType === IndexTypeValues.spoken_word) {
       const transcriptJob = new TranscriptJob(this.vhttp, this.videoId);
       const reqData = fromCamelToSnake(this.indexConfig);
       transcriptJob.on('success', async () => {

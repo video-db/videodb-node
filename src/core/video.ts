@@ -157,7 +157,7 @@ export class Video implements IVideo {
     const indexJob = new IndexJob(
       this.#vhttp,
       this.meta.id,
-      IndexTypeValues.spoken
+      IndexTypeValues.spoken_word
     );
     return indexJob;
   };

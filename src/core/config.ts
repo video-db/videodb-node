@@ -76,12 +76,12 @@ export enum SearchTypeValues {
 }
 
 export enum IndexTypeValues {
-  spoken = 'spoken',
+  spoken_word = 'spoken_word',
   scene = 'scene',
 }
 
 export const DefaultSearchType = SearchTypeValues.semantic;
-export const DefaultIndexType = IndexTypeValues.spoken;
+export const DefaultIndexType = IndexTypeValues.spoken_word;
 
 export const SceneExtractionType = {
   shotBased: 'shot',
