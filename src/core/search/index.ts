@@ -66,7 +66,8 @@ class SemanticSearch
     data: SemanticVideoSearch | SemanticCollectionSearch
   ) => {
     return {
-      index_type: SearchTypeValues.semantic,
+      search_type: SearchTypeValues.semantic,
+      index_type: data.indexType,
       query: data.query,
       score_threshold:
         data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
@@ -106,7 +107,8 @@ class KeywordSearch
     data: KeywordVideoSearch | KeywordCollectionSearch
   ) => {
     return {
-      index_type: SearchTypeValues.keyword,
+      search_type: SearchTypeValues.keyword,
+      index_type: data.indexType,
       query: data.query,
       score_threshold:
         data.scoreThreshold ?? KeywordSearchDefaultValues.scoreThreshold,
