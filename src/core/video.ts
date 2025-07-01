@@ -280,7 +280,6 @@ export class Video implements IVideo {
     const indexScenesPayload = fromCamelToSnake(
       Object.assign({}, defaultConfig, config)
     );
-    console.log('this is payload', indexScenesPayload);
     const res = await this.#vhttp.post<IndexScenesResponse, object>(
       [video, this.meta.id, index, scene],
       indexScenesPayload

@@ -14,6 +14,7 @@ export interface CollectionBase {
   id: string;
   name?: string;
   description?: string;
+  isPublic?: boolean;
 }
 /**
  * Collection class interface for reference

@@ -3,7 +3,13 @@ import { Video } from '@/core/video';
 import { Audio } from '@/core/audio';
 import { Image } from '@/core/image';
 import type { AudioBase, ImageBase, VideoBase } from '@/interfaces/core';
-import type { SyncUploadConfig } from '@/types/collection';
+import type {
+  SyncDubVideoConfig,
+  SyncGenerateAudioConfig,
+  SyncGenerateImageConfig,
+  SyncGenerateVideoConfig,
+  SyncUploadConfig,
+} from '@/types/collection';
 import type { MediaBase, SceneIndexRecords } from '@/types/index';
 import type { ExtractSceneConfig, IndexConfig } from '@/types/config';
 import type { IndexType } from '@/types/search';
@@ -13,6 +19,9 @@ import type {
   TranscriptResponse,
   MediaResponse,
   GetSceneIndexResponse,
+  VideoResponse,
+  AudioResponse,
+  ImageResponse,
 } from '@/types/response';
 import type { JobErrorCallback, JobSuccessCallback } from '@/types/utils';
 import type { Transcript } from '@/types/video';
@@ -27,8 +36,19 @@ import { IndexSceneConfig } from '@/types/config';
 import { IndexTypeValues } from '@/core/config';
 
 const { in_progress, processing } = ResponseStatus;
-const { video, transcription, collection, upload, index, scene, scenes } =
-  ApiPath;
+const {
+  video,
+  transcription,
+  collection,
+  upload,
+  index,
+  scene,
+  scenes,
+  generate,
+  audio,
+  image,
+  dub,
+} = ApiPath;
 
 /**
  * Base Job class used to create different kinds of jobs
@@ -404,5 +424,189 @@ export class ExtractScenesJob extends Job<object, object, object> {
       //@ts-ignore
       return data.sceneCollection;
     }
+  };
+}
+
+/**
+ * GenerateVideoJob is used to initialize a new video generation job.
+ *
+ * @remarks
+ * Uses the base Job class to implement a backoff to get the generated video data.
+ */
+export class GenerateVideoJob extends Job<VideoResponse, VideoBase, Video> {
+  public uploadData: SyncGenerateVideoConfig;
+  public collectionId: string;
+  constructor(
+    data: SyncGenerateVideoConfig,
+    collectionId: string,
+    http: HttpClient
+  ) {
+    super(http);
+    this.uploadData = data;
+    this.collectionId = collectionId;
+    this.jobTitle = 'Generate Video Job';
+  }
+
+  /**
+   * Fetches the callbackURL from the server and initiates a backoff
+   */
+  public start = async () => {
+    try {
+      const res = await this.vhttp.post<
+        SyncJobResponse,
+        SyncGenerateVideoConfig
+      >([collection, this.collectionId, generate, video], this.uploadData);
+
+      void this._initiateBackoff(res.data.output_url);
+    } catch (err) {
+      this._handleError(err);
+    }
+  };
+
+  /**
+   * Converts the API response to a Video instance.
+   * @param data - Video data returned from the API and converted to camelCase
+   * @returns a new Video object
+   */
+  protected beforeSuccess = (data: VideoBase) => {
+    return new Video(this.vhttp, data);
+  };
+}
+
+/**
+ * GenerateAudioJob is used to initialize a new audio generation job (music, sound effect, or voice).
+ *
+ * @remarks
+ * Uses the base Job class to implement a backoff to get the generated audio data.
+ */
+export class GenerateAudioJob extends Job<AudioResponse, AudioBase, Audio> {
+  public uploadData: SyncGenerateAudioConfig;
+  public collectionId: string;
+  constructor(
+    data: SyncGenerateAudioConfig,
+    collectionId: string,
+    http: HttpClient
+  ) {
+    super(http);
+    this.uploadData = data;
+    this.collectionId = collectionId;
+    this.jobTitle = 'Generate Audio Job';
+  }
+
+  /**
+   * Fetches the callbackURL from the server and initiates a backoff
+   */
+  public start = async () => {
+    try {
+      const res = await this.vhttp.post<
+        SyncJobResponse,
+        SyncGenerateAudioConfig
+      >([collection, this.collectionId, generate, audio], this.uploadData);
+
+      void this._initiateBackoff(res.data.output_url);
+    } catch (err) {
+      this._handleError(err);
+    }
+  };
+
+  /**
+   * Converts the API response to an Audio instance.
+   * @param data - Audio data returned from the API and converted to camelCase
+   * @returns a new Audio object
+   */
+  protected beforeSuccess = (data: AudioBase) => {
+    return new Audio(this.vhttp, data);
+  };
+}
+
+/**
+ * GenerateImageJob is used to initialize a new image generation job.
+ *
+ * @remarks
+ * Uses the base Job class to implement a backoff to get the generated image data.
+ */
+export class GenerateImageJob extends Job<ImageResponse, ImageBase, Image> {
+  public uploadData: SyncGenerateImageConfig;
+  public collectionId: string;
+  constructor(
+    data: SyncGenerateImageConfig,
+    collectionId: string,
+    http: HttpClient
+  ) {
+    super(http);
+    this.uploadData = data;
+    this.collectionId = collectionId;
+    this.jobTitle = 'Generate Image Job';
+  }
+
+  /**
+   * Fetches the callbackURL from the server and initiates a backoff
+   */
+  public start = async () => {
+    try {
+      const res = await this.vhttp.post<
+        SyncJobResponse,
+        SyncGenerateImageConfig
+      >([collection, this.collectionId, generate, image], this.uploadData);
+
+      void this._initiateBackoff(res.data.output_url);
+    } catch (err) {
+      this._handleError(err);
+    }
+  };
+
+  /**
+   * Converts the API response to an Image instance.
+   * @param data - Image data returned from the API and converted to camelCase
+   * @returns a new Image object
+   */
+  protected beforeSuccess = (data: ImageBase) => {
+    return new Image(this.vhttp, data);
+  };
+}
+
+/**
+ * DubVideoJob is used to initialize a new video dubbing job.
+ *
+ * @remarks
+ * Uses the base Job class to implement a backoff to get the dubbed video data.
+ */
+export class DubVideoJob extends Job<VideoResponse, VideoBase, Video> {
+  public uploadData: SyncDubVideoConfig;
+  public collectionId: string;
+  constructor(
+    data: SyncDubVideoConfig,
+    collectionId: string,
+    http: HttpClient
+  ) {
+    super(http);
+    this.uploadData = data;
+    this.collectionId = collectionId;
+    this.jobTitle = 'Dub Video Job';
+  }
+
+  /**
+   * Fetches the callbackURL from the server and initiates a backoff
+   */
+  public start = async () => {
+    try {
+      const res = await this.vhttp.post<SyncJobResponse, SyncDubVideoConfig>(
+        [collection, this.collectionId, generate, video, dub],
+        this.uploadData
+      );
+
+      void this._initiateBackoff(res.data.output_url);
+    } catch (err) {
+      this._handleError(err);
+    }
+  };
+
+  /**
+   * Converts the API response to a Video instance.
+   * @param data - Video data returned from the API and converted to camelCase
+   * @returns a new Video object
+   */
+  protected beforeSuccess = (data: VideoBase) => {
+    return new Video(this.vhttp, data);
   };
 }

@@ -7,7 +7,14 @@ import type {
   ImageBase,
 } from '@/interfaces/core';
 import { IndexType, SearchType } from '@/types/search';
-import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
+import type {
+  DubVideoConfig,
+  FileUploadConfig,
+  GenerateAudioConfig,
+  GenerateImageConfig,
+  GenerateVideoConfig,
+  URLUploadConfig,
+} from '@/types/collection';
 import type {
   GetVideos,
   GetAudios,
@@ -25,6 +32,12 @@ import { Video } from './video';
 import { Audio } from './audio';
 import { Image } from './image';
 import { VideodbError } from '@/utils/error';
+import {
+  DubVideoJob,
+  GenerateAudioJob,
+  GenerateImageJob,
+  GenerateVideoJob,
+} from '@/utils/job';
 
 const { video, audio, image } = ApiPath;
 
@@ -236,5 +249,290 @@ export class Collection implements ICollection {
       scoreThreshold: scoreThreshold,
     });
     return results;
+  };
+
+  /**
+   * Generate an image from a prompt.
+   * @param prompt - Prompt for the image generation
+   * @param aspectRatio - Aspect ratio of the image (default: '1:1')
+   * @param callbackUrl - Optional URL to receive a callback when generation is complete
+   * @returns An Image object containing the generated image metadata
+   */
+  public generateImage = async (
+    prompt: string,
+    aspectRatio: '1:1' | '9:16' | '16:9' | '4:3' | '3:4' = '1:1',
+    callbackUrl?: string
+  ) => {
+    const generateImageConfig: GenerateImageConfig = {
+      prompt,
+      aspect_ratio: aspectRatio,
+      callback_url: callbackUrl,
+    };
+    if (generateImageConfig.callback_url) {
+      const res = await this.#vhttp.post(
+        [
+          ApiPath.collection,
+          this.meta.id,
+          ApiPath.generate,
+          ApiPath.image,
+        ] as string[],
+        {
+          prompt,
+          aspect_ratio: aspectRatio,
+          callback_url: callbackUrl,
+        }
+      );
+    } else {
+      const job = new GenerateImageJob(
+        generateImageConfig,
+        this.meta.id,
+        this.#vhttp
+      );
+      return job;
+    }
+  };
+
+  /**
+   * Generate music from a prompt.
+   * @param prompt - Prompt for the music generation
+   * @param duration - Duration of the music in seconds (default: 5)
+   * @param callbackUrl - Optional URL to receive a callback when generation is complete
+   * @returns An Audio object containing the generated music metadata
+   */
+  public generateMusic = async (
+    prompt: string,
+    duration: number = 5,
+    callbackUrl?: string
+  ) => {
+    const generateAudioConfig: GenerateAudioConfig = {
+      prompt,
+      duration,
+      audio_type: 'music',
+      callback_url: callbackUrl,
+    };
+
+    if (generateAudioConfig.callback_url) {
+      await this.#vhttp.post(
+        [
+          ApiPath.collection,
+          this.meta.id,
+          ApiPath.generate,
+          ApiPath.audio,
+        ] as string[],
+        generateAudioConfig
+      );
+    } else {
+      const job = new GenerateAudioJob(
+        generateAudioConfig,
+        this.meta.id,
+        this.#vhttp
+      );
+      return job;
+    }
+  };
+
+  /**
+   * Generate a sound effect from a prompt.
+   * @param prompt - Prompt for the sound effect generation
+   * @param duration - Duration of the sound effect in seconds (default: 2)
+   * @param config - Optional configuration for the sound effect generation
+   * @param callbackUrl - Optional URL to receive a callback when generation is complete
+   * @returns An Audio object containing the generated sound effect metadata
+   */
+  public generateSoundEffect = async (
+    prompt: string,
+    duration: number = 2,
+    config: Record<string, unknown> = {},
+    callbackUrl?: string
+  ) => {
+    const generateAudioConfig: GenerateAudioConfig = {
+      prompt,
+      duration,
+      audio_type: 'sound_effect',
+      config,
+      callback_url: callbackUrl,
+    };
+
+    if (generateAudioConfig.callback_url) {
+      await this.#vhttp.post(
+        [
+          ApiPath.collection,
+          this.meta.id,
+          ApiPath.generate,
+          ApiPath.audio,
+        ] as string[],
+        generateAudioConfig
+      );
+    } else {
+      const job = new GenerateAudioJob(
+        generateAudioConfig,
+        this.meta.id,
+        this.#vhttp
+      );
+      return job;
+    }
+  };
+
+  /**
+   * Generate a voice audio from text.
+   * @param text - Text to convert to voice
+   * @param voiceName - Name of the voice to use (default: 'Default')
+   * @param config - Optional configuration for the voice generation
+   * @param callbackUrl - Optional URL to receive a callback when generation is complete
+   * @returns An Audio object containing the generated voice metadata
+   */
+  public generateVoice = async (
+    text: string,
+    voiceName: string = 'Default',
+    config: Record<string, unknown> = {},
+    callbackUrl?: string
+  ) => {
+    const generateVoiceConfig: GenerateAudioConfig = {
+      text,
+      voice_name: voiceName,
+      config,
+      callback_url: callbackUrl,
+      audio_type: 'voice',
+    };
+
+    if (generateVoiceConfig.callback_url) {
+      await this.#vhttp.post(
+        [
+          ApiPath.collection,
+          this.meta.id,
+          ApiPath.generate,
+          ApiPath.audio,
+        ] as string[],
+        generateVoiceConfig
+      );
+    } else {
+      return new GenerateAudioJob(
+        generateVoiceConfig,
+        this.meta.id,
+        this.#vhttp
+      );
+    }
+  };
+
+  /**
+   * Generate a video from a prompt.
+   * @param prompt - Prompt for the video generation
+   * @param duration - Duration of the video in seconds (default: 5)
+   * @param callbackUrl - Optional URL to receive a callback when generation is complete
+   * @returns A Video object containing the generated video metadata
+   */
+  public generateVideo = async (
+    prompt: string,
+    duration: number = 5,
+    callbackUrl?: string
+  ) => {
+    const generateVideoConfig: GenerateVideoConfig = {
+      prompt,
+      duration,
+      callback_url: callbackUrl,
+    };
+
+    if (generateVideoConfig.callback_url) {
+      await this.#vhttp.post(
+        [
+          ApiPath.collection,
+          this.meta.id,
+          ApiPath.generate,
+          ApiPath.video,
+        ] as string[],
+        {
+          prompt,
+          duration,
+          callback_url: callbackUrl,
+        }
+      );
+    } else {
+      const job = new GenerateVideoJob(
+        generateVideoConfig,
+        this.meta.id,
+        this.#vhttp
+      );
+      return job;
+    }
+  };
+
+  /**
+   * Dub a video in a different language.
+   * @param videoId - ID of the video to dub
+   * @param languageCode - Language code to dub the video to
+   * @param callbackUrl - Optional URL to receive a callback when dubbing is complete
+   * @returns A Video object containing the dubbed video metadata
+   */
+  public dubVideo = async (
+    videoId: string,
+    languageCode: string,
+    callbackUrl?: string
+  ) => {
+    const dubVideoConfig: DubVideoConfig = {
+      video_id: videoId,
+      language_code: languageCode,
+      callback_url: callbackUrl,
+    };
+
+    if (dubVideoConfig.callback_url) {
+      await this.#vhttp.post(
+        [
+          ApiPath.collection,
+          this.meta.id,
+          ApiPath.generate,
+          ApiPath.video,
+          ApiPath.dub,
+        ] as string[],
+        dubVideoConfig
+      );
+    } else {
+      return new DubVideoJob(dubVideoConfig, this.meta.id, this.#vhttp);
+    }
+  };
+
+  /**
+   * Search for videos by title using LLM search.
+   * @param query - Query string to search for in video titles
+   * @returns An array of objects each containing a Video instance matching the title
+   */
+  public searchTitle = async (query: string): Promise<{ video: Video }[]> => {
+    const res = await this.#vhttp.post(
+      [ApiPath.collection, this.meta.id, ApiPath.search, 'title'] as string[],
+      {
+        query,
+        search_type: 'llm',
+      }
+    );
+    if (Array.isArray(res?.data)) {
+      return res.data.map((result: { video: VideoBase }) => ({
+        video: new Video(
+          this.#vhttp,
+          fromSnakeToCamel(result.video) as VideoBase
+        ),
+      }));
+    }
+    return [];
+  };
+
+  /**
+   * Make the collection public.
+   * @returns A promise that resolves when the collection is made public
+   */
+  public makePublic = async (): Promise<void> => {
+    await this.#vhttp.patch([ApiPath.collection, this.meta.id] as string[], {
+      is_public: true,
+    });
+    this.meta.isPublic = true;
+  };
+
+  /**
+   * Make the collection private.
+   * @returns A promise that resolves when the collection is made private
+   */
+  public makePrivate = async (): Promise<void> => {
+    await this.#vhttp.patch([ApiPath.collection, this.meta.id] as string[], {
+      is_public: false,
+    });
+    this.meta.isPublic = false;
   };
 }

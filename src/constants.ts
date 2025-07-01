@@ -36,6 +36,8 @@ export const ApiPath = {
   scenes: 'scenes',
   timeline: 'timeline',
   frame: 'frame',
+  generate: 'generate',
+  dub: 'dub',
 } as const;
 
 export const ResponseStatus = {
