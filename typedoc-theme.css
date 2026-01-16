@@ -1,0 +1,703 @@
+/* ShadCN-inspired TypeDoc Theme with Geist Font */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
+
+:root {
+  /* ShadCN Color Palette */
+  --color-background: hsl(0, 0%, 100%);
+  --color-foreground: hsl(240, 10%, 3.9%);
+  --color-card: hsl(0, 0%, 100%);
+  --color-card-foreground: hsl(240, 10%, 3.9%);
+  --color-popover: hsl(0, 0%, 100%);
+  --color-popover-foreground: hsl(240, 10%, 3.9%);
+  --color-primary: hsl(240, 5.9%, 10%);
+  --color-primary-foreground: hsl(0, 0%, 98%);
+  --color-secondary: hsl(240, 4.8%, 95.9%);
+  --color-secondary-foreground: hsl(240, 5.9%, 10%);
+  --color-muted: hsl(240, 4.8%, 95.9%);
+  --color-muted-foreground: hsl(240, 3.8%, 46.1%);
+  --color-accent: hsl(240, 4.8%, 95.9%);
+  --color-accent-foreground: hsl(240, 5.9%, 10%);
+  --color-border: hsl(240, 5.9%, 90%);
+  --color-input: hsl(240, 5.9%, 90%);
+  --color-ring: hsl(240, 5.9%, 10%);
+  
+  /* Typography */
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  
+  /* Spacing */
+  --radius: 0.5rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: hsl(240, 10%, 3.9%);
+    --color-foreground: hsl(0, 0%, 98%);
+    --color-card: hsl(240, 10%, 3.9%);
+    --color-card-foreground: hsl(0, 0%, 98%);
+    --color-popover: hsl(240, 10%, 3.9%);
+    --color-popover-foreground: hsl(0, 0%, 98%);
+    --color-primary: hsl(0, 0%, 98%);
+    --color-primary-foreground: hsl(240, 5.9%, 10%);
+    --color-secondary: hsl(240, 3.7%, 15.9%);
+    --color-secondary-foreground: hsl(0, 0%, 98%);
+    --color-muted: hsl(240, 3.7%, 15.9%);
+    --color-muted-foreground: hsl(240, 5%, 64.9%);
+    --color-accent: hsl(240, 3.7%, 15.9%);
+    --color-accent-foreground: hsl(0, 0%, 98%);
+    --color-border: hsl(240, 3.7%, 15.9%);
+    --color-input: hsl(240, 3.7%, 15.9%);
+    --color-ring: hsl(240, 4.9%, 83.9%);
+  }
+}
+
+/* Base Reset */
+* {
+  box-sizing: border-box;
+}
+
+/* Force reset TypeDoc navigation indents */
+nav.tsd-navigation,
+nav.tsd-navigation *,
+.site-menu,
+.site-menu * {
+  text-indent: 0 !important;
+}
+
+html, body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Override TypeDoc body */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Main Container */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.container-main {
+  padding: 2rem 2.5rem;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--color-foreground);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.75rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+h4 {
+  font-size: 1.125rem;
+}
+
+p {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--color-muted-foreground);
+  margin-bottom: 1rem;
+}
+
+/* Links */
+a {
+  color: var(--color-foreground);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--color-muted-foreground);
+}
+
+/* Navigation Sidebar */
+.site-menu,
+.tsd-navigation {
+  font-size: 0.875rem;
+}
+
+.tsd-navigation a {
+  display: block;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius);
+  color: var(--color-muted-foreground);
+  font-weight: 400;
+  transition: all 0.15s ease;
+}
+
+.tsd-navigation a:hover {
+  background-color: var(--color-accent);
+  color: var(--color-foreground);
+}
+
+.tsd-navigation a.current,
+.tsd-navigation .current > a {
+  background-color: var(--color-accent);
+  color: var(--color-foreground);
+  font-weight: 500;
+}
+
+.tsd-navigation ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tsd-navigation li {
+  margin: 0;
+}
+
+.tsd-nested-navigation {
+  padding-left: 1rem;
+}
+
+.tsd-accordion-summary {
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.tsd-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tsd-accordion-summary::marker {
+  content: "";
+}
+
+.tsd-accordion-summary:hover {
+  background-color: var(--color-accent);
+}
+
+.tsd-accordion-summary svg {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  opacity: 0.4;
+}
+
+/* Header */
+header,
+.tsd-page-toolbar {
+  background-color: var(--color-background) !important;
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: none !important;
+}
+
+.tsd-page-toolbar a {
+  color: var(--color-foreground);
+}
+
+.tsd-page-title h1 {
+  font-size: 1.5rem;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Search */
+#tsd-search {
+  background: transparent;
+}
+
+#tsd-search input {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  color: var(--color-foreground);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#tsd-search input:focus {
+  outline: none;
+  border-color: var(--color-ring);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+#tsd-search input::placeholder {
+  color: var(--color-muted-foreground);
+}
+
+.tsd-filter-visibility {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-background);
+}
+
+/* Code Blocks */
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+code {
+  background-color: var(--color-muted);
+  padding: 0.2em 0.4em;
+  border-radius: calc(var(--radius) * 0.5);
+  font-weight: 500;
+}
+
+pre {
+  background-color: var(--color-secondary) !important;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Signature / Method Blocks */
+.tsd-signature {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background-color: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+}
+
+.tsd-signature-keyword {
+  color: var(--color-muted-foreground);
+  font-weight: 500;
+}
+
+.tsd-signature-symbol {
+  color: var(--color-muted-foreground);
+}
+
+.tsd-kind-icon {
+  display: none;
+}
+
+/* Panels / Cards */
+.tsd-panel {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.tsd-panel-group {
+  margin: 2rem 0;
+}
+
+.tsd-panel > h1,
+.tsd-panel > h2,
+.tsd-panel > h3 {
+  margin-top: 0;
+}
+
+/* Member Items */
+.tsd-member {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tsd-member:last-child {
+  border-bottom: none;
+}
+
+.tsd-member-group > h2 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-muted-foreground);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Parameters Table */
+.tsd-parameters {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.tsd-parameter {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tsd-parameter:last-child {
+  border-bottom: none;
+}
+
+.tsd-parameter-name {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Tags / Badges */
+.tsd-tag {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--color-secondary);
+  color: var(--color-secondary-foreground);
+  padding: 0.25rem 0.5rem;
+  border-radius: calc(var(--radius) * 0.75);
+  margin-right: 0.25rem;
+}
+
+/* Breadcrumbs */
+.tsd-breadcrumb {
+  list-style: none;
+  display: flex;
+  padding: 0;
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+}
+
+.tsd-breadcrumb li {
+  display: flex;
+  align-items: center;
+}
+
+.tsd-breadcrumb li:not(:last-child)::after {
+  content: "/";
+  margin: 0 0.5rem;
+  color: var(--color-muted-foreground);
+}
+
+.tsd-breadcrumb a {
+  color: var(--color-muted-foreground);
+  font-weight: 400;
+}
+
+.tsd-breadcrumb a:hover {
+  color: var(--color-foreground);
+}
+
+/* Index Section */
+.tsd-index-panel {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.tsd-index-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.25rem;
+}
+
+.tsd-index-list a {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+}
+
+.tsd-index-list a:hover {
+  background-color: var(--color-accent);
+}
+
+/* Type / Return info */
+.tsd-returns-title,
+.tsd-type-declaration-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid var(--color-border);
+  padding: 1.5rem 0;
+  margin-top: 3rem;
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+
+/* Sidebar */
+.col-sidebar {
+  padding: 1.5rem;
+  border-right: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  overflow-x: visible !important;
+}
+
+.site-menu {
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+/* Fix accordion arrows */
+.tsd-accordion summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.tsd-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.tsd-accordion summary::marker {
+  display: none;
+  content: "";
+}
+
+.tsd-accordion summary svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  position: relative;
+}
+
+.tsd-accordion[open] summary svg {
+  transform: rotate(90deg);
+}
+
+.tsd-accordion summary:hover svg {
+  opacity: 1;
+}
+
+/* Navigation - Fix left cutoff */
+.tsd-navigation {
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+.tsd-navigation ul,
+.tsd-navigation li {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  list-style: none !important;
+}
+
+.tsd-navigation a {
+  display: block;
+  padding: 0.375rem 0.75rem;
+  padding-left: 0.75rem !important;
+  margin-left: 0 !important;
+  border-radius: var(--radius);
+  color: var(--color-muted-foreground);
+  font-weight: 400;
+  transition: all 0.15s ease;
+  text-indent: 0 !important;
+}
+
+.tsd-navigation .tsd-accordion-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0 !important;
+  text-indent: 0 !important;
+}
+
+.tsd-navigation .tsd-accordion-summary span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tsd-nested-navigation {
+  padding-left: 1rem !important;
+  margin-left: 0 !important;
+  border-left: 1px solid var(--color-border);
+}
+
+.tsd-nested-navigation > li {
+  margin-left: 0 !important;
+}
+
+/* Reset any weird indents from TypeDoc defaults */
+.tsd-navigation .tsd-is-loading,
+.tsd-navigation .tsd-small-nested-navigation {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Page Layout */
+.col-content {
+  padding: 2rem 3rem;
+  max-width: 900px;
+}
+
+/* Source Links */
+.tsd-sources {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  margin-top: 0.5rem;
+}
+
+.tsd-sources a {
+  color: var(--color-muted-foreground);
+  font-weight: 400;
+}
+
+.tsd-sources a:hover {
+  color: var(--color-foreground);
+}
+
+/* Hierarchy */
+.tsd-hierarchy {
+  list-style: none;
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-border);
+}
+
+/* Comment / Description */
+.tsd-comment {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--color-muted-foreground);
+}
+
+.tsd-comment p {
+  margin: 0.5rem 0;
+}
+
+.tsd-comment-summary {
+  margin-bottom: 1rem;
+}
+
+/* Anchor Links */
+.tsd-anchor-icon {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  margin-left: 0.5rem;
+}
+
+h1:hover .tsd-anchor-icon,
+h2:hover .tsd-anchor-icon,
+h3:hover .tsd-anchor-icon {
+  opacity: 0.5;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+
+/* Focus states */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* Remove default TypeDoc colors that clash */
+.tsd-kind-method .tsd-signature,
+.tsd-kind-property .tsd-signature,
+.tsd-kind-call-signature .tsd-signature {
+  border-left: none;
+}
+
+/* Clean up excessive styling */
+.tsd-panel.tsd-member {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  padding: 1.5rem 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .col-content {
+    padding: 1.5rem;
+  }
+  
+  h1 {
+    font-size: 1.75rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+}
