@@ -6,4 +6,5 @@
 
 ### Classes
 
+- [Frame](../classes/core_image.Frame.md)
 - [Image](../classes/core_image.Image.md)

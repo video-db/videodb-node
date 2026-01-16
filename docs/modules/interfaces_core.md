@@ -8,6 +8,7 @@
 
 - [AudioBase](../interfaces/interfaces_core.AudioBase.md)
 - [CollectionBase](../interfaces/interfaces_core.CollectionBase.md)
+- [FrameBase](../interfaces/interfaces_core.FrameBase.md)
 - [IAudio](../interfaces/interfaces_core.IAudio.md)
 - [ICollection](../interfaces/interfaces_core.ICollection.md)
 - [IImage](../interfaces/interfaces_core.IImage.md)

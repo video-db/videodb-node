@@ -19,7 +19,7 @@
 
 #### Defined in
 
-[src/types/video.ts:11](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/video.ts#L11)
+[src/types/video.ts:11](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/video.ts#L11)
 
 ___
 
@@ -29,7 +29,7 @@ ___
 
 #### Defined in
 
-[src/types/video.ts:2](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/video.ts#L2)
+[src/types/video.ts:2](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/video.ts#L2)
 
 ___
 
@@ -39,7 +39,7 @@ ___
 
 #### Defined in
 
-[src/types/video.ts:1](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/video.ts#L1)
+[src/types/video.ts:1](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/video.ts#L1)
 
 ___
 
@@ -56,4 +56,4 @@ ___
 
 #### Defined in
 
-[src/types/video.ts:3](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/video.ts#L3)
+[src/types/video.ts:3](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/video.ts#L3)

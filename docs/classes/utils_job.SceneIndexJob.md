@@ -1,61 +1,61 @@
-[videodb](../README.md) / [Exports](../modules.md) / [utils/job](../modules/utils_job.md) / TranscriptJob
+[videodb](../README.md) / [Exports](../modules.md) / [utils/job](../modules/utils_job.md) / SceneIndexJob
 
-# Class: TranscriptJob
+# Class: SceneIndexJob
 
-[utils/job](../modules/utils_job.md).TranscriptJob
+[utils/job](../modules/utils_job.md).SceneIndexJob
 
-TranscriptJob is used to initalize a new trancsript generation call.
+SceneIndexJob is used to initalize a new video upload.
 
 **`Remarks`**
 
-Uses the base Job class to implement a backoff to get the transcript
+Uses the base Job class to implement a backoff to get the uploaded video data.
 
 ## Hierarchy
 
-- [`Job`](utils_job.Job.md)\<[`TranscriptResponse`](../modules/types_response.md#transcriptresponse), [`Transcript`](../modules/types_video.md#transcript)\>
+- [`Job`](utils_job.Job.md)\<[`GetSceneIndexResponse`](../modules/types_response.md#getsceneindexresponse), [`GetSceneIndexResponse`](../modules/types_response.md#getsceneindexresponse), [`SceneIndexRecords`](../modules/types.md#sceneindexrecords)\>
 
-  ↳ **`TranscriptJob`**
+  ↳ **`SceneIndexJob`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](utils_job.TranscriptJob.md#constructor)
+- [constructor](utils_job.SceneIndexJob.md#constructor)
 
 ### Properties
 
-- [convertResponseToCamelCase](utils_job.TranscriptJob.md#convertresponsetocamelcase)
-- [force](utils_job.TranscriptJob.md#force)
-- [jobTitle](utils_job.TranscriptJob.md#jobtitle)
-- [vhttp](utils_job.TranscriptJob.md#vhttp)
-- [videoId](utils_job.TranscriptJob.md#videoid)
+- [convertResponseToCamelCase](utils_job.SceneIndexJob.md#convertresponsetocamelcase)
+- [jobTitle](utils_job.SceneIndexJob.md#jobtitle)
+- [sceneIndexId](utils_job.SceneIndexJob.md#sceneindexid)
+- [vhttp](utils_job.SceneIndexJob.md#vhttp)
+- [videoId](utils_job.SceneIndexJob.md#videoid)
 
 ### Methods
 
-- [\_handleError](utils_job.TranscriptJob.md#_handleerror)
-- [\_handleSuccess](utils_job.TranscriptJob.md#_handlesuccess)
-- [\_initiateBackoff](utils_job.TranscriptJob.md#_initiatebackoff)
-- [beforeSuccess](utils_job.TranscriptJob.md#beforesuccess)
-- [on](utils_job.TranscriptJob.md#on)
-- [start](utils_job.TranscriptJob.md#start)
+- [\_handleError](utils_job.SceneIndexJob.md#_handleerror)
+- [\_handleSuccess](utils_job.SceneIndexJob.md#_handlesuccess)
+- [\_initiateBackoff](utils_job.SceneIndexJob.md#_initiatebackoff)
+- [beforeSuccess](utils_job.SceneIndexJob.md#beforesuccess)
+- [on](utils_job.SceneIndexJob.md#on)
+- [start](utils_job.SceneIndexJob.md#start)
 
 ## Constructors
 
 ### constructor
 
-• **new TranscriptJob**(`http`, `videoId`, `force?`): [`TranscriptJob`](utils_job.TranscriptJob.md)
+• **new SceneIndexJob**(`http`, `videoId`, `sceneIndexId`): [`SceneIndexJob`](utils_job.SceneIndexJob.md)
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `http` | [`HttpClient`](utils_httpClient.HttpClient.md) | `undefined` |
-| `videoId` | `string` | `undefined` |
-| `force` | `boolean` | `false` |
+| Name | Type |
+| :------ | :------ |
+| `http` | [`HttpClient`](utils_httpClient.HttpClient.md) |
+| `videoId` | `string` |
+| `sceneIndexId` | `string` |
 
 #### Returns
 
-[`TranscriptJob`](utils_job.TranscriptJob.md)
+[`SceneIndexJob`](utils_job.SceneIndexJob.md)
 
 #### Overrides
 
@@ -63,7 +63,7 @@ Uses the base Job class to implement a backoff to get the transcript
 
 #### Defined in
 
-[src/utils/job.ts:163](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L163)
+[src/utils/job.ts:321](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L321)
 
 ## Properties
 
@@ -81,16 +81,6 @@ Uses the base Job class to implement a backoff to get the transcript
 
 ___
 
-### force
-
-• **force**: `boolean`
-
-#### Defined in
-
-[src/utils/job.ts:162](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L162)
-
-___
-
 ### jobTitle
 
 • `Protected` **jobTitle**: `string`
@@ -102,6 +92,16 @@ ___
 #### Defined in
 
 [src/utils/job.ts:57](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L57)
+
+___
+
+### sceneIndexId
+
+• **sceneIndexId**: `string`
+
+#### Defined in
+
+[src/utils/job.ts:320](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L320)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:161](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L161)
+[src/utils/job.ts:319](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L319)
 
 ## Methods
 
@@ -209,17 +209,21 @@ ___
 
 ### beforeSuccess
 
-▸ **beforeSuccess**(`data`): [`Transcript`](../modules/types_video.md#transcript)
+▸ **beforeSuccess**(`data`): [`SceneIndexRecords`](../modules/types.md#sceneindexrecords)
+
+Initializes a new video object with the returned data
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `data` | [`Transcript`](../modules/types_video.md#transcript) |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `data` | [`GetSceneIndexResponse`](../modules/types_response.md#getsceneindexresponse) | Media data returned from the API and converted to camelCase |
 
 #### Returns
 
-[`Transcript`](../modules/types_video.md#transcript)
+[`SceneIndexRecords`](../modules/types.md#sceneindexrecords)
+
+a new Video object
 
 #### Overrides
 
@@ -227,7 +231,7 @@ Job.beforeSuccess
 
 #### Defined in
 
-[src/utils/job.ts:194](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L194)
+[src/utils/job.ts:356](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L356)
 
 ___
 
@@ -240,7 +244,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `option` | ``"success"`` |
-| `method` | [`JobSuccessCallback`](../modules/types_utils.md#jobsuccesscallback)\<[`Transcript`](../modules/types_video.md#transcript)\> |
+| `method` | [`JobSuccessCallback`](../modules/types_utils.md#jobsuccesscallback)\<[`SceneIndexRecords`](../modules/types.md#sceneindexrecords)\> |
 
 #### Returns
 
@@ -281,9 +285,7 @@ ___
 
 ▸ **start**(): `Promise`\<`void`\>
 
-If the transcript exists, it immediately calls
-the success listener. If it doesn't exist, it
-initiates a backoff.
+Fetches the callbackURL from the server and initiates a backoff
 
 #### Returns
 
@@ -295,4 +297,4 @@ Job.start
 
 #### Defined in
 
-[src/utils/job.ts:174](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L174)
+[src/utils/job.ts:331](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L331)
