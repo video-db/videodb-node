@@ -63,7 +63,7 @@ Uses the base Job class to implement a backoff to get the uploaded video data.
 
 #### Defined in
 
-[src/utils/job.ts:212](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L212)
+[src/utils/job.ts:210](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L210)
 
 ## Properties
 
@@ -73,7 +73,7 @@ Uses the base Job class to implement a backoff to get the uploaded video data.
 
 #### Defined in
 
-[src/utils/job.ts:211](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L211)
+[src/utils/job.ts:209](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L209)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:54](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L54)
+[src/utils/job.ts:56](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L56)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:55](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L55)
+[src/utils/job.ts:57](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L57)
 
 ___
 
@@ -111,7 +111,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:210](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L210)
+[src/utils/job.ts:208](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L208)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L53)
+[src/utils/job.ts:55](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L55)
 
 ## Methods
 
@@ -149,7 +149,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:84](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L84)
+[src/utils/job.ts:86](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L86)
 
 ___
 
@@ -173,7 +173,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:100](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L100)
+[src/utils/job.ts:102](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L102)
 
 ___
 
@@ -203,13 +203,13 @@ success or error listener depending on the status.
 
 #### Defined in
 
-[src/utils/job.ts:122](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L122)
+[src/utils/job.ts:124](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L124)
 
 ___
 
 ### beforeSuccess
 
-▸ **beforeSuccess**(`data`): [`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md) \| [`Image`](core_image.Image.md)
+▸ **beforeSuccess**(`data`): [`Image`](core_image.Image.md) \| [`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md)
 
 Initializes a new video object with the returned data
 
@@ -221,7 +221,7 @@ Initializes a new video object with the returned data
 
 #### Returns
 
-[`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md) \| [`Image`](core_image.Image.md)
+[`Image`](core_image.Image.md) \| [`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md)
 
 a new Video object
 
@@ -231,7 +231,7 @@ Job.beforeSuccess
 
 #### Defined in
 
-[src/utils/job.ts:240](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L240)
+[src/utils/job.ts:238](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L238)
 
 ___
 
@@ -244,7 +244,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `option` | ``"success"`` |
-| `method` | [`JobSuccessCallback`](../modules/types_utils.md#jobsuccesscallback)\<[`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md) \| [`Image`](core_image.Image.md)\> |
+| `method` | [`JobSuccessCallback`](../modules/types_utils.md#jobsuccesscallback)\<[`Image`](core_image.Image.md) \| [`Video`](core_video.Video.md) \| [`Audio`](core_audio.Audio.md)\> |
 
 #### Returns
 
@@ -256,7 +256,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:67](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L67)
+[src/utils/job.ts:69](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L69)
 
 ▸ **on**(`option`, `method`): `void`
 
@@ -277,7 +277,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:68](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L68)
+[src/utils/job.ts:70](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L70)
 
 ___
 
@@ -297,4 +297,4 @@ Job.start
 
 #### Defined in
 
-[src/utils/job.ts:222](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L222)
+[src/utils/job.ts:220](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L220)

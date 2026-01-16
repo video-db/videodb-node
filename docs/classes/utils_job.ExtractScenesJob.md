@@ -1,61 +1,67 @@
-[videodb](../README.md) / [Exports](../modules.md) / [utils/job](../modules/utils_job.md) / TranscriptJob
+[videodb](../README.md) / [Exports](../modules.md) / [utils/job](../modules/utils_job.md) / ExtractScenesJob
 
-# Class: TranscriptJob
+# Class: ExtractScenesJob
 
-[utils/job](../modules/utils_job.md).TranscriptJob
+[utils/job](../modules/utils_job.md).ExtractScenesJob
 
-TranscriptJob is used to initalize a new trancsript generation call.
+Base Job class used to create different kinds of jobs
 
 **`Remarks`**
 
-Uses the base Job class to implement a backoff to get the transcript
+Jobs are used for long running tasks where a simple
+async call would take too long causing a timeout.
+
+**`See`**
+
+This class accepts 3 type params
+- ApiResponse: The response recieved from the API on calling
 
 ## Hierarchy
 
-- [`Job`](utils_job.Job.md)\<[`TranscriptResponse`](../modules/types_response.md#transcriptresponse), [`Transcript`](../modules/types_video.md#transcript)\>
+- [`Job`](utils_job.Job.md)\<`object`, `object`, `object`\>
 
-  ↳ **`TranscriptJob`**
+  ↳ **`ExtractScenesJob`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](utils_job.TranscriptJob.md#constructor)
+- [constructor](utils_job.ExtractScenesJob.md#constructor)
 
 ### Properties
 
-- [convertResponseToCamelCase](utils_job.TranscriptJob.md#convertresponsetocamelcase)
-- [force](utils_job.TranscriptJob.md#force)
-- [jobTitle](utils_job.TranscriptJob.md#jobtitle)
-- [vhttp](utils_job.TranscriptJob.md#vhttp)
-- [videoId](utils_job.TranscriptJob.md#videoid)
+- [config](utils_job.ExtractScenesJob.md#config)
+- [convertResponseToCamelCase](utils_job.ExtractScenesJob.md#convertresponsetocamelcase)
+- [jobTitle](utils_job.ExtractScenesJob.md#jobtitle)
+- [vhttp](utils_job.ExtractScenesJob.md#vhttp)
+- [videoId](utils_job.ExtractScenesJob.md#videoid)
 
 ### Methods
 
-- [\_handleError](utils_job.TranscriptJob.md#_handleerror)
-- [\_handleSuccess](utils_job.TranscriptJob.md#_handlesuccess)
-- [\_initiateBackoff](utils_job.TranscriptJob.md#_initiatebackoff)
-- [beforeSuccess](utils_job.TranscriptJob.md#beforesuccess)
-- [on](utils_job.TranscriptJob.md#on)
-- [start](utils_job.TranscriptJob.md#start)
+- [\_handleError](utils_job.ExtractScenesJob.md#_handleerror)
+- [\_handleSuccess](utils_job.ExtractScenesJob.md#_handlesuccess)
+- [\_initiateBackoff](utils_job.ExtractScenesJob.md#_initiatebackoff)
+- [beforeSuccess](utils_job.ExtractScenesJob.md#beforesuccess)
+- [on](utils_job.ExtractScenesJob.md#on)
+- [start](utils_job.ExtractScenesJob.md#start)
 
 ## Constructors
 
 ### constructor
 
-• **new TranscriptJob**(`http`, `videoId`, `force?`): [`TranscriptJob`](utils_job.TranscriptJob.md)
+• **new ExtractScenesJob**(`http`, `videoId`, `config`): [`ExtractScenesJob`](utils_job.ExtractScenesJob.md)
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `http` | [`HttpClient`](utils_httpClient.HttpClient.md) | `undefined` |
-| `videoId` | `string` | `undefined` |
-| `force` | `boolean` | `false` |
+| Name | Type |
+| :------ | :------ |
+| `http` | [`HttpClient`](utils_httpClient.HttpClient.md) |
+| `videoId` | `string` |
+| `config` | `Partial`\<[`ExtractSceneConfig`](../modules/types_config.md#extractsceneconfig)\> |
 
 #### Returns
 
-[`TranscriptJob`](utils_job.TranscriptJob.md)
+[`ExtractScenesJob`](utils_job.ExtractScenesJob.md)
 
 #### Overrides
 
@@ -63,9 +69,19 @@ Uses the base Job class to implement a backoff to get the transcript
 
 #### Defined in
 
-[src/utils/job.ts:163](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L163)
+[src/utils/job.ts:364](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L364)
 
 ## Properties
+
+### config
+
+• **config**: `Partial`\<[`ExtractSceneConfig`](../modules/types_config.md#extractsceneconfig)\>
+
+#### Defined in
+
+[src/utils/job.ts:363](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L363)
+
+___
 
 ### convertResponseToCamelCase
 
@@ -78,16 +94,6 @@ Uses the base Job class to implement a backoff to get the transcript
 #### Defined in
 
 [src/utils/job.ts:56](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L56)
-
-___
-
-### force
-
-• **force**: `boolean`
-
-#### Defined in
-
-[src/utils/job.ts:162](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L162)
 
 ___
 
@@ -125,7 +131,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:161](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L161)
+[src/utils/job.ts:362](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L362)
 
 ## Methods
 
@@ -209,17 +215,21 @@ ___
 
 ### beforeSuccess
 
-▸ **beforeSuccess**(`data`): [`Transcript`](../modules/types_video.md#transcript)
+▸ **beforeSuccess**(`data`): `any`
+
+Initializes a new video object with the returned data
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `data` | [`Transcript`](../modules/types_video.md#transcript) |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `data` | `object` | Media data returned from the API and converted to camelCase |
 
 #### Returns
 
-[`Transcript`](../modules/types_video.md#transcript)
+`any`
+
+a new Video object
 
 #### Overrides
 
@@ -227,7 +237,7 @@ Job.beforeSuccess
 
 #### Defined in
 
-[src/utils/job.ts:194](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L194)
+[src/utils/job.ts:401](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L401)
 
 ___
 
@@ -240,7 +250,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `option` | ``"success"`` |
-| `method` | [`JobSuccessCallback`](../modules/types_utils.md#jobsuccesscallback)\<[`Transcript`](../modules/types_video.md#transcript)\> |
+| `method` | [`JobSuccessCallback`](../modules/types_utils.md#jobsuccesscallback)\<`object`\> |
 
 #### Returns
 
@@ -281,9 +291,7 @@ ___
 
 ▸ **start**(): `Promise`\<`void`\>
 
-If the transcript exists, it immediately calls
-the success listener. If it doesn't exist, it
-initiates a backoff.
+Fetches the callbackURL from the server and initiates a backoff
 
 #### Returns
 
@@ -295,4 +303,4 @@ Job.start
 
 #### Defined in
 
-[src/utils/job.ts:174](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L174)
+[src/utils/job.ts:378](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L378)
