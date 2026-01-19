@@ -26,7 +26,7 @@
 
 #### Defined in
 
-[src/core/config.ts:11](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L11)
+[src/core/config.ts:11](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L11)
 
 ___
 
@@ -36,7 +36,7 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:10](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L10)
+[src/core/config.ts:10](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L10)
 
 ___
 
@@ -46,7 +46,7 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:12](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L12)
+[src/core/config.ts:12](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L12)
 
 ___
 
@@ -56,7 +56,7 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:14](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L14)
+[src/core/config.ts:14](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L14)
 
 ___
 
@@ -66,7 +66,7 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:13](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L13)
+[src/core/config.ts:13](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L13)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:15](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L15)
+[src/core/config.ts:15](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L15)
 
 ___
 
@@ -86,7 +86,7 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:17](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L17)
+[src/core/config.ts:17](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L17)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:16](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L16)
+[src/core/config.ts:16](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L16)
 
 ___
 
@@ -106,4 +106,4 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:18](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L18)
+[src/core/config.ts:18](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L18)

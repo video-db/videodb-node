@@ -76,7 +76,7 @@ export enum SearchTypeValues {
 }
 
 export enum IndexTypeValues {
-  spoken = 'spoken',
+  spoken = 'spoken_word',
   scene = 'scene',
 }
 

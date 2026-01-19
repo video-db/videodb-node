@@ -55,7 +55,7 @@ MediaAsset.constructor
 
 #### Defined in
 
-[src/core/asset.ts:51](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L51)
+[src/core/asset.ts:51](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L51)
 
 ## Properties
 
@@ -69,7 +69,7 @@ MediaAsset.assetId
 
 #### Defined in
 
-[src/core/asset.ts:31](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L31)
+[src/core/asset.ts:31](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L31)
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:43](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L43)
+[src/core/asset.ts:43](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L43)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:42](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L42)
+[src/core/asset.ts:42](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L42)
 
 ## Methods
 
@@ -109,4 +109,4 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:58](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L58)
+[src/core/asset.ts:58](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L58)

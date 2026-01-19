@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[src/core/config.ts:4](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L4)
+[src/core/config.ts:4](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L4)
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:5](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L5)
+[src/core/config.ts:5](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L5)
 
 ___
 
@@ -40,4 +40,4 @@ ___
 
 #### Defined in
 
-[src/core/config.ts:6](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/config.ts#L6)
+[src/core/config.ts:6](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/config.ts#L6)

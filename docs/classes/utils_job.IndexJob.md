@@ -57,7 +57,7 @@ This class accepts 3 type params
 | :------ | :------ |
 | `http` | [`HttpClient`](utils_httpClient.HttpClient.md) |
 | `videoId` | `string` |
-| `indexType` | ``"semantic"`` \| ``"scene"`` |
+| `indexType` | ``"scene"`` \| ``"spoken"`` |
 | `additionalConfig` | [`IndexSceneConfig`](../modules/types_config.md#indexsceneconfig) |
 
 #### Returns
@@ -70,7 +70,7 @@ This class accepts 3 type params
 
 #### Defined in
 
-[src/utils/job.ts:255](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L255)
+[src/utils/job.ts:253](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L253)
 
 ## Properties
 
@@ -84,7 +84,7 @@ This class accepts 3 type params
 
 #### Defined in
 
-[src/utils/job.ts:54](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L54)
+[src/utils/job.ts:56](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L56)
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:253](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L253)
+[src/utils/job.ts:251](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L251)
 
 ___
 
@@ -108,7 +108,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:55](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L55)
+[src/utils/job.ts:57](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L57)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L53)
+[src/utils/job.ts:55](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L55)
 
 ___
 
@@ -132,7 +132,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:252](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L252)
+[src/utils/job.ts:250](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L250)
 
 ## Methods
 
@@ -156,7 +156,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:84](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L84)
+[src/utils/job.ts:86](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L86)
 
 ___
 
@@ -180,7 +180,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:100](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L100)
+[src/utils/job.ts:102](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L102)
 
 ___
 
@@ -210,7 +210,7 @@ success or error listener depending on the status.
 
 #### Defined in
 
-[src/utils/job.ts:122](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L122)
+[src/utils/job.ts:124](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L124)
 
 ___
 
@@ -234,7 +234,7 @@ Job.beforeSuccess
 
 #### Defined in
 
-[src/utils/job.ts:309](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L309)
+[src/utils/job.ts:294](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L294)
 
 ___
 
@@ -259,7 +259,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:67](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L67)
+[src/utils/job.ts:69](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L69)
 
 ▸ **on**(`option`, `method`): `void`
 
@@ -280,7 +280,7 @@ ___
 
 #### Defined in
 
-[src/utils/job.ts:68](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L68)
+[src/utils/job.ts:70](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L70)
 
 ___
 
@@ -301,4 +301,4 @@ Job.start
 
 #### Defined in
 
-[src/utils/job.ts:274](https://github.com/video-db/videodb-node/blob/4dc9a20/src/utils/job.ts#L274)
+[src/utils/job.ts:272](https://github.com/omgate234/videodb-node/blob/047cbbf/src/utils/job.ts#L272)
