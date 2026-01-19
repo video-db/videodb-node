@@ -184,28 +184,24 @@ export class Collection implements ICollection {
   };
 
   /**
-   * @param filePath - absolute path to a file
-   * @param callbackUrl- [optional] A url that will be called once upload is finished
-   * @param name - [optional] Name of the file
-   * @param description - [optional] Description of the file
-   *
-   * @see
-   * Providing a callbackUrl will return undefined and not providing one
-   * will return a Job object (TODO: Implement proper type for this condition)
+   * Upload a file from the local filesystem.
+   * @param data.filePath - absolute path to a file
+   * @param data.callbackUrl - [optional] A url that will be called once upload is finished
+   * @param data.name - [optional] Name of the file
+   * @param data.description - [optional] Description of the file
+   * @returns Video, Audio, or Image object. Returns undefined if callbackUrl is provided.
    */
   public uploadFile = async (data: FileUploadConfig) => {
     return uploadToServer(this.#vhttp, this.meta.id, data);
   };
 
   /**
-   * @param URL - URL of the hosted file
-   * @param callbackUrl- [optional] A url that will be called once upload is finished
-   * @param name - [optional] Name of the file
-   * @param description - [optional] Description of the file
-   *
-   * @see
-   * Providing a callbackUrl will return undefined and not providing one
-   * will return a Job object (TODO: Implement proper type for this condition)
+   * Upload a file from a URL.
+   * @param data.url - URL of the hosted file
+   * @param data.callbackUrl - [optional] A url that will be called once upload is finished
+   * @param data.name - [optional] Name of the file
+   * @param data.description - [optional] Description of the file
+   * @returns Video, Audio, or Image object. Returns undefined if callbackUrl is provided.
    */
   public uploadURL = async (data: URLUploadConfig) => {
     return uploadToServer(this.#vhttp, this.meta.id, data);

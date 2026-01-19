@@ -1,9 +1,10 @@
 import { SearchResult } from '@/core/search/searchResult';
 import { Video } from '@/core/video';
+import { Audio } from '@/core/audio';
+import { Image } from '@/core/image';
 import type { SearchType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { StreamableURL, Timeline, Transcript } from '@/types/video';
-import { IndexJob, TranscriptJob, UploadJob } from '@/utils/job';
 import { AudioAsset, VideoAsset } from '..';
 import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
 
@@ -23,8 +24,8 @@ export interface ICollection {
   getVideos: () => Promise<Video[]>;
   getVideo: (videoId: string) => Promise<Video>;
   deleteVideo: (videoId: string) => Promise<object>;
-  uploadFile: (data: FileUploadConfig) => Promise<void | UploadJob>;
-  uploadURL: (data: URLUploadConfig) => Promise<void | UploadJob>;
+  uploadFile: (data: FileUploadConfig) => Promise<Video | Audio | Image | undefined>;
+  uploadURL: (data: URLUploadConfig) => Promise<Video | Audio | Image | undefined>;
   search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
 }
 
@@ -51,8 +52,8 @@ export interface IVideo {
   transcript?: Transcript;
   generateStream: (timeline: Timeline) => Promise<string>;
   play: () => string;
-  getTranscript: (forceCreate?: boolean) => Transcript | TranscriptJob;
-  indexSpokenWords: () => IndexJob;
+  getTranscript: (forceCreate?: boolean) => Promise<Transcript>;
+  indexSpokenWords: () => Promise<{ success: boolean; message?: string }>;
   indexScenes: (config: IndexSceneConfig) => Promise<string | undefined>;
   search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
   generateThumbnail: () => Promise<string>;

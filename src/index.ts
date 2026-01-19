@@ -32,10 +32,9 @@ export {
   AudioAssetConfig,
 } from './types/config';
 export { SubtitleAlignment, SubtitleBorderStyle } from './core/config';
-export { IndexJob, UploadJob, TranscriptJob } from './utils/job';
 export { Shot } from './core/shot';
 export { VideodbError } from './utils/error';
 export { SearchResult } from './core/search/searchResult';
 
-export { playStream, waitForJob } from './utils/index';
+export { playStream } from './utils/index';
 export { connect, Connection };

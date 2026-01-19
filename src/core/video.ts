@@ -9,6 +9,9 @@ import {
   type GenerateStreamResponse,
   ListSceneCollection,
   SceneCollectionResponse,
+  TranscriptResponse,
+  GetSceneIndexResponse,
+  NoDataResponse,
 } from '@/types/response';
 import type { Timeline, Transcript } from '@/types/video';
 import { fromCamelToSnake, playStream } from '@/utils';
@@ -19,12 +22,6 @@ import {
   IndexTypeValues,
   SceneExtractionType,
 } from '@/core/config';
-import {
-  IndexJob,
-  TranscriptJob,
-  SceneIndexJob,
-  ExtractScenesJob,
-} from '@/utils/job';
 import { SearchFactory } from './search';
 import {
   ExtractSceneConfig,
@@ -34,7 +31,7 @@ import {
 import { SearchType, IndexType } from '@/types/search';
 import { SceneIndexRecords, SceneIndexes } from '@/types';
 
-const { video, stream, thumbnail, workflow, index, scene, scenes } = ApiPath;
+const { video, stream, thumbnail, workflow, index, scene, scenes, transcription } = ApiPath;
 
 /**
  * The base Video class
@@ -137,29 +134,41 @@ export class Video implements IVideo {
    * Fetches the transcript of the video if it exists, generates one
    * if it doesn't.
    * @param forceCreate - Forces transcript generation even if it exists
-   * @returns A promise of -
-   * - If the transcript exists, an object of the type Transcript
-   * - If it doesn't, an instance of TranscriptJob which can be used
-   *   to start transcript generation.
+   * @returns The transcript data
    */
-  public getTranscript = (forceCreate = false) => {
+  public getTranscript = async (forceCreate = false): Promise<Transcript> => {
     if (this.transcript && !forceCreate) return this.transcript;
-    const job = new TranscriptJob(this.#vhttp, this.meta.id, forceCreate);
-    return job;
+
+    const res = await this.#vhttp.get<TranscriptResponse>([
+      video,
+      this.meta.id,
+      transcription,
+      `?force=${String(forceCreate)}`,
+    ]);
+
+    const transcript = fromSnakeToCamel(res.data) as unknown as Transcript;
+    this.transcript = transcript;
+    return transcript;
   };
 
   /**
-   * Indexs the video semantically
-   * @returns an awaited boolean signifying whether the process
-   * was successful or not
+   * Indexes the video semantically
+   * @returns Whether the process was successful
    */
-  public indexSpokenWords = () => {
-    const indexJob = new IndexJob(
-      this.#vhttp,
-      this.meta.id,
-      IndexTypeValues.spoken
+  public indexSpokenWords = async (): Promise<{ success: boolean; message?: string }> => {
+    const reqData = fromCamelToSnake({ indexType: IndexTypeValues.spoken });
+    const res = await this.#vhttp.post<NoDataResponse, object>(
+      [video, this.meta.id, index],
+      reqData
     );
-    return indexJob;
+
+    if (res.data?.success !== undefined) {
+      return {
+        success: res.data.success,
+        message: res.data.message,
+      };
+    }
+    return { success: true };
   };
 
   public _formatSceneCollectionData = (
@@ -199,7 +208,9 @@ export class Video implements IVideo {
     });
   };
 
-  public extractScenes = async (config: Partial<ExtractSceneConfig> = {}) => {
+  public extractScenes = async (
+    config: Partial<ExtractSceneConfig> = {}
+  ): Promise<SceneCollection> => {
     const defaultConfig = {
       extractionType: SceneExtractionType.shotBased,
       extractionConfig: {},
@@ -208,25 +219,14 @@ export class Video implements IVideo {
     const extractScenePayload = fromCamelToSnake(
       Object.assign({}, defaultConfig, config)
     );
-    const extractScenesJob = new ExtractScenesJob(
-      this.#vhttp,
-      this.meta.id,
+
+    const res = await this.#vhttp.post<{ sceneCollection: object }, object>(
+      [video, this.meta.id, scenes],
       extractScenePayload
     );
-    return new Promise<SceneCollection>((resolve, reject) => {
-      extractScenesJob.on('success', data => {
-        resolve(this._formatSceneCollectionData(data));
-      });
-      extractScenesJob.on('error', err => {
-        reject(err);
-      });
-      extractScenesJob
-        .start()
-        .then(() => {})
-        .catch(err => {
-          reject(err);
-        });
-    });
+
+    const data = fromSnakeToCamel(res.data.sceneCollection);
+    return this._formatSceneCollectionData(data);
   };
 
   public listSceneCollection = async () => {
@@ -303,26 +303,16 @@ export class Video implements IVideo {
     return transformed as SceneIndexes;
   };
 
-  public getSceneIndex = async (sceneIndexId: string) => {
-    const sceneIndexJob = new SceneIndexJob(
-      this.#vhttp,
+  public getSceneIndex = async (sceneIndexId: string): Promise<SceneIndexRecords> => {
+    const res = await this.#vhttp.get<GetSceneIndexResponse>([
+      video,
       this.meta.id,
-      sceneIndexId
-    );
-    return new Promise<SceneIndexRecords>((resolve, reject) => {
-      sceneIndexJob.on('success', data => {
-        resolve(data);
-      });
-      sceneIndexJob.on('error', err => {
-        reject(err);
-      });
-      sceneIndexJob
-        .start()
-        .then(() => {})
-        .catch(err => {
-          reject(err);
-        });
-    });
+      index,
+      scene,
+      sceneIndexId,
+    ]);
+
+    return fromSnakeToCamel(res.data).sceneIndexRecords as SceneIndexRecords;
   };
 
   public deleteSceneIndex = async (sceneIndexId: string) => {

@@ -1,6 +1,5 @@
 import { PLAYER_URL } from '@/constants';
 import _ from 'lodash';
-import { Job } from './job';
 import { AudioBase, VideoBase } from '@/interfaces/core';
 
 /**
@@ -77,26 +76,6 @@ export const fromCamelToSnake = <O extends object>(
 };
 
 export const playStream = (url: string) => `${PLAYER_URL}?url=${url}`;
-
-export const waitForJob = async (job: Job<any, any>): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    job.on('success', async (data: any) => {
-      resolve(data);
-    });
-    job.on('error', async (err: any) => {
-      reject(err);
-    });
-    job
-      .start()
-      .then(() => {
-        console.log('Job started');
-      })
-      .catch(err => {
-        console.log('Job Failed');
-        reject(err);
-      });
-  });
-};
 
 export const isMediaAudio = (
   media: AudioBase | VideoBase
