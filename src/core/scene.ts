@@ -41,10 +41,8 @@ export class Scene {
     const response = await this.#vhttp.post<{ description: string }, object>(
       [ApiPath.video, this.videoId, ApiPath.scene, this.id, ApiPath.describe],
       {
-        data: {
-          prompt,
-          model_name: modelName,
-        },
+        prompt,
+        model_name: modelName,
       }
     );
     this.description = response.data.description;
