@@ -30,8 +30,12 @@
 | `collection` | ``"collection"`` |
 | `compile` | ``"compile"`` |
 | `delete` | ``"delete"`` |
+| `describe` | ``"describe"`` |
+| `frame` | ``"frame"`` |
 | `image` | ``"image"`` |
 | `index` | ``"index"`` |
+| `scene` | ``"scene"`` |
+| `scenes` | ``"scenes"`` |
 | `search` | ``"search"`` |
 | `stream` | ``"stream"`` |
 | `thumbnail` | ``"thumbnail"`` |
@@ -44,7 +48,7 @@
 
 #### Defined in
 
-[src/constants.ts:19](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L19)
+[src/constants.ts:19](https://github.com/omgate234/videodb-node/blob/047cbbf/src/constants.ts#L19)
 
 ___
 
@@ -62,7 +66,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:42](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L42)
+[src/constants.ts:47](https://github.com/omgate234/videodb-node/blob/047cbbf/src/constants.ts#L47)
 
 ___
 
@@ -81,7 +85,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:8](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L8)
+[src/constants.ts:8](https://github.com/omgate234/videodb-node/blob/047cbbf/src/constants.ts#L8)
 
 ___
 
@@ -97,7 +101,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:48](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L48)
+[src/constants.ts:53](https://github.com/omgate234/videodb-node/blob/047cbbf/src/constants.ts#L53)
 
 ___
 
@@ -107,7 +111,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L53)
+[src/constants.ts:58](https://github.com/omgate234/videodb-node/blob/047cbbf/src/constants.ts#L58)
 
 ___
 
@@ -121,10 +125,11 @@ ___
 | :------ | :------ |
 | `in_progress` | ``"in progress"`` |
 | `processing` | ``"processing"`` |
+| `success` | ``"success"`` |
 
 #### Defined in
 
-[src/constants.ts:37](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L37)
+[src/constants.ts:41](https://github.com/omgate234/videodb-node/blob/047cbbf/src/constants.ts#L41)
 
 ___
 
@@ -143,7 +148,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:1](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L1)
+[src/constants.ts:1](https://github.com/omgate234/videodb-node/blob/047cbbf/src/constants.ts#L1)
 
 ___
 
@@ -153,7 +158,7 @@ ___
 
 #### Defined in
 
-[src/constants.ts:52](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L52)
+[src/constants.ts:57](https://github.com/omgate234/videodb-node/blob/047cbbf/src/constants.ts#L57)
 
 ___
 
@@ -169,4 +174,4 @@ ___
 
 #### Defined in
 
-[src/constants.ts:15](https://github.com/video-db/videodb-node/blob/4dc9a20/src/constants.ts#L15)
+[src/constants.ts:15](https://github.com/omgate234/videodb-node/blob/047cbbf/src/constants.ts#L15)

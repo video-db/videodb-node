@@ -5,6 +5,7 @@ import {
   InvalidRequestError,
   VideodbError,
 } from '@/utils/error';
+import { SDK_CLIENT_HEADER } from '@/version';
 import axios, {
   AxiosError,
   AxiosHeaders,
@@ -29,6 +30,7 @@ export class HttpClient {
       baseURL,
       headers: {
         'x-access-token': apiKey,
+        'x-videodb-client': SDK_CLIENT_HEADER,
       },
       timeout: HttpClientDefaultValues.timeout,
     });

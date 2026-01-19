@@ -7,6 +7,7 @@
 ### Type Aliases
 
 - [AudioAssetConfig](types_config.md#audioassetconfig)
+- [ExtractSceneConfig](types_config.md#extractsceneconfig)
 - [ImageAssetConfig](types_config.md#imageassetconfig)
 - [IndexConfig](types_config.md#indexconfig)
 - [IndexSceneConfig](types_config.md#indexsceneconfig)
@@ -33,7 +34,26 @@
 
 #### Defined in
 
-[src/types/config.ts:56](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L56)
+[src/types/config.ts:57](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/config.ts#L57)
+
+___
+
+### ExtractSceneConfig
+
+Ƭ **ExtractSceneConfig**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `callbackUrl?` | `string` \| ``null`` |
+| `extractionConfig?` | `object` |
+| `extractionType?` | `string` |
+| `force` | `boolean` |
+
+#### Defined in
+
+[src/types/config.ts:84](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/config.ts#L84)
 
 ___
 
@@ -53,7 +73,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:69](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L69)
+[src/types/config.ts:70](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/config.ts#L70)
 
 ___
 
@@ -63,7 +83,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:89](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L89)
+[src/types/config.ts:101](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/config.ts#L101)
 
 ___
 
@@ -76,12 +96,16 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `callbackUrl?` | `string` \| ``null`` |
-| `force?` | `boolean` |
+| `extractionConfig?` | `object` |
+| `extractionType?` | `string` |
+| `modelConfig?` | `object` |
+| `modelName?` | `string` |
 | `prompt?` | `string` \| ``null`` |
+| `scenes?` | [`Scene`](../classes/core_scene.Scene.md)[] |
 
 #### Defined in
 
-[src/types/config.ts:83](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L83)
+[src/types/config.ts:91](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/config.ts#L91)
 
 ___
 
@@ -117,7 +141,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:4](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L4)
+[src/types/config.ts:5](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/config.ts#L5)
 
 ___
 
@@ -135,7 +159,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:77](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L77)
+[src/types/config.ts:78](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/config.ts#L78)
 
 ___
 
@@ -175,7 +199,7 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:28](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L28)
+[src/types/config.ts:29](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/config.ts#L29)
 
 ___
 
@@ -192,4 +216,4 @@ ___
 
 #### Defined in
 
-[src/types/config.ts:64](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/config.ts#L64)
+[src/types/config.ts:65](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/config.ts#L65)

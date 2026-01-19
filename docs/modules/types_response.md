@@ -11,15 +11,21 @@
 - [ErrorResponse](types_response.md#errorresponse)
 - [GenerateStreamResponse](types_response.md#generatestreamresponse)
 - [GetAudios](types_response.md#getaudios)
+- [GetCollections](types_response.md#getcollections)
 - [GetImages](types_response.md#getimages)
-- [GetScenes](types_response.md#getscenes)
+- [GetSceneIndexResponse](types_response.md#getsceneindexresponse)
 - [GetUploadUrl](types_response.md#getuploadurl)
 - [GetVideos](types_response.md#getvideos)
 - [ImageResponse](types_response.md#imageresponse)
+- [IndexScenesResponse](types_response.md#indexscenesresponse)
+- [ListSceneCollection](types_response.md#listscenecollection)
+- [ListSceneIndex](types_response.md#listsceneindex)
 - [MediaResponse](types_response.md#mediaresponse)
 - [NoDataResponse](types_response.md#nodataresponse)
 - [ResponseOf](types_response.md#responseof)
 - [SceneBase](types_response.md#scenebase)
+- [SceneCollectionResponse](types_response.md#scenecollectionresponse)
+- [SceneIndex](types_response.md#sceneindex)
 - [SearchResponse](types_response.md#searchresponse)
 - [SyncJobResponse](types_response.md#syncjobresponse)
 - [TranscriptResponse](types_response.md#transcriptresponse)
@@ -46,7 +52,7 @@
 
 #### Defined in
 
-[src/types/response.ts:57](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L57)
+[src/types/response.ts:58](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L58)
 
 ___
 
@@ -64,7 +70,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:72](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L72)
+[src/types/response.ts:73](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L73)
 
 ___
 
@@ -84,7 +90,7 @@ All error responses sent by the server are of this type
 
 #### Defined in
 
-[src/types/response.ts:13](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L13)
+[src/types/response.ts:14](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L14)
 
 ___
 
@@ -101,7 +107,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:109](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L109)
+[src/types/response.ts:113](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L113)
 
 ___
 
@@ -117,7 +123,24 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:94](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L94)
+[src/types/response.ts:100](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L100)
+
+___
+
+### GetCollections
+
+Ƭ **GetCollections**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `collections` | [`CollectionResponse`](types_response.md#collectionresponse)[] |
+| `default_collection` | `string` |
+
+#### Defined in
+
+[src/types/response.ts:79](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L79)
 
 ___
 
@@ -133,17 +156,23 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:98](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L98)
+[src/types/response.ts:104](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L104)
 
 ___
 
-### GetScenes
+### GetSceneIndexResponse
 
-Ƭ **GetScenes**: [`SceneBase`](types_response.md#scenebase)[]
+Ƭ **GetSceneIndexResponse**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `sceneIndexRecords` | [`SceneIndexRecords`](types.md#sceneindexrecords) |
 
 #### Defined in
 
-[src/types/response.ts:107](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L107)
+[src/types/response.ts:153](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L153)
 
 ___
 
@@ -159,7 +188,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:86](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L86)
+[src/types/response.ts:92](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L92)
 
 ___
 
@@ -175,7 +204,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:90](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L90)
+[src/types/response.ts:96](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L96)
 
 ___
 
@@ -193,7 +222,55 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:66](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L66)
+[src/types/response.ts:67](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L67)
+
+___
+
+### IndexScenesResponse
+
+Ƭ **IndexScenesResponse**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `scene_index_id` | `string` |
+
+#### Defined in
+
+[src/types/response.ts:147](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L147)
+
+___
+
+### ListSceneCollection
+
+Ƭ **ListSceneCollection**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `scene_collections` | \{ `config`: `object` ; `scene_collection_id`: `string` ; `status`: `string`  }[] |
+
+#### Defined in
+
+[src/types/response.ts:175](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L175)
+
+___
+
+### ListSceneIndex
+
+Ƭ **ListSceneIndex**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `scene_indexes` | [`SceneIndex`](types_response.md#sceneindex)[] |
+
+#### Defined in
+
+[src/types/response.ts:163](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L163)
 
 ___
 
@@ -203,7 +280,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:143](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L143)
+[src/types/response.ts:151](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L151)
 
 ___
 
@@ -220,7 +297,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:40](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L40)
+[src/types/response.ts:41](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L41)
 
 ___
 
@@ -249,7 +326,7 @@ All sucessfull responses are wrapped by this type
 
 #### Defined in
 
-[src/types/response.ts:25](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L25)
+[src/types/response.ts:26](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L26)
 
 ___
 
@@ -261,13 +338,50 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `end` | `string` |
+| `end` | `number` |
 | `response` | `string` |
-| `start` | `string` |
+| `start` | `number` |
 
 #### Defined in
 
-[src/types/response.ts:102](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L102)
+[src/types/response.ts:108](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L108)
+
+___
+
+### SceneCollectionResponse
+
+Ƭ **SceneCollectionResponse**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `scene_collection` | \{ `config`: `object` ; `scene_collection_id`: `string` ; `scenes`: `object`[]  } |
+| `scene_collection.config` | `object` |
+| `scene_collection.scene_collection_id` | `string` |
+| `scene_collection.scenes` | `object`[] |
+
+#### Defined in
+
+[src/types/response.ts:167](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L167)
+
+___
+
+### SceneIndex
+
+Ƭ **SceneIndex**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+| `scene_index_id` | `string` |
+| `status` | `string` |
+
+#### Defined in
+
+[src/types/response.ts:157](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L157)
 
 ___
 
@@ -283,7 +397,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:123](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L123)
+[src/types/response.ts:127](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L127)
 
 ___
 
@@ -299,7 +413,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:82](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L82)
+[src/types/response.ts:88](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L88)
 
 ___
 
@@ -316,7 +430,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:114](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L114)
+[src/types/response.ts:118](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L118)
 
 ___
 
@@ -332,7 +446,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:78](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L78)
+[src/types/response.ts:84](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L84)
 
 ___
 
@@ -350,7 +464,7 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:34](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L34)
+[src/types/response.ts:35](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L35)
 
 ___
 
@@ -373,4 +487,4 @@ ___
 
 #### Defined in
 
-[src/types/response.ts:45](https://github.com/video-db/videodb-node/blob/4dc9a20/src/types/response.ts#L45)
+[src/types/response.ts:46](https://github.com/omgate234/videodb-node/blob/047cbbf/src/types/response.ts#L46)

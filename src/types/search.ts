@@ -1,7 +1,7 @@
 import { IndexTypeValues, SearchTypeValues } from '@/core/config';
 
 export type SearchType = keyof typeof SearchTypeValues;
-export type IndexType = keyof typeof IndexTypeValues;
+export type IndexType = `${IndexTypeValues}`;
 
 export type SearchBase = {
   query: string;

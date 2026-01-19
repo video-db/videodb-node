@@ -15,6 +15,7 @@
 - [ImageAsset](index.md#imageasset)
 - [ImageAssetConfig](index.md#imageassetconfig)
 - [IndexJob](index.md#indexjob)
+- [SceneExtractionType](index.md#sceneextractiontype)
 - [SearchResult](index.md#searchresult)
 - [Shot](index.md#shot)
 - [SubtitleAlignment](index.md#subtitlealignment)
@@ -88,6 +89,12 @@ ___
 ### IndexJob
 
 Re-exports [IndexJob](../classes/utils_job.IndexJob.md)
+
+___
+
+### SceneExtractionType
+
+Re-exports [SceneExtractionType](core_config.md#sceneextractiontype)
 
 ___
 
@@ -202,4 +209,4 @@ A Connection instance that can be used to fetch any collection
 
 #### Defined in
 
-[src/index.ts:11](https://github.com/video-db/videodb-node/blob/4dc9a20/src/index.ts#L11)
+[src/index.ts:11](https://github.com/omgate234/videodb-node/blob/047cbbf/src/index.ts#L11)

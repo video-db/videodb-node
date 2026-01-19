@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.3] (2026-01-19)
+
+### Added
+
+- Scene Collection management methods:
+  - `listSceneCollection()` - Fetch list of scene collections
+  - `getSceneCollection()` - Fetch a specific scene collection
+  - `deleteSceneCollection()` - Delete a scene collection
+- Version header for Node.js SDK identification
+
+### Fixed
+
+- Spoken word indexing using correct index name
+- Frame describe with correct input parameters
+- Index spoken words without requiring transcript fetching
+
 ## [0.1.3-alpha] (2025-01-23)
 
 ### Added

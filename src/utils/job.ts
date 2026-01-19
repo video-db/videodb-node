@@ -24,7 +24,6 @@ import {
 } from './error';
 import { HttpClient } from './httpClient';
 import { IndexSceneConfig } from '@/types/config';
-import { IndexTypeValues } from '@/core/config';
 
 const { in_progress, processing } = ResponseStatus;
 const { video, transcription, collection, upload, index, scene, scenes } =
@@ -265,29 +264,16 @@ export class IndexJob extends Job<NoDataResponse, NoDataResponse> {
     this.jobTitle = 'Index Job';
   }
 
-  /**
-   * Initiates a Transcript Job.
-   * On sucess, it calls the index endpoint
-   */
   public start = async () => {
-    if (this.indexConfig.indexType === IndexTypeValues.spoken) {
-      const transcriptJob = new TranscriptJob(this.vhttp, this.videoId);
+    try {
       const reqData = fromCamelToSnake(this.indexConfig);
-      transcriptJob.on('success', async () => {
-        try {
-          const res = await this.vhttp.post<NoDataResponse, IndexConfig>(
-            [video, this.videoId, index],
-            reqData
-          );
-          this._handleSuccess(res);
-        } catch (err) {
-          this._handleError(err);
-        }
-      });
-      transcriptJob.on('error', err => {
-        this._handleError(err);
-      });
-      await transcriptJob.start();
+      const res = await this.vhttp.post<NoDataResponse, IndexConfig>(
+        [video, this.videoId, index],
+        reqData
+      );
+      this._handleSuccess(res);
+    } catch (err) {
+      this._handleError(err);
     }
   };
 
