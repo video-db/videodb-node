@@ -27,15 +27,21 @@ Use this to initialize a video stored in videoDB
 
 ### Methods
 
+- [\_formatSceneCollectionData](core_video.Video.md#_formatscenecollectiondata)
 - [addSubtitle](core_video.Video.md#addsubtitle)
 - [delete](core_video.Video.md#delete)
+- [deleteSceneCollection](core_video.Video.md#deletescenecollection)
 - [deleteSceneIndex](core_video.Video.md#deletesceneindex)
+- [extractScenes](core_video.Video.md#extractscenes)
 - [generateStream](core_video.Video.md#generatestream)
 - [generateThumbnail](core_video.Video.md#generatethumbnail)
-- [getScenes](core_video.Video.md#getscenes)
+- [getSceneCollection](core_video.Video.md#getscenecollection)
+- [getSceneIndex](core_video.Video.md#getsceneindex)
 - [getTranscript](core_video.Video.md#gettranscript)
 - [indexScenes](core_video.Video.md#indexscenes)
 - [indexSpokenWords](core_video.Video.md#indexspokenwords)
+- [listSceneCollection](core_video.Video.md#listscenecollection)
+- [listSceneIndex](core_video.Video.md#listsceneindex)
 - [play](core_video.Video.md#play)
 - [search](core_video.Video.md#search)
 
@@ -60,7 +66,7 @@ Initializes a videoDB Instance
 
 #### Defined in
 
-[src/core/video.ts:30](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L30)
+[src/core/video.ts:54](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L54)
 
 ## Properties
 
@@ -74,7 +80,7 @@ Initializes a videoDB Instance
 
 #### Defined in
 
-[src/core/video.ts:21](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L21)
+[src/core/video.ts:45](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L45)
 
 ___
 
@@ -88,9 +94,29 @@ ___
 
 #### Defined in
 
-[src/core/video.ts:22](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L22)
+[src/core/video.ts:46](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L46)
 
 ## Methods
+
+### \_formatSceneCollectionData
+
+▸ **_formatSceneCollectionData**(`sceneCollectionData`): [`SceneCollection`](core_scene.SceneCollection.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sceneCollectionData` | `any` |
+
+#### Returns
+
+[`SceneCollection`](core_scene.SceneCollection.md)
+
+#### Defined in
+
+[src/core/video.ts:165](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L165)
+
+___
 
 ### addSubtitle
 
@@ -116,7 +142,7 @@ an awaited stream url for subtitled overlayed video
 
 #### Defined in
 
-[src/core/video.ts:183](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L183)
+[src/core/video.ts:344](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L344)
 
 ___
 
@@ -138,21 +164,67 @@ an InvalidRequestError if the request fails
 
 #### Defined in
 
-[src/core/video.ts:63](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L63)
+[src/core/video.ts:91](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L91)
+
+___
+
+### deleteSceneCollection
+
+▸ **deleteSceneCollection**(`sceneCollectionId`): `Promise`\<[`ResponseOf`](../modules/types_response.md#responseof)\<`unknown`\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sceneCollectionId` | `string` |
+
+#### Returns
+
+`Promise`\<[`ResponseOf`](../modules/types_response.md#responseof)\<`unknown`\>\>
+
+#### Defined in
+
+[src/core/video.ts:256](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L256)
 
 ___
 
 ### deleteSceneIndex
 
-▸ **deleteSceneIndex**(): `Promise`\<[`ResponseOf`](../modules/types_response.md#responseof)\<`object`\>\>
+▸ **deleteSceneIndex**(`sceneIndexId`): `Promise`\<[`ResponseOf`](../modules/types_response.md#responseof)\<`unknown`\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sceneIndexId` | `string` |
 
 #### Returns
 
-`Promise`\<[`ResponseOf`](../modules/types_response.md#responseof)\<`object`\>\>
+`Promise`\<[`ResponseOf`](../modules/types_response.md#responseof)\<`unknown`\>\>
 
 #### Defined in
 
-[src/core/video.ts:167](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L167)
+[src/core/video.ts:328](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L328)
+
+___
+
+### extractScenes
+
+▸ **extractScenes**(`config?`): `Promise`\<[`SceneCollection`](core_scene.SceneCollection.md)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `Partial`\<[`ExtractSceneConfig`](../modules/types_config.md#extractsceneconfig)\> |
+
+#### Returns
+
+`Promise`\<[`SceneCollection`](core_scene.SceneCollection.md)\>
+
+#### Defined in
+
+[src/core/video.ts:202](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L202)
 
 ___
 
@@ -180,7 +252,7 @@ a streaming URL
 
 #### Defined in
 
-[src/core/video.ts:75](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L75)
+[src/core/video.ts:103](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L103)
 
 ___
 
@@ -202,21 +274,47 @@ An awaited URL to the video's thumbnail
 
 #### Defined in
 
-[src/core/video.ts:97](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L97)
+[src/core/video.ts:125](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L125)
 
 ___
 
-### getScenes
+### getSceneCollection
 
-▸ **getScenes**(): `Promise`\<[`Scene`](core_scene.Scene.md)[]\>
+▸ **getSceneCollection**(`sceneCollectionId`): `Promise`\<[`SceneCollection`](core_scene.SceneCollection.md)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sceneCollectionId` | `string` |
 
 #### Returns
 
-`Promise`\<[`Scene`](core_scene.Scene.md)[]\>
+`Promise`\<[`SceneCollection`](core_scene.SceneCollection.md)\>
 
 #### Defined in
 
-[src/core/video.ts:152](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L152)
+[src/core/video.ts:244](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L244)
+
+___
+
+### getSceneIndex
+
+▸ **getSceneIndex**(`sceneIndexId`): `Promise`\<[`SceneIndexRecords`](../modules/types.md#sceneindexrecords)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sceneIndexId` | `string` |
+
+#### Returns
+
+`Promise`\<[`SceneIndexRecords`](../modules/types.md#sceneindexrecords)\>
+
+#### Defined in
+
+[src/core/video.ts:306](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L306)
 
 ___
 
@@ -248,13 +346,13 @@ A promise of -
 
 #### Defined in
 
-[src/core/video.ts:117](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L117)
+[src/core/video.ts:145](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L145)
 
 ___
 
 ### indexScenes
 
-▸ **indexScenes**(`config?`): [`IndexJob`](utils_job.IndexJob.md)
+▸ **indexScenes**(`config?`): `Promise`\<`undefined` \| `string`\>
 
 Indexs the video with scenes
 
@@ -266,7 +364,7 @@ Indexs the video with scenes
 
 #### Returns
 
-[`IndexJob`](utils_job.IndexJob.md)
+`Promise`\<`undefined` \| `string`\>
 
 an awaited boolean signifying whether the process
 was successful or not
@@ -277,7 +375,7 @@ was successful or not
 
 #### Defined in
 
-[src/core/video.ts:142](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L142)
+[src/core/video.ts:271](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L271)
 
 ___
 
@@ -300,7 +398,35 @@ was successful or not
 
 #### Defined in
 
-[src/core/video.ts:128](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L128)
+[src/core/video.ts:156](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L156)
+
+___
+
+### listSceneCollection
+
+▸ **listSceneCollection**(): `Promise`\<[`SnakeKeysToCamelCase`](../modules/utils.md#snakekeystocamelcase)\<\{ `config`: `object` ; `scene_collection_id`: `string` ; `status`: `string`  }\>[]\>
+
+#### Returns
+
+`Promise`\<[`SnakeKeysToCamelCase`](../modules/utils.md#snakekeystocamelcase)\<\{ `config`: `object` ; `scene_collection_id`: `string` ; `status`: `string`  }\>[]\>
+
+#### Defined in
+
+[src/core/video.ts:232](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L232)
+
+___
+
+### listSceneIndex
+
+▸ **listSceneIndex**(): `Promise`\<[`SceneIndexes`](../modules/types.md#sceneindexes)\>
+
+#### Returns
+
+`Promise`\<[`SceneIndexes`](../modules/types.md#sceneindexes)\>
+
+#### Defined in
+
+[src/core/video.ts:293](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L293)
 
 ___
 
@@ -322,20 +448,21 @@ a URL that can be opened in browser
 
 #### Defined in
 
-[src/core/video.ts:199](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L199)
+[src/core/video.ts:360](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L360)
 
 ___
 
 ### search
 
-▸ **search**(`query`, `searchType?`, `resultThreshold?`, `scoreThreshold?`): `Promise`\<[`SearchResult`](core_search_searchResult.SearchResult.md)\>
+▸ **search**(`query`, `searchType?`, `indexType?`, `resultThreshold?`, `scoreThreshold?`): `Promise`\<[`SearchResult`](core_search_searchResult.SearchResult.md)\>
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `query` | `string` | Search query |
-| `searchType?` | ``"semantic"`` \| ``"keyword"`` \| ``"scene"`` | - |
+| `searchType?` | ``"keyword"`` \| ``"semantic"`` | - |
+| `indexType?` | ``"scene"`` \| ``"spoken"`` | - |
 | `resultThreshold?` | `number` | [optional] Result Threshold |
 | `scoreThreshold?` | `number` | [optional] Score Threshold |
 
@@ -349,4 +476,4 @@ ___
 
 #### Defined in
 
-[src/core/video.ts:41](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/video.ts#L41)
+[src/core/video.ts:66](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/video.ts#L66)

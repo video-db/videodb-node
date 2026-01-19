@@ -41,7 +41,7 @@
 
 #### Defined in
 
-[src/core/search/searchResult.ts:15](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/searchResult.ts#L15)
+[src/core/search/searchResult.ts:15](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/search/searchResult.ts#L15)
 
 ## Properties
 
@@ -51,7 +51,7 @@
 
 #### Defined in
 
-[src/core/search/searchResult.ts:13](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/searchResult.ts#L13)
+[src/core/search/searchResult.ts:13](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/search/searchResult.ts#L13)
 
 ___
 
@@ -61,7 +61,7 @@ ___
 
 #### Defined in
 
-[src/core/search/searchResult.ts:12](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/searchResult.ts#L12)
+[src/core/search/searchResult.ts:12](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/search/searchResult.ts#L12)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 
 #### Defined in
 
-[src/core/search/searchResult.ts:10](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/searchResult.ts#L10)
+[src/core/search/searchResult.ts:10](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/search/searchResult.ts#L10)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 #### Defined in
 
-[src/core/search/searchResult.ts:11](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/searchResult.ts#L11)
+[src/core/search/searchResult.ts:11](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/search/searchResult.ts#L11)
 
 ## Methods
 
@@ -95,7 +95,7 @@ ___
 
 #### Defined in
 
-[src/core/search/searchResult.ts:41](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/searchResult.ts#L41)
+[src/core/search/searchResult.ts:41](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/search/searchResult.ts#L41)
 
 ___
 
@@ -109,4 +109,4 @@ ___
 
 #### Defined in
 
-[src/core/search/searchResult.ts:63](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/search/searchResult.ts#L63)
+[src/core/search/searchResult.ts:63](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/search/searchResult.ts#L63)

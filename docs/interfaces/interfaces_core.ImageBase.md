@@ -13,16 +13,17 @@ Base type for all Image objects
 - [collectionId](interfaces_core.ImageBase.md#collectionid)
 - [id](interfaces_core.ImageBase.md#id)
 - [name](interfaces_core.ImageBase.md#name)
+- [url](interfaces_core.ImageBase.md#url)
 
 ## Properties
 
 ### collectionId
 
-• **collectionId**: `string`
+• `Optional` **collectionId**: `string`
 
 #### Defined in
 
-[src/interfaces/core.ts:89](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L89)
+[src/interfaces/core.ts:85](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L85)
 
 ___
 
@@ -32,14 +33,24 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:90](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L90)
+[src/interfaces/core.ts:86](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L86)
 
 ___
 
 ### name
 
-• **name**: `string`
+• `Optional` **name**: `string`
 
 #### Defined in
 
-[src/interfaces/core.ts:91](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L91)
+[src/interfaces/core.ts:87](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L87)
+
+___
+
+### url
+
+• `Optional` **url**: `string`
+
+#### Defined in
+
+[src/interfaces/core.ts:88](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L88)

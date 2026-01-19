@@ -12,23 +12,30 @@
 
 ### Properties
 
+- [description](core_scene.Scene.md#description)
 - [end](core_scene.Scene.md#end)
-- [response](core_scene.Scene.md#response)
+- [frames](core_scene.Scene.md#frames)
+- [id](core_scene.Scene.md#id)
 - [start](core_scene.Scene.md#start)
+- [videoId](core_scene.Scene.md#videoid)
+
+### Methods
+
+- [describe](core_scene.Scene.md#describe)
+- [getRequestData](core_scene.Scene.md#getrequestdata)
 
 ## Constructors
 
 ### constructor
 
-• **new Scene**(`response`, `start`, `end`): [`Scene`](core_scene.Scene.md)
+• **new Scene**(`http`, `data`): [`Scene`](core_scene.Scene.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `response` | `string` |
-| `start` | `number` |
-| `end` | `number` |
+| `http` | [`HttpClient`](utils_httpClient.HttpClient.md) |
+| `data` | [`SceneBase`](../interfaces/core_scene.SceneBase.md) |
 
 #### Returns
 
@@ -36,9 +43,19 @@
 
 #### Defined in
 
-[src/core/scene.ts:6](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/scene.ts#L6)
+[src/core/scene.ts:30](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/scene.ts#L30)
 
 ## Properties
+
+### description
+
+• **description**: `undefined` \| `string`
+
+#### Defined in
+
+[src/core/scene.ts:27](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/scene.ts#L27)
+
+___
 
 ### end
 
@@ -46,17 +63,27 @@
 
 #### Defined in
 
-[src/core/scene.ts:4](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/scene.ts#L4)
+[src/core/scene.ts:25](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/scene.ts#L25)
 
 ___
 
-### response
+### frames
 
-• **response**: `string`
+• **frames**: [`Frame`](core_image.Frame.md)[]
 
 #### Defined in
 
-[src/core/scene.ts:2](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/scene.ts#L2)
+[src/core/scene.ts:26](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/scene.ts#L26)
+
+___
+
+### id
+
+• **id**: `string`
+
+#### Defined in
+
+[src/core/scene.ts:22](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/scene.ts#L22)
 
 ___
 
@@ -66,4 +93,49 @@ ___
 
 #### Defined in
 
-[src/core/scene.ts:3](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/scene.ts#L3)
+[src/core/scene.ts:24](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/scene.ts#L24)
+
+___
+
+### videoId
+
+• **videoId**: `string`
+
+#### Defined in
+
+[src/core/scene.ts:23](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/scene.ts#L23)
+
+## Methods
+
+### describe
+
+▸ **describe**(`prompt?`, `modelName?`): `Promise`\<`string`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `prompt?` | `string` |
+| `modelName?` | `string` |
+
+#### Returns
+
+`Promise`\<`string`\>
+
+#### Defined in
+
+[src/core/scene.ts:40](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/scene.ts#L40)
+
+___
+
+### getRequestData
+
+▸ **getRequestData**(): `object`
+
+#### Returns
+
+`object`
+
+#### Defined in
+
+[src/core/scene.ts:54](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/scene.ts#L54)

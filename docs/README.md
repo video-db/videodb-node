@@ -38,6 +38,46 @@ videodb / [Exports](modules.md)
 
 VideoDB Node.js SDK allows you to interact with the VideoDB serverless database. Manage videos as intelligent data, not files. It's scalable, cost efficient & optimized for AI applications and LLM integration.
 
+<!-- TABLE OF CONTENTS -->
+# Table of Contents
+
+- [About The Project](#videoDB-nodejs-sdk)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  * [Creating a Connection](#creating-a-connection)
+  * [Getting a Connection](#getting-a-collection)
+- [Working with a single video](#working-with-a-single-video)
+  * [⬆️ Upload Video](#upload-video)
+  * [📺 View your Video](#view-your-video)
+  * [⛓️ Stream Sections of videos](#stream-sections-of-videos)
+  * [🗂️ Indexing a Video](#indexing-a-video)
+  * [🔍 Searching inside a video](#searching-inside-a-video)
+  * [Viewing Search Results](#viewing-search-results)
+- [RAG: Search inside Multiple Videos](#rag-search-inside-multiple-videos)
+  * [🔄 Using Collection to Upload Multiple Videos](#using-collection-to-upload-multiple-videos)
+  * [📂 Search inside multiple videos in a collection](#search-inside-multiple-videos-in-a-collection)
+- [Timeline And Assets](#timeline-and-assets)
+  * [Understanding Assets](#understanding-assets)
+  * [Creating Assets](#creating-assets)
+    * [VideoAsset](#videoasset)
+    * [AudioAsset](#audioasset)
+    * [ImageAsset](#imageasset)
+    * [TextAsset](#textasset)
+  * [Understanding Timeline](#understanding-timeline)
+  * [Creating Timeline](#creating-timeline)
+- [More on `Video` object](#more-on-video-object)
+  * [Get the video's transcript](#get-the-videos-transcript)
+  * [Get the video's thumbnail](#get-the-videos-thumbnail)
+  * [Overlay Subtitle on video](#overlay-subtitle-on-video)
+  * [Delete the video](#delete-the-video)
+- [More on `Collection` object](#more-on-collection-object)
+  * [Get all videos](#get-all-videos)
+  * [Get a video given videoId](#get-a-video-given-videoid)
+  * [Delete a video](#delete-a-video)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
 <!-- Installation -->
 
 ## Installation
@@ -86,7 +126,7 @@ Or using `async`/`await`
 
 ## Working with a single video
 
-#### ⬆️ Upload Video
+#### Upload Video
 
 Now that you have established a connection to VideoDB, you can upload your videos using `coll.uploadURL()` or `coll.uploadFile()`.  
 You can directly upload files from `youtube`, `any public url`, `S3 bucket` or a `local file path`. A default collection is created when you create your first connection.
@@ -109,7 +149,7 @@ uploadJob.on('error', err => {
 uploadJob.start();
 ```
 
-#### 📺 View your Video
+#### View your Video
 
 Once uploaded, your video is immediately available for viewing in 720p resolution. ⚡️
 
@@ -125,7 +165,7 @@ const playerUrl = await video.play();
 console.log('Video Preview : ', playerUrl);
 ```
 
-#### ⛓️ Stream Sections of videos
+#### Stream Sections of videos
 
 You can easily clip specific sections of a video by passing a timeline of the start and end timestamps (in seconds) as a parameter.
 For example, this will generate a streaming URL for a compilation of the fist `10 seconds`, and the part between the `120th` and the `140th` second.
@@ -142,7 +182,7 @@ const streamPreview = playStream(streamLink);
 console.log('Clipped Video Preview : ', streamPreview);
 ```
 
-#### 🗂️ Indexing a Video
+#### Indexing a Video
 
 To search bits inside a video, you have to first index the video. This can be done by a invoking the index function on the `Video`. VideoDB offers two type of indexes currently.
 
@@ -168,7 +208,7 @@ job2.start();
 >
 > ⏱️ Indexing may take some time for longer videos, structure it as a batch job in your application.
 
-#### 🔍 Searching inside a video
+#### Searching inside a video
 
 Search the segments inside a video. While searching you have options to choose the type of search. VideoDB offers following type of search :
 
@@ -192,7 +232,7 @@ indexJob.start();
 
 Similarly, you can index and search from scenes using `Video.indexScenes()`
 
-#### Viewing Search Results :
+#### Viewing Search Results
 
 `video.search()` will return a `SearchResult` object, which contains the sections or as we call them, `shots` of videos which semantically match your search query.
 
@@ -203,7 +243,7 @@ Similarly, you can index and search from scenes using `Video.indexScenes()`
 
 `VideoDB` can store and search inside multiple videos with ease. By default, videos are uploaded to your default collection.
 
-#### 🔄 Using Collection to Upload Multiple Videos
+#### Using Collection to Upload Multiple Videos
 
 ```ts
 const uploadJobHandler = video => {
@@ -237,7 +277,7 @@ job3.start();
 - `Collection.getVideo(videoId)`: Returns Video, respective video object from given `videoId`
 - `Collection.deleteVideo(videoId)`: Deletes the video from Collection
 
-#### 📂 Search inside multiple videos in a collection
+#### Search inside multiple videos in a collection
 
 You can simply Index all the videos in a collection and use the search method to find relevant results. Here we are indexing the spoken content of a collection and performing semantic search.
 
@@ -269,7 +309,7 @@ The result here has all the matching bits in a single stream from your collectio
 
 > As you can see VideoDB fundamentally removes the limitation of files and gives you power to access and stream videos in a very seamless way. Stay tuned for exciting features in our upcoming version and keep building awesome stuff with VideoDB 🤘
 
-## 🎞 Timeline And Assets
+## Timeline And Assets
 
 **Timeline and Assets** lets you create programmatic compilation streams with audio, image and text overlays using your video data in VideoDB.
 

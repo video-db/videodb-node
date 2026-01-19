@@ -47,7 +47,7 @@ Video class interface for reference
 
 #### Defined in
 
-[src/interfaces/core.ts:63](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L63)
+[src/interfaces/core.ts:59](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L59)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:53](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L53)
+[src/interfaces/core.ts:52](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L52)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:62](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L62)
+[src/interfaces/core.ts:58](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L58)
 
 ___
 
@@ -113,17 +113,17 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:55](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L55)
+[src/interfaces/core.ts:54](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L54)
 
 ___
 
 ### indexScenes
 
-• **indexScenes**: (`config`: [`IndexSceneConfig`](../modules/types_config.md#indexsceneconfig)) => [`IndexJob`](../classes/utils_job.IndexJob.md)
+• **indexScenes**: (`config`: [`IndexSceneConfig`](../modules/types_config.md#indexsceneconfig)) => `Promise`\<`undefined` \| `string`\>
 
 #### Type declaration
 
-▸ (`config`): [`IndexJob`](../classes/utils_job.IndexJob.md)
+▸ (`config`): `Promise`\<`undefined` \| `string`\>
 
 ##### Parameters
 
@@ -133,11 +133,11 @@ ___
 
 ##### Returns
 
-[`IndexJob`](../classes/utils_job.IndexJob.md)
+`Promise`\<`undefined` \| `string`\>
 
 #### Defined in
 
-[src/interfaces/core.ts:57](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L57)
+[src/interfaces/core.ts:56](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L56)
 
 ___
 
@@ -155,7 +155,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:56](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L56)
+[src/interfaces/core.ts:55](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L55)
 
 ___
 
@@ -165,7 +165,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:51](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L51)
+[src/interfaces/core.ts:50](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L50)
 
 ___
 
@@ -183,13 +183,13 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:54](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L54)
+[src/interfaces/core.ts:53](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L53)
 
 ___
 
 ### search
 
-• **search**: (`query`: `string`, `searchType?`: [`SearchTypeValues`](../enums/core_search.SearchTypeValues.md)) => `Promise`\<[`SearchResult`](../classes/core_search_searchResult.SearchResult.md)\>
+• **search**: (`query`: `string`, `searchType?`: ``"keyword"`` \| ``"semantic"``) => `Promise`\<[`SearchResult`](../classes/core_search_searchResult.SearchResult.md)\>
 
 #### Type declaration
 
@@ -200,7 +200,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `query` | `string` |
-| `searchType?` | [`SearchTypeValues`](../enums/core_search.SearchTypeValues.md) |
+| `searchType?` | ``"keyword"`` \| ``"semantic"`` |
 
 ##### Returns
 
@@ -208,7 +208,7 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:58](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L58)
+[src/interfaces/core.ts:57](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L57)
 
 ___
 
@@ -218,4 +218,4 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:52](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L52)
+[src/interfaces/core.ts:51](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L51)

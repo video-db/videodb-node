@@ -20,7 +20,10 @@ primary collection.
 
 ### Methods
 
+- [createCollection](core_connection.Connection.md#createcollection)
 - [getCollection](core_connection.Connection.md#getcollection)
+- [getCollections](core_connection.Connection.md#getcollections)
+- [updateCollection](core_connection.Connection.md#updatecollection)
 - [uploadFile](core_connection.Connection.md#uploadfile)
 - [uploadURL](core_connection.Connection.md#uploadurl)
 
@@ -43,7 +46,7 @@ primary collection.
 
 #### Defined in
 
-[src/core/connection.ts:22](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L22)
+[src/core/connection.ts:25](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/connection.ts#L25)
 
 ## Properties
 
@@ -53,9 +56,34 @@ primary collection.
 
 #### Defined in
 
-[src/core/connection.ts:21](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L21)
+[src/core/connection.ts:24](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/connection.ts#L24)
 
 ## Methods
+
+### createCollection
+
+▸ **createCollection**(`name`, `description`): `Promise`\<[`Collection`](core_collection.Collection.md)\>
+
+Create a new collection
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `name` | `string` | Name of the collection |
+| `description` | `string` | Description of the collection |
+
+#### Returns
+
+`Promise`\<[`Collection`](core_collection.Collection.md)\>
+
+Returns a new Collection object
+
+#### Defined in
+
+[src/core/connection.ts:65](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/connection.ts#L65)
+
+___
 
 ### getCollection
 
@@ -78,7 +106,51 @@ else returns the default collection.
 
 #### Defined in
 
-[src/core/connection.ts:33](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L33)
+[src/core/connection.ts:36](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/connection.ts#L36)
+
+___
+
+### getCollections
+
+▸ **getCollections**(): `Promise`\<[`Collection`](core_collection.Collection.md)[]\>
+
+Get all Collections from db
+
+#### Returns
+
+`Promise`\<[`Collection`](core_collection.Collection.md)[]\>
+
+Returns an array of Collection objects
+
+#### Defined in
+
+[src/core/connection.ts:48](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/connection.ts#L48)
+
+___
+
+### updateCollection
+
+▸ **updateCollection**(`id`, `name`, `description`): `Promise`\<[`Collection`](core_collection.Collection.md)\>
+
+Update a collection
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | `string` | ID of the collection |
+| `name` | `string` | Name of the collection |
+| `description` | `string` | - |
+
+#### Returns
+
+`Promise`\<[`Collection`](core_collection.Collection.md)\>
+
+Returns an updated Collection object
+
+#### Defined in
+
+[src/core/connection.ts:85](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/connection.ts#L85)
 
 ___
 
@@ -104,7 +176,7 @@ will return a Job object (TODO: Implement proper type for this condition)
 
 #### Defined in
 
-[src/core/connection.ts:50](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L50)
+[src/core/connection.ts:111](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/connection.ts#L111)
 
 ___
 
@@ -130,4 +202,4 @@ will return a Job object (TODO: Implement proper type for this condition)
 
 #### Defined in
 
-[src/core/connection.ts:67](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/connection.ts#L67)
+[src/core/connection.ts:128](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/connection.ts#L128)
