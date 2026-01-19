@@ -60,7 +60,7 @@ export interface IVideo {
   indexSpokenWords: () => Promise<{ success: boolean; message?: string }>;
   indexScenes: (config: IndexSceneConfig) => Promise<string | undefined>;
   search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
-  generateThumbnail: () => Promise<string>;
+  generateThumbnail: (time?: number) => Promise<string | Image>;
   addSubtitle: (config: SubtitleStyleProps) => Promise<string>;
 }
 
@@ -149,4 +149,87 @@ export interface ITimeline {
   addInline(asset: VideoAsset): void;
   addOverlay(start: number, asset: AudioAsset): void;
   generateStream(): Promise<string>;
+}
+
+/**
+ * Base type for Meeting objects
+ */
+export interface MeetingBase {
+  id: string;
+  collectionId: string;
+  botName?: string;
+  meetingTitle?: string;
+  meetingUrl?: string;
+  status?: string;
+  timeZone?: string;
+  videoId?: string;
+  speakerTimeline?: Record<string, unknown>;
+}
+
+/**
+ * Base type for RTStream objects
+ */
+export interface RTStreamBase {
+  id: string;
+  name?: string;
+  collectionId?: string;
+  createdAt?: string;
+  sampleRate?: number;
+  status?: string;
+}
+
+/**
+ * Base type for RTStreamSceneIndex objects
+ */
+export interface RTStreamSceneIndexBase {
+  rtstreamIndexId: string;
+  rtstreamId: string;
+  extractionType?: string;
+  extractionConfig?: Record<string, unknown>;
+  prompt?: string;
+  name?: string;
+  status?: string;
+}
+
+/**
+ * Configuration for RTStream scene indexing
+ */
+export interface IndexScenesConfig {
+  extractionType?: string;
+  extractionConfig?: Record<string, unknown>;
+  prompt?: string;
+  modelName?: string;
+  modelConfig?: Record<string, unknown>;
+  name?: string;
+}
+
+/**
+ * Video configuration for transcoding
+ */
+export interface VideoConfig {
+  resolution?: number;
+  quality?: number;
+  framerate?: number;
+  aspectRatio?: string;
+  resizeMode?: string;
+}
+
+/**
+ * Audio configuration for transcoding
+ */
+export interface AudioConfig {
+  mute?: boolean;
+}
+
+/**
+ * Configuration for recording a meeting
+ */
+export interface RecordMeetingConfig {
+  meetingUrl: string;
+  botName?: string;
+  botImageUrl?: string;
+  meetingTitle?: string;
+  callbackUrl?: string;
+  callbackData?: Record<string, unknown>;
+  timeZone?: string;
 }

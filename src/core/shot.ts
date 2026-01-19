@@ -2,6 +2,7 @@ import { ApiPath } from '@/constants';
 import type { IShot, ShotBase } from '@/interfaces/core';
 import type { GenerateStreamResponse } from '@/types/response';
 import type { Timeline } from '@/types/video';
+import { playStream } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 
 const { video, stream } = ApiPath;
@@ -33,5 +34,14 @@ export class Shot implements IShot {
     );
 
     return res.data.streamUrl;
+  };
+
+  /**
+   * Generate stream and open in browser
+   * @returns The player URL
+   */
+  play = async () => {
+    const streamUrl = await this.generateStream();
+    return playStream(streamUrl);
   };
 }
