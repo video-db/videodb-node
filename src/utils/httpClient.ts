@@ -19,6 +19,7 @@ import axios, {
   AxiosResponse,
   HttpStatusCode,
 } from 'axios';
+import FormData from 'form-data';
 
 const POLLING_INTERVAL = 5000;
 const MAX_POLLING_TIME = 500000;
