@@ -18,7 +18,7 @@
     "once": "ts-node -r tsconfig-paths/register  src/index.ts",
     "docs:gen": "npm run docs:del && typedoc --plugin typedoc-plugin-markdown",
     "docs:del": "rm -rf ./docs",
-    "docs:html": "rm -rf ./docs-html && typedoc --out docs-html --entryPoints ./src/ --entryPointStrategy expand --excludePrivate --customCss ./typedoc-theme.css",
+    "docs:html": "rm -rf ./docs-html && typedoc --out docs-html --entryPoints ./src/ --entryPointStrategy expand --excludePrivate",
     "docs:serve": "npm run docs:html && npx serve docs-html",
     "prepublishOnly": "npm run build"
   },
