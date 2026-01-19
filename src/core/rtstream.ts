@@ -1,11 +1,95 @@
-import { ApiPath } from '@/constants';
+import { ApiPath, Segmenter } from '@/constants';
 import { SceneExtractionType } from '@/core/config';
 import type {
   RTStreamBase,
   RTStreamSceneIndexBase,
+  RTStreamShotBase,
   IndexScenesConfig,
+  RTStreamIndexSpokenWordsConfig,
+  RTStreamSearchConfig,
 } from '@/interfaces/core';
 import { HttpClient } from '@/utils/httpClient';
+import { playStream } from '@/utils';
+
+/**
+ * RTStreamShot class for rtstream search results
+ */
+export class RTStreamShot {
+  public rtstreamId: string;
+  public rtstreamName?: string;
+  public start: number;
+  public end: number;
+  public text?: string;
+  public searchScore?: number;
+  public sceneIndexId?: string;
+  public sceneIndexName?: string;
+  public metadata?: Record<string, unknown>;
+  public streamUrl?: string;
+  public playerUrl?: string;
+  #vhttp: HttpClient;
+
+  constructor(http: HttpClient, data: RTStreamShotBase) {
+    this.#vhttp = http;
+    this.rtstreamId = data.rtstreamId;
+    this.rtstreamName = data.rtstreamName;
+    this.start = data.start;
+    this.end = data.end;
+    this.text = data.text;
+    this.searchScore = data.searchScore;
+    this.sceneIndexId = data.sceneIndexId;
+    this.sceneIndexName = data.sceneIndexName;
+    this.metadata = data.metadata;
+  }
+
+  /**
+   * Generate a stream url for the shot
+   * @returns The stream url
+   */
+  public generateStream = async (): Promise<string | null> => {
+    if (this.streamUrl) return this.streamUrl;
+
+    const res = await this.#vhttp.get<{ streamUrl: string; playerUrl: string }>(
+      [ApiPath.rtstream, this.rtstreamId, ApiPath.stream],
+      { params: { start: Math.floor(this.start), end: Math.floor(this.end) } }
+    );
+    this.streamUrl = res.data?.streamUrl;
+    this.playerUrl = res.data?.playerUrl;
+    return this.streamUrl || null;
+  };
+
+  /**
+   * Generate a stream url for the shot and open it in the default browser
+   * @returns The stream url
+   */
+  public play = async (): Promise<string | null> => {
+    await this.generateStream();
+    if (this.streamUrl) {
+      return playStream(this.streamUrl);
+    }
+    return null;
+  };
+}
+
+/**
+ * RTStreamSearchResult class to interact with rtstream search results
+ */
+export class RTStreamSearchResult {
+  public collectionId: string;
+  public shots: RTStreamShot[];
+
+  constructor(collectionId: string, shots: RTStreamShot[]) {
+    this.collectionId = collectionId;
+    this.shots = shots;
+  }
+
+  /**
+   * Get the list of shots from the search result
+   * @returns List of RTStreamShot objects
+   */
+  public getShots = (): RTStreamShot[] => {
+    return this.shots;
+  };
+}
 
 /**
  * RTStreamSceneIndex class to interact with the rtstream scene index
@@ -329,5 +413,125 @@ export class RTStream {
       name: res.data.name,
       status: res.data.status,
     });
+  };
+
+  /**
+   * Index spoken words from the rtstream transcript
+   * @param config - Configuration for spoken words indexing
+   * @returns RTStreamSceneIndex object
+   */
+  public indexSpokenWords = async (
+    config: Partial<RTStreamIndexSpokenWordsConfig> = {}
+  ): Promise<RTStreamSceneIndex | null> => {
+    const extractionConfig: Record<string, unknown> = {
+      segmenter: config.segmenter ?? Segmenter.word,
+      segmentation_value: config.length ?? 10,
+    };
+
+    const data: Record<string, unknown> = {
+      extractionType: SceneExtractionType.transcript,
+      extractionConfig,
+      prompt: config.prompt,
+      modelName: config.modelName,
+      modelConfig: config.modelConfig ?? {},
+      name: config.name,
+    };
+    if (config.wsConnectionId) {
+      data.wsConnectionId = config.wsConnectionId;
+    }
+
+    const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
+      [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
+      data
+    );
+
+    if (!res.data) return null;
+
+    return new RTStreamSceneIndex(this.#vhttp, {
+      rtstreamIndexId: res.data.rtstreamIndexId,
+      rtstreamId: this.id,
+      extractionType: res.data.extractionType,
+      extractionConfig: res.data.extractionConfig,
+      prompt: res.data.prompt,
+      name: res.data.name,
+      status: res.data.status,
+    });
+  };
+
+  /**
+   * Get transcription data from the rtstream
+   * @param page - Page number (default: 1)
+   * @param pageSize - Items per page (default: 100, max: 1000)
+   * @param start - Start timestamp filter (optional)
+   * @param end - End timestamp filter (optional)
+   * @param since - For polling - only get transcriptions after this timestamp (optional)
+   * @param engine - Transcription engine (optional)
+   * @returns Transcription data with segments and metadata
+   */
+  public getTranscript = async (
+    page: number = 1,
+    pageSize: number = 100,
+    start?: number,
+    end?: number,
+    since?: number,
+    engine?: string
+  ): Promise<Record<string, unknown>> => {
+    const params: Record<string, unknown> = {
+      page,
+      page_size: pageSize,
+    };
+    if (engine !== undefined) params.engine = engine;
+    if (start !== undefined) params.start = start;
+    if (end !== undefined) params.end = end;
+    if (since !== undefined) params.since = since;
+
+    const res = await this.#vhttp.get<Record<string, unknown>>(
+      [ApiPath.rtstream, this.id, ApiPath.transcription],
+      { params }
+    );
+    return res.data;
+  };
+
+  /**
+   * Search across scene index records for the rtstream
+   * @param config - Search configuration
+   * @returns RTStreamSearchResult object
+   */
+  public search = async (
+    config: RTStreamSearchConfig
+  ): Promise<RTStreamSearchResult> => {
+    const data: Record<string, unknown> = { query: config.query };
+
+    if (config.indexId !== undefined) data.sceneIndexId = config.indexId;
+    if (config.resultThreshold !== undefined)
+      data.resultThreshold = config.resultThreshold;
+    if (config.scoreThreshold !== undefined)
+      data.scoreThreshold = config.scoreThreshold;
+    if (config.dynamicScorePercentage !== undefined)
+      data.dynamicScorePercentage = config.dynamicScorePercentage;
+    if (config.filter !== undefined) data.filter = config.filter;
+
+    const res = await this.#vhttp.post<
+      { results: Array<Record<string, unknown>> },
+      typeof data
+    >([ApiPath.rtstream, this.id, ApiPath.search], data);
+
+    const results = res.data?.results || [];
+    const shots = results.map(
+      (result: Record<string, unknown>) =>
+        new RTStreamShot(this.#vhttp, {
+          rtstreamId: this.id,
+          rtstreamName: this.name,
+          start: (result.start as number) || 0,
+          end: (result.end as number) || 0,
+          text: result.text as string | undefined,
+          searchScore: result.score as number | undefined,
+          sceneIndexId: result.sceneIndexId as string | undefined,
+          sceneIndexName: result.sceneIndexName as string | undefined,
+          metadata: result.metadata as Record<string, unknown> | undefined,
+        })
+    );
+
+    return new RTStreamSearchResult(this.collectionId || '', shots);
   };
 }

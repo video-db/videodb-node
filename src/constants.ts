@@ -58,6 +58,11 @@ export const ApiPath = {
   record: 'record',
   reframe: 'reframe',
   editor: 'editor',
+  clip: 'clip',
+  capture: 'capture',
+  session: 'session',
+  token: 'token',
+  websocket: 'websocket',
 } as const;
 
 export const ResponseStatus = {
@@ -76,6 +81,11 @@ export const Segmenter = {
   time: 'time',
   word: 'word',
   sentence: 'sentence',
+} as const;
+
+export const SegmentationType = {
+  sentence: 'sentence',
+  llm: 'llm',
 } as const;
 
 export const ReframeMode = {

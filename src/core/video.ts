@@ -1,4 +1,10 @@
-import { ApiPath, ReframeMode, Segmenter, Workflows } from '@/constants';
+import {
+  ApiPath,
+  ReframeMode,
+  Segmenter,
+  SegmentationType,
+  Workflows,
+} from '@/constants';
 import type {
   IVideo,
   VideoBase,
@@ -28,6 +34,7 @@ import {
   SceneExtractionType,
 } from '@/core/config';
 import { SearchFactory } from './search';
+import { SearchResult } from './search/searchResult';
 import {
   ExtractSceneConfig,
   IndexSceneConfig,
@@ -54,6 +61,7 @@ const {
   reframe,
   compile,
   collection,
+  clip,
 } = ApiPath;
 
 /**
@@ -66,6 +74,7 @@ export class Video implements IVideo {
   public readonly collectionId: string;
   public readonly length: string;
   public readonly name: string;
+  public readonly description?: string;
   public readonly size: string;
   public readonly streamUrl: string;
   public readonly userId: string;
@@ -84,6 +93,7 @@ export class Video implements IVideo {
     this.collectionId = data.collectionId;
     this.length = data.length;
     this.name = data.name;
+    this.description = data.description;
     this.size = data.size;
     this.streamUrl = data.streamUrl;
     this.userId = data.userId;
@@ -93,18 +103,23 @@ export class Video implements IVideo {
   }
 
   /**
+   * Search for a query in the video
    * @param query - Search query
-   * @param searchType- [optional] Type of search to be performed
-   * @param indexType- [optional] Index Type
+   * @param searchType - [optional] Type of search to be performed
+   * @param indexType - [optional] Index Type
    * @param resultThreshold - [optional] Result Threshold
    * @param scoreThreshold - [optional] Score Threshold
+   * @param dynamicScorePercentage - [optional] Percentage of dynamic score to consider
+   * @param filter - [optional] Additional metadata filters
    */
   public search = async (
     query: string,
     searchType?: SearchType,
     indexType?: IndexType,
     resultThreshold?: number,
-    scoreThreshold?: number
+    scoreThreshold?: number,
+    dynamicScorePercentage?: number,
+    filter?: Array<Record<string, unknown>>
   ) => {
     const s = new SearchFactory(this.#vhttp);
     const searchFunc = s.getSearch(searchType ?? DefaultSearchType);
@@ -115,6 +130,8 @@ export class Video implements IVideo {
       indexType: indexType ?? DefaultIndexType,
       resultThreshold: resultThreshold,
       scoreThreshold: scoreThreshold,
+      dynamicScorePercentage: dynamicScorePercentage,
+      filter: filter,
     });
     return results;
   };
@@ -182,18 +199,42 @@ export class Video implements IVideo {
   /**
    * Fetches the transcript of the video if it exists, generates one
    * if it doesn't.
-   * @param forceCreate - Forces transcript generation even if it exists
+   * @param start - Start time in seconds (optional)
+   * @param end - End time in seconds (optional)
+   * @param segmenter - Segmentation type (word, sentence, time) (optional)
+   * @param length - Length of segments when using time segmenter (optional)
+   * @param force - Force fetch new transcript (optional)
    * @returns The transcript data
    */
-  public getTranscript = async (forceCreate = false): Promise<Transcript> => {
-    if (this.transcript && !forceCreate) return this.transcript;
+  public getTranscript = async (
+    start?: number,
+    end?: number,
+    segmenter?: string,
+    length?: number,
+    force?: boolean
+  ): Promise<Transcript> => {
+    if (
+      this.transcript &&
+      !start &&
+      !end &&
+      !segmenter &&
+      !length &&
+      !force
+    ) {
+      return this.transcript;
+    }
 
-    const res = await this.#vhttp.get<TranscriptResponse>([
-      video,
-      this.id,
-      transcription,
-      `?force=${String(forceCreate)}`,
-    ]);
+    const params: Record<string, unknown> = {};
+    if (start !== undefined) params.start = start;
+    if (end !== undefined) params.end = end;
+    if (segmenter !== undefined) params.segmenter = segmenter;
+    if (length !== undefined) params.length = length;
+    if (force !== undefined) params.force = force ? 'true' : 'false';
+
+    const res = await this.#vhttp.get<TranscriptResponse>(
+      [video, this.id, transcription],
+      { params }
+    );
 
     this.transcript = res.data as Transcript;
     return this.transcript;
@@ -223,16 +264,34 @@ export class Video implements IVideo {
   };
 
   /**
-   * Indexes the video semantically
+   * Semantic indexing of spoken words in the video
+   * @param languageCode - Language code of the video (optional)
+   * @param segmentationType - Segmentation type used for indexing (optional, default: sentence)
+   * @param force - Force to index the video (optional)
+   * @param callbackUrl - URL to receive the callback (optional)
    * @returns Whether the process was successful
    */
-  public indexSpokenWords = async (): Promise<{
+  public indexSpokenWords = async (
+    languageCode?: string,
+    segmentationType?: string,
+    force?: boolean,
+    callbackUrl?: string
+  ): Promise<{
     success: boolean;
     message?: string;
   }> => {
-    const res = await this.#vhttp.post<NoDataResponse, { indexType: string }>(
+    const data: Record<string, unknown> = {
+      indexType: IndexTypeValues.spoken,
+    };
+    if (languageCode !== undefined) data.languageCode = languageCode;
+    if (segmentationType !== undefined)
+      data.segmentationType = segmentationType;
+    if (force !== undefined) data.force = force;
+    if (callbackUrl !== undefined) data.callbackUrl = callbackUrl;
+
+    const res = await this.#vhttp.post<NoDataResponse, typeof data>(
       [video, this.id, index],
-      { indexType: IndexTypeValues.spoken }
+      data
     );
 
     if (res.data?.success !== undefined) {
@@ -594,6 +653,44 @@ export class Video implements IVideo {
     callbackUrl?: string
   ): Promise<Video | undefined> => {
     return this.reframe(start, end, 'vertical', ReframeMode.smart, callbackUrl);
+  };
+
+  /**
+   * Generate a clip from the video using a prompt
+   * @param prompt - Prompt to generate the clip
+   * @param contentType - Content type for the clip
+   * @param modelName - Model name for generation
+   * @returns SearchResult object containing the clip
+   */
+  public clip = async (
+    prompt: string,
+    contentType: string,
+    modelName: string
+  ): Promise<SearchResult> => {
+    type ClipResponse = {
+      results: Array<{
+        collectionId: string;
+        docs: Array<{
+          end: number;
+          score: number;
+          start: number;
+          streamUrl: string;
+          text: string;
+        }>;
+        length: string;
+        maxScore: number;
+        platform: string;
+        streamUrl: string;
+        thumbnail: string;
+        title: string;
+        videoId: string;
+      }>;
+    };
+    const res = await this.#vhttp.post<ClipResponse, object>(
+      [video, this.id, clip],
+      { prompt, contentType, modelName }
+    );
+    return new SearchResult(this.#vhttp, res.data);
   };
 
   /**

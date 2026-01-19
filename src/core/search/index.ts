@@ -136,10 +136,51 @@ class KeywordSearch
   };
 }
 
+class LLMSearch
+  implements Search<SemanticVideoSearch, SemanticCollectionSearch>
+{
+  #vhttp: HttpClient;
+  constructor(http: HttpClient) {
+    this.#vhttp = http;
+  }
+
+  private getRequestData = (
+    data: SemanticVideoSearch | SemanticCollectionSearch
+  ) => {
+    return {
+      index_type: SearchTypeValues.llm,
+      query: data.query,
+      score_threshold:
+        data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
+      result_threshold:
+        data.resultThreshold ?? SemanticSearchDefaultValues.resultThreshold,
+    };
+  };
+
+  searchInsideVideo = async (data: SemanticVideoSearch) => {
+    const reqData = this.getRequestData(data);
+    const res = await this.#vhttp.post<SearchResponse, typeof reqData>(
+      [video, data.videoId, search],
+      reqData
+    );
+    return new SearchResult(this.#vhttp, res.data);
+  };
+
+  searchInsideCollection = async (data: SemanticCollectionSearch) => {
+    const reqData = this.getRequestData(data);
+    const res = await this.#vhttp.post<SearchResponse, typeof reqData>(
+      [collection, data.collectionId, search],
+      reqData
+    );
+    return new SearchResult(this.#vhttp, res.data);
+  };
+}
+
 const searchType = {
   semantic: SemanticSearch,
   keyword: KeywordSearch,
   scene: SceneSearch,
+  llm: LLMSearch,
 };
 
 export class SearchFactory {

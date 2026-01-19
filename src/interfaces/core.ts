@@ -15,6 +15,7 @@ export interface CollectionBase {
   id: string;
   name?: string;
   description?: string;
+  isPublic?: boolean;
 }
 /**
  * Collection class interface for reference
@@ -29,7 +30,8 @@ export interface ICollection extends CollectionBase {
   uploadURL: (
     data: URLUploadConfig
   ) => Promise<Video | Audio | Image | undefined>;
-  search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
+  // Note: search method signature is more complex in implementation to support RTStream namespace
+  search: (query: string, searchType?: SearchType) => Promise<unknown>;
 }
 
 /**
@@ -40,6 +42,7 @@ export interface VideoBase {
   id: string;
   length: string;
   name: string;
+  description?: string;
   size: string;
   streamUrl: StreamableURL;
   userId: string;
@@ -55,8 +58,19 @@ export interface IVideo extends Omit<VideoBase, 'thumbnail'> {
   transcript?: Transcript;
   generateStream: (timeline: Timeline) => Promise<string>;
   play: () => string;
-  getTranscript: (forceCreate?: boolean) => Promise<Transcript>;
-  indexSpokenWords: () => Promise<{ success: boolean; message?: string }>;
+  getTranscript: (
+    start?: number,
+    end?: number,
+    segmenter?: string,
+    length?: number,
+    force?: boolean
+  ) => Promise<Transcript>;
+  indexSpokenWords: (
+    languageCode?: string,
+    segmentationType?: string,
+    force?: boolean,
+    callbackUrl?: string
+  ) => Promise<{ success: boolean; message?: string }>;
   indexScenes: (config: IndexSceneConfig) => Promise<string | undefined>;
   search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
   generateThumbnail: (time?: number) => Promise<string | Image>;
@@ -197,6 +211,47 @@ export interface IndexScenesConfig {
   modelName?: string;
   modelConfig?: Record<string, unknown>;
   name?: string;
+  wsConnectionId?: string;
+}
+
+/**
+ * Base type for RTStreamShot objects
+ */
+export interface RTStreamShotBase {
+  rtstreamId: string;
+  rtstreamName?: string;
+  start: number;
+  end: number;
+  text?: string;
+  searchScore?: number;
+  sceneIndexId?: string;
+  sceneIndexName?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Configuration for RTStream index spoken words
+ */
+export interface RTStreamIndexSpokenWordsConfig {
+  prompt?: string;
+  segmenter?: string;
+  length?: number;
+  modelName?: string;
+  modelConfig?: Record<string, unknown>;
+  name?: string;
+  wsConnectionId?: string;
+}
+
+/**
+ * Configuration for RTStream search
+ */
+export interface RTStreamSearchConfig {
+  query: string;
+  indexId?: string;
+  resultThreshold?: number;
+  scoreThreshold?: number;
+  dynamicScorePercentage?: number;
+  filter?: Array<Record<string, unknown>>;
 }
 
 /**

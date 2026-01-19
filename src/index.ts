@@ -28,6 +28,9 @@ export {
   SceneExtractionType,
   SearchTypeValues,
   IndexTypeValues,
+  SubtitleStyle,
+  VideoConfigClass,
+  AudioConfigClass,
 } from './core/config';
 export {
   ImageAssetConfig,
@@ -41,7 +44,14 @@ export { Scene, SceneCollection } from './core/scene';
 export { VideodbError } from './utils/error';
 export { SearchResult } from './core/search/searchResult';
 export { Meeting } from './core/meeting';
-export { RTStream, RTStreamSceneIndex } from './core/rtstream';
+export {
+  RTStream,
+  RTStreamSceneIndex,
+  RTStreamSearchResult,
+  RTStreamShot,
+} from './core/rtstream';
+export { WebSocketConnection, type WebSocketMessage } from './core/websocket';
+export { CaptureSession, type CaptureSessionBase } from './core/captureSession';
 
 // Editor module exports
 export {
@@ -103,6 +113,7 @@ export {
 export {
   MeetingStatus,
   Segmenter,
+  SegmentationType,
   ReframeMode,
   TranscodeMode,
   ResizeMode,

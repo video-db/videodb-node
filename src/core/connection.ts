@@ -1,6 +1,8 @@
 import { ApiPath, TranscodeMode } from '@/constants';
 import { Collection } from '@/core/collection';
 import { Meeting } from '@/core/meeting';
+import { CaptureSession, type CaptureSessionBase } from '@/core/captureSession';
+import { WebSocketConnection } from '@/core/websocket';
 import type {
   CollectionBase,
   MeetingBase,
@@ -26,6 +28,9 @@ const {
   transcode,
   meeting,
   record,
+  websocket,
+  capture,
+  session,
 } = ApiPath;
 
 class VdbHttpClient extends HttpClient {
@@ -73,15 +78,21 @@ export class Connection {
    * Create a new collection
    * @param name - Name of the collection
    * @param description - Description of the collection
+   * @param isPublic - Make collection public (optional, default: false)
    * @returns
    * Returns a new Collection object
    */
-  public createCollection = async (name: string, description: string) => {
+  public createCollection = async (
+    name: string,
+    description: string,
+    isPublic: boolean = false
+  ) => {
     const res = await this.vhttp.post<CollectionResponse, object>(
       [collection],
       {
         name,
         description,
+        isPublic,
       }
     );
     return new Collection(this.vhttp, res.data as CollectionBase);
@@ -109,6 +120,43 @@ export class Connection {
     );
     return new Collection(this.vhttp, res.data as CollectionBase);
   }
+
+  /**
+   * Unified upload method for files and URLs
+   * @param source - Local path or URL of the file to upload
+   * @param mediaType - Type of media (video, audio, image) - optional
+   * @param name - Name of the file - optional
+   * @param description - Description of the file - optional
+   * @param callbackUrl - URL to receive the callback - optional
+   * @returns Video, Audio, or Image object. Returns undefined if callbackUrl is provided.
+   */
+  public upload = async (
+    source: string,
+    mediaType?: 'video' | 'audio' | 'image',
+    name?: string,
+    description?: string,
+    callbackUrl?: string
+  ) => {
+    const isUrl =
+      source.startsWith('http://') || source.startsWith('https://');
+    if (isUrl) {
+      return uploadToServer(this.vhttp, 'default', {
+        url: source,
+        mediaType,
+        name,
+        description,
+        callbackUrl,
+      });
+    } else {
+      return uploadToServer(this.vhttp, 'default', {
+        filePath: source,
+        mediaType,
+        name,
+        description,
+        callbackUrl,
+      });
+    }
+  };
 
   /**
    * @param filePath - absolute path to a file
@@ -309,5 +357,75 @@ export class Connection {
     });
     await meetingObj.refresh();
     return meetingObj;
+  };
+
+  /**
+   * Connect to the VideoDB WebSocket service for real-time events
+   * @param collectionId - ID of the collection (default: "default")
+   * @returns WebSocketConnection object (call .connect() to establish connection)
+   *
+   * @example
+   * ```typescript
+   * const ws = await conn.connectWebsocket();
+   * await ws.connect();
+   *
+   * for await (const message of ws.receive()) {
+   *   console.log('Event:', message);
+   * }
+   * ```
+   */
+  public connectWebsocket = async (
+    collectionId: string = 'default'
+  ): Promise<WebSocketConnection> => {
+    const res = await this.vhttp.get<{ websocketUrl: string }>([
+      collection,
+      collectionId,
+      websocket,
+    ]);
+    const wsUrl = res.data?.websocketUrl;
+    if (!wsUrl) {
+      throw new Error('Failed to get WebSocket URL from server');
+    }
+    return new WebSocketConnection(wsUrl);
+  };
+
+  /**
+   * Create a capture session for video recording
+   * @param endUserId - ID of the end user
+   * @param clientId - Client-provided session ID
+   * @param collectionId - ID of the collection (default: "default")
+   * @param callbackUrl - URL to receive callback when recording completes (optional)
+   * @returns CaptureSession object
+   *
+   * @example
+   * ```typescript
+   * const session = await conn.createCaptureSession('user123', 'client456');
+   * const token = await session.generateSessionToken(3600);
+   * ```
+   */
+  public createCaptureSession = async (
+    endUserId: string,
+    clientId: string,
+    collectionId: string = 'default',
+    callbackUrl?: string
+  ): Promise<CaptureSession> => {
+    const data: Record<string, unknown> = {
+      endUserId,
+      clientId,
+    };
+    if (callbackUrl) data.callbackUrl = callbackUrl;
+
+    const res = await this.vhttp.post<
+      CaptureSessionBase & { sessionId: string },
+      typeof data
+    >([collection, collectionId, capture, session], data);
+
+    return new CaptureSession(this.vhttp, {
+      id: res.data.sessionId,
+      collectionId,
+      endUserId: res.data.endUserId,
+      clientId: res.data.clientId,
+      status: res.data.status,
+    });
   };
 }
