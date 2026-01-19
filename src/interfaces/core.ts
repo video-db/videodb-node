@@ -1,9 +1,10 @@
 import { SearchResult } from '@/core/search/searchResult';
 import { Video } from '@/core/video';
+import { Audio } from '@/core/audio';
+import { Image } from '@/core/image';
 import type { SearchType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { StreamableURL, Timeline, Transcript } from '@/types/video';
-import { IndexJob, TranscriptJob, UploadJob } from '@/utils/job';
 import { AudioAsset, VideoAsset } from '..';
 import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
 
@@ -14,18 +15,23 @@ export interface CollectionBase {
   id: string;
   name?: string;
   description?: string;
+  isPublic?: boolean;
 }
 /**
  * Collection class interface for reference
  */
-export interface ICollection {
-  meta: CollectionBase;
+export interface ICollection extends CollectionBase {
   getVideos: () => Promise<Video[]>;
   getVideo: (videoId: string) => Promise<Video>;
   deleteVideo: (videoId: string) => Promise<object>;
-  uploadFile: (data: FileUploadConfig) => Promise<void | UploadJob>;
-  uploadURL: (data: URLUploadConfig) => Promise<void | UploadJob>;
-  search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
+  uploadFile: (
+    data: FileUploadConfig
+  ) => Promise<Video | Audio | Image | undefined>;
+  uploadURL: (
+    data: URLUploadConfig
+  ) => Promise<Video | Audio | Image | undefined>;
+  // Note: search method signature is more complex in implementation to support RTStream namespace
+  search: (query: string, searchType?: SearchType) => Promise<unknown>;
 }
 
 /**
@@ -36,6 +42,7 @@ export interface VideoBase {
   id: string;
   length: string;
   name: string;
+  description?: string;
   size: string;
   streamUrl: StreamableURL;
   userId: string;
@@ -46,16 +53,27 @@ export interface VideoBase {
 /**
  * Video class interface for reference
  */
-export interface IVideo {
-  meta: VideoBase;
+export interface IVideo extends Omit<VideoBase, 'thumbnail'> {
+  thumbnail?: string;
   transcript?: Transcript;
   generateStream: (timeline: Timeline) => Promise<string>;
   play: () => string;
-  getTranscript: (forceCreate?: boolean) => Transcript | TranscriptJob;
-  indexSpokenWords: () => IndexJob;
+  getTranscript: (
+    start?: number,
+    end?: number,
+    segmenter?: string,
+    length?: number,
+    force?: boolean
+  ) => Promise<Transcript>;
+  indexSpokenWords: (
+    languageCode?: string,
+    segmentationType?: string,
+    force?: boolean,
+    callbackUrl?: string
+  ) => Promise<{ success: boolean; message?: string }>;
   indexScenes: (config: IndexSceneConfig) => Promise<string | undefined>;
   search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
-  generateThumbnail: () => Promise<string>;
+  generateThumbnail: (time?: number) => Promise<string | Image>;
   addSubtitle: (config: SubtitleStyleProps) => Promise<string>;
 }
 
@@ -74,9 +92,7 @@ export interface AudioBase {
 /**
  * Audio class interface for reference
  */
-export interface IAudio {
-  meta: AudioBase;
-}
+export interface IAudio extends AudioBase {}
 
 /**
  * Base type for all Image objects
@@ -100,7 +116,7 @@ export interface FrameBase {
 /**
  * Image class interface for reference
  */
-export interface IImage {}
+export interface IImage extends ImageBase {}
 
 /**
  * Base type for all Shot objects
@@ -119,8 +135,7 @@ export interface ShotBase {
 /**
  * Shot class interface for reference
  */
-export interface IShot {
-  meta: ShotBase;
+export interface IShot extends ShotBase {
   /**
    * Fetches the streaming Url of the shot
    * @returns An awaited streaming URL
@@ -144,4 +159,128 @@ export interface ITimeline {
   addInline(asset: VideoAsset): void;
   addOverlay(start: number, asset: AudioAsset): void;
   generateStream(): Promise<string>;
+}
+
+/**
+ * Base type for Meeting objects
+ */
+export interface MeetingBase {
+  id: string;
+  collectionId: string;
+  botName?: string;
+  meetingTitle?: string;
+  meetingUrl?: string;
+  status?: string;
+  timeZone?: string;
+  videoId?: string;
+  speakerTimeline?: Record<string, unknown>;
+}
+
+/**
+ * Base type for RTStream objects
+ */
+export interface RTStreamBase {
+  id: string;
+  name?: string;
+  collectionId?: string;
+  createdAt?: string;
+  sampleRate?: number;
+  status?: string;
+}
+
+/**
+ * Base type for RTStreamSceneIndex objects
+ */
+export interface RTStreamSceneIndexBase {
+  rtstreamIndexId: string;
+  rtstreamId: string;
+  extractionType?: string;
+  extractionConfig?: Record<string, unknown>;
+  prompt?: string;
+  name?: string;
+  status?: string;
+}
+
+/**
+ * Configuration for RTStream scene indexing
+ */
+export interface IndexScenesConfig {
+  extractionType?: string;
+  extractionConfig?: Record<string, unknown>;
+  prompt?: string;
+  modelName?: string;
+  modelConfig?: Record<string, unknown>;
+  name?: string;
+  wsConnectionId?: string;
+}
+
+/**
+ * Base type for RTStreamShot objects
+ */
+export interface RTStreamShotBase {
+  rtstreamId: string;
+  rtstreamName?: string;
+  start: number;
+  end: number;
+  text?: string;
+  searchScore?: number;
+  sceneIndexId?: string;
+  sceneIndexName?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Configuration for RTStream index spoken words
+ */
+export interface RTStreamIndexSpokenWordsConfig {
+  prompt?: string;
+  segmenter?: string;
+  length?: number;
+  modelName?: string;
+  modelConfig?: Record<string, unknown>;
+  name?: string;
+  wsConnectionId?: string;
+}
+
+/**
+ * Configuration for RTStream search
+ */
+export interface RTStreamSearchConfig {
+  query: string;
+  indexId?: string;
+  resultThreshold?: number;
+  scoreThreshold?: number;
+  dynamicScorePercentage?: number;
+  filter?: Array<Record<string, unknown>>;
+}
+
+/**
+ * Video configuration for transcoding
+ */
+export interface VideoConfig {
+  resolution?: number;
+  quality?: number;
+  framerate?: number;
+  aspectRatio?: string;
+  resizeMode?: string;
+}
+
+/**
+ * Audio configuration for transcoding
+ */
+export interface AudioConfig {
+  mute?: boolean;
+}
+
+/**
+ * Configuration for recording a meeting
+ */
+export interface RecordMeetingConfig {
+  meetingUrl: string;
+  botName?: string;
+  botImageUrl?: string;
+  meetingTitle?: string;
+  callbackUrl?: string;
+  callbackData?: Record<string, unknown>;
+  timeZone?: string;
 }

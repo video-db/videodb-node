@@ -7,6 +7,7 @@
 import { ResponseStatus } from '@/constants';
 import type { StreamableURL } from './video';
 import { SceneIndexRecords } from '.';
+import type { SnakeKeysToCamelCase } from '@/utils';
 
 /**
  * All error responses sent by the server are of this type
@@ -18,13 +19,24 @@ export type ErrorResponse = {
 };
 
 /**
- * All sucessfull responses are wrapped by this type
- * @param D - Type of the response data
- *
- * TODO: Fix this type after server update
+ * Raw API response wrapper (snake_case from server)
+ * Used internally by HttpClient
+ */
+export type ApiResponseOf<D> = {
+  data: D;
+  success?: boolean;
+  message?: string;
+  status?: (typeof ResponseStatus)[keyof typeof ResponseStatus];
+  request_type?: 'sync' | 'async';
+  response?: ApiResponseOf<D>;
+};
+
+/**
+ * Converted response wrapper with camelCase data
+ * Returned to SDK consumers
  */
 export type ResponseOf<D> = {
-  data: D;
+  data: SnakeKeysToCamelCase<D>;
   success?: boolean;
   message?: string;
   status?: (typeof ResponseStatus)[keyof typeof ResponseStatus];
@@ -118,8 +130,8 @@ export type GenerateStreamResponse = {
 export type TranscriptResponse = {
   text: string;
   word_timestamps: {
-    end: string;
-    start: string;
+    end: number;
+    start: number;
     word: string;
   }[];
 };
@@ -151,7 +163,7 @@ export type IndexScenesResponse = {
 export type MediaResponse = VideoResponse | AudioResponse | ImageResponse;
 
 export type GetSceneIndexResponse = {
-  sceneIndexRecords: SceneIndexRecords;
+  scene_index_records: SceneIndexRecords;
 };
 
 export type SceneIndex = {
@@ -164,12 +176,32 @@ export type ListSceneIndex = {
   scene_indexes: SceneIndex[];
 };
 
+/** API response structure for a frame within a scene */
+export type FrameResponse = {
+  frame_id: string;
+  url: string;
+  frame_time: number;
+  description: string;
+};
+
+/** API response structure for a scene within a collection */
+export type SceneResponse = {
+  scene_id: string;
+  start: number;
+  end: number;
+  frames: FrameResponse[];
+  description?: string;
+};
+
+/** API response structure for scene collection data */
+export type SceneCollectionData = {
+  scene_collection_id: string;
+  config: object;
+  scenes: SceneResponse[];
+};
+
 export type SceneCollectionResponse = {
-  scene_collection: {
-    config: object;
-    scene_collection_id: string;
-    scenes: object[];
-  };
+  scene_collection: SceneCollectionData;
 };
 
 export type ListSceneCollection = {

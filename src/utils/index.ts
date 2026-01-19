@@ -1,10 +1,9 @@
 import { PLAYER_URL } from '@/constants';
 import _ from 'lodash';
-import { Job } from './job';
 import { AudioBase, VideoBase } from '@/interfaces/core';
 
 /**
- * TS Interpretation of snake_case to camelCase conversion for better readability
+ * Type-level conversion of snake_case string to camelCase
  */
 export type SnakeToCamelCase<S extends string> =
   S extends `${infer T}_${infer U}`
@@ -12,91 +11,100 @@ export type SnakeToCamelCase<S extends string> =
     : S;
 
 /**
- * Return type for function fromSnakeToCamel
- * - T = Type of the input object
+ * Type-level conversion of camelCase string to snake_case
  */
-export type SnakeKeysToCamelCase<T> = {
-  [K in keyof T as SnakeToCamelCase<K & string>]: T[K] extends Array<infer U>
+export type CamelToSnakeCase<S extends string> =
+  S extends `${infer T}${infer U}`
+    ? T extends Uppercase<T>
+      ? `_${Lowercase<T>}${CamelToSnakeCase<U>}`
+      : `${T}${CamelToSnakeCase<U>}`
+    : S;
+
+/**
+ * Recursively converts all keys in an object type from snake_case to camelCase
+ */
+export type SnakeKeysToCamelCase<T> = T extends Array<infer U>
+  ? U extends object
     ? SnakeKeysToCamelCase<U>[]
-    : T[K] extends object
-      ? SnakeKeysToCamelCase<T[K]>
-      : T[K];
+    : U[]
+  : T extends object
+    ? {
+        [K in keyof T as SnakeToCamelCase<K & string>]: SnakeKeysToCamelCase<
+          T[K]
+        >;
+      }
+    : T;
+
+/**
+ * Recursively converts all keys in an object type from camelCase to snake_case
+ */
+export type CamelKeysToSnakeCase<T> = T extends Array<infer U>
+  ? U extends object
+    ? CamelKeysToSnakeCase<U>[]
+    : U[]
+  : T extends object
+    ? {
+        [K in keyof T as CamelToSnakeCase<K & string>]: CamelKeysToSnakeCase<
+          T[K]
+        >;
+      }
+    : T;
+
+/**
+ * Recursively converts a value from snake_case to camelCase
+ */
+const convertValueSnakeToCamel = (v: unknown): unknown => {
+  if (_.isArray(v)) {
+    return v.map((item: unknown) =>
+      _.isObject(item) && item !== null ? fromSnakeToCamel(item) : item
+    );
+  }
+  if (_.isObject(v) && v !== null) {
+    return fromSnakeToCamel(v);
+  }
+  return v;
 };
 
 /**
- * Converts the provided snake_case object into camelCase
- * @remarks
- * Performs an in-depth conversion. Be careful before passing
- * large objects with a lot of values.
- *
- * @param data - The object that needs to be converted
- * @returns The provided object with all the keys converted into camelCase
- *
- * TODO: Implement this safely at the HttpClient level to avoid rewrites throughout the codebase
+ * Recursively converts object keys from snake_case to camelCase
  */
-export const fromSnakeToCamel = <O extends object>(
-  data: O
-): SnakeKeysToCamelCase<O> => {
-  const finalData = _(data)
-    .mapKeys((__, k) => _.camelCase(k))
-    .mapValues(v => {
-      if (_.isArray(v)) {
-        return v.map(item => fromSnakeToCamel(item));
-      } else if (_.isObject(v)) {
-        return fromSnakeToCamel(v);
-      } else {
-        return v;
-      }
-    })
-    .value() as SnakeKeysToCamelCase<O>;
-  return finalData;
+export const fromSnakeToCamel = <T extends object>(
+  data: T
+): SnakeKeysToCamelCase<T> => {
+  return _(data)
+    .mapKeys((_v: unknown, k: string) => _.camelCase(k))
+    .mapValues(convertValueSnakeToCamel)
+    .value() as SnakeKeysToCamelCase<T>;
 };
 
-export const fromCamelToSnake = <O extends object>(
-  data: O
-): SnakeKeysToCamelCase<O> => {
-  const finalData = _(data)
-    .mapKeys((__, k) => _.snakeCase(k))
-    .mapValues(v => {
-      if (_.isArray(v)) {
-        const array = v.map(item => {
-          if (_.isObject(item)) return fromCamelToSnake(item);
-          // @ts-ignore
-          return item;
-        });
-        // @ts-ignore
-        return array;
-      } else if (_.isObject(v)) {
-        return fromCamelToSnake(v);
-      } else {
-        return v;
-      }
-    })
-    .value() as SnakeKeysToCamelCase<O>;
-  return finalData;
+/**
+ * Recursively converts a value from camelCase to snake_case
+ */
+const convertValueCamelToSnake = (v: unknown): unknown => {
+  if (_.isArray(v)) {
+    return v.map((item: unknown) =>
+      _.isObject(item) && item !== null ? fromCamelToSnake(item) : item
+    );
+  }
+  if (_.isObject(v) && v !== null) {
+    return fromCamelToSnake(v);
+  }
+  return v;
+};
+
+/**
+ * Recursively converts object keys from camelCase to snake_case
+ */
+export const fromCamelToSnake = <T extends object>(
+  data: T
+): CamelKeysToSnakeCase<T> => {
+  return _(data)
+    .mapKeys((_v: unknown, k: string) => _.snakeCase(k))
+    .mapValues(convertValueCamelToSnake)
+    .value() as CamelKeysToSnakeCase<T>;
 };
 
 export const playStream = (url: string) => `${PLAYER_URL}?url=${url}`;
-
-export const waitForJob = async (job: Job<any, any>): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    job.on('success', async (data: any) => {
-      resolve(data);
-    });
-    job.on('error', async (err: any) => {
-      reject(err);
-    });
-    job
-      .start()
-      .then(() => {
-        console.log('Job started');
-      })
-      .catch(err => {
-        console.log('Job Failed');
-        reject(err);
-      });
-  });
-};
 
 export const isMediaAudio = (
   media: AudioBase | VideoBase

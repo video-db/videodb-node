@@ -2,13 +2,18 @@ import { ApiPath } from '@/constants';
 import type { FrameBase, ImageBase, IImage } from '@/interfaces/core';
 import { HttpClient } from '@/utils/httpClient';
 
+const { image, generate_url } = ApiPath;
+
 /**
  * The base Image class
  * @remarks
  * Use this to initialize an Image stored in VideoDB
  */
 export class Image implements IImage {
-  public meta: ImageBase;
+  public readonly id: string;
+  public readonly collectionId?: string;
+  public readonly name?: string;
+  public readonly url?: string;
   #vhttp: HttpClient;
 
   /**
@@ -17,7 +22,10 @@ export class Image implements IImage {
    * @param data - Data needed to initialize an Image instance
    */
   constructor(http: HttpClient, data: ImageBase) {
-    this.meta = data;
+    this.id = data.id;
+    this.collectionId = data.collectionId;
+    this.name = data.name;
+    this.url = data.url;
     this.#vhttp = http;
   }
 
@@ -28,9 +36,22 @@ export class Image implements IImage {
    */
   public delete = async () => {
     return await this.#vhttp.delete<Record<string, never>>([
-      ApiPath.image,
-      this.meta.id,
+      image,
+      this.id,
     ]);
+  };
+
+  /**
+   * Generate the signed url of the image
+   * @returns The signed url of the image
+   */
+  public generateUrl = async (): Promise<string | null> => {
+    const res = await this.#vhttp.post<{ signedUrl: string }, object>(
+      [image, this.id, generate_url],
+      {},
+      { params: { collection_id: this.collectionId } }
+    );
+    return res.data?.signedUrl || null;
   };
 }
 
@@ -57,10 +78,10 @@ export class Frame extends Image {
 
   public getRequestData(): object {
     return {
-      id: this.meta.id,
+      id: this.id,
       videoId: this.videoId,
       sceneId: this.sceneId,
-      url: this.meta.url || '',
+      url: this.url || '',
       frameTime: this.frameTime,
       description: this.description,
     };
@@ -72,7 +93,7 @@ export class Frame extends Image {
         ApiPath.video,
         this.videoId,
         ApiPath.frame,
-        this.meta.id,
+        this.id,
         ApiPath.describe,
       ],
       {
