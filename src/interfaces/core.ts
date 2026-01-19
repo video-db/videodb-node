@@ -19,8 +19,7 @@ export interface CollectionBase {
 /**
  * Collection class interface for reference
  */
-export interface ICollection {
-  meta: CollectionBase;
+export interface ICollection extends CollectionBase {
   getVideos: () => Promise<Video[]>;
   getVideo: (videoId: string) => Promise<Video>;
   deleteVideo: (videoId: string) => Promise<object>;
@@ -51,8 +50,8 @@ export interface VideoBase {
 /**
  * Video class interface for reference
  */
-export interface IVideo {
-  meta: VideoBase;
+export interface IVideo extends Omit<VideoBase, 'thumbnail'> {
+  thumbnail?: string;
   transcript?: Transcript;
   generateStream: (timeline: Timeline) => Promise<string>;
   play: () => string;
@@ -79,9 +78,7 @@ export interface AudioBase {
 /**
  * Audio class interface for reference
  */
-export interface IAudio {
-  meta: AudioBase;
-}
+export interface IAudio extends AudioBase {}
 
 /**
  * Base type for all Image objects
@@ -105,7 +102,7 @@ export interface FrameBase {
 /**
  * Image class interface for reference
  */
-export interface IImage {}
+export interface IImage extends ImageBase {}
 
 /**
  * Base type for all Shot objects
@@ -124,8 +121,7 @@ export interface ShotBase {
 /**
  * Shot class interface for reference
  */
-export interface IShot {
-  meta: ShotBase;
+export interface IShot extends ShotBase {
   /**
    * Fetches the streaming Url of the shot
    * @returns An awaited streaming URL
