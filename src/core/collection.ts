@@ -16,7 +16,6 @@ import type {
   AudioResponse,
   ImageResponse,
 } from '@/types/response';
-import { fromSnakeToCamel } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
 import { DefaultSearchType, DefaultIndexType } from '@/core/config';
@@ -50,11 +49,7 @@ export class Collection implements ICollection {
     const res = await this.#vhttp.get<GetVideos>([video], {
       params: { collection_id: this.meta.id },
     });
-    const videos = res.data.videos;
-    return videos.map(vid => {
-      const data = fromSnakeToCamel(vid) as VideoBase;
-      return new Video(this.#vhttp, data);
-    });
+    return res.data.videos.map(vid => new Video(this.#vhttp, vid as VideoBase));
   };
 
   /**
@@ -70,8 +65,7 @@ export class Collection implements ICollection {
     const res = await this.#vhttp.get<VideoResponse>([video, videoId], {
       params: { collection_id: this.meta.id },
     });
-    const data = fromSnakeToCamel(res.data) as VideoBase;
-    return new Video(this.#vhttp, data);
+    return new Video(this.#vhttp, res.data as VideoBase);
   };
 
   /**
@@ -97,11 +91,7 @@ export class Collection implements ICollection {
     const res = await this.#vhttp.get<GetAudios>([audio], {
       params: { collection_id: this.meta.id },
     });
-    const audios = res.data.audios;
-    return audios.map(audio => {
-      const data = fromSnakeToCamel(audio) as AudioBase;
-      return new Audio(this.#vhttp, data);
-    });
+    return res.data.audios.map(aud => new Audio(this.#vhttp, aud as AudioBase));
   };
 
   /**
@@ -117,8 +107,7 @@ export class Collection implements ICollection {
     const res = await this.#vhttp.get<AudioResponse>([audio, audioId], {
       params: { collection_id: this.meta.id },
     });
-    const data = fromSnakeToCamel(res.data) as AudioBase;
-    return new Audio(this.#vhttp, data);
+    return new Audio(this.#vhttp, res.data as AudioBase);
   };
 
   /**
@@ -144,11 +133,7 @@ export class Collection implements ICollection {
     const res = await this.#vhttp.get<GetImages>([image], {
       params: { collection_id: this.meta.id },
     });
-    const images = res.data.images;
-    return images.map(audio => {
-      const data = fromSnakeToCamel(audio) as ImageBase;
-      return new Image(this.#vhttp, data);
-    });
+    return res.data.images.map(img => new Image(this.#vhttp, img as ImageBase));
   };
 
   /**
@@ -164,8 +149,7 @@ export class Collection implements ICollection {
     const res = await this.#vhttp.get<ImageResponse>([image, imageId], {
       params: { collection_id: this.meta.id },
     });
-    const data = fromSnakeToCamel(res.data) as ImageBase;
-    return new Image(this.#vhttp, data);
+    return new Image(this.#vhttp, res.data as ImageBase);
   };
 
   /**

@@ -5,7 +5,6 @@ import { VideodbError } from '@/utils/error';
 import { Video } from '@/core/video';
 import { Audio } from '@/core/audio';
 import { Image } from '@/core/image';
-import { fromSnakeToCamel } from '@/utils';
 import type { AudioBase, ImageBase, VideoBase } from '@/interfaces/core';
 import FormData from 'form-data';
 import { createReadStream } from 'fs';
@@ -28,8 +27,7 @@ export const getUploadUrl = async (http: HttpClient, collectionId: string) => {
     collectionId,
     upload_url,
   ]);
-  const { data } = res;
-  return data.upload_url;
+  return res.data.uploadUrl;
 };
 
 /**
@@ -67,12 +65,12 @@ export const uploadToServer = async (
     url: urlToUpload,
     name: data.name,
     description: data.description,
-    callback_url: data.callbackUrl,
-    media_type: data.mediaType,
+    callbackUrl: data.callbackUrl,
+    mediaType: data.mediaType,
   };
 
   // Async upload with callback - return immediately
-  if (finalData.callback_url) {
+  if (finalData.callbackUrl) {
     await http.post<Record<string, never>, typeof finalData>(
       [collection, collectionId, upload],
       finalData
@@ -86,13 +84,12 @@ export const uploadToServer = async (
     finalData
   );
 
-  const mediaData = fromSnakeToCamel(res.data);
-  const mediaId = mediaData.id as string;
+  const mediaId = res.data.id;
 
   if (mediaId.startsWith('img-')) {
-    return new Image(http, mediaData as ImageBase);
+    return new Image(http, res.data as ImageBase);
   } else if (mediaId.startsWith('a-')) {
-    return new Audio(http, mediaData as AudioBase);
+    return new Audio(http, res.data as AudioBase);
   }
-  return new Video(http, mediaData as VideoBase);
+  return new Video(http, res.data as VideoBase);
 };

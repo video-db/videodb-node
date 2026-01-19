@@ -3,7 +3,6 @@ import { Collection } from '@/core/collection';
 import type { CollectionBase } from '@/interfaces/core';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { CollectionResponse, GetCollections } from '@/types/response';
-import { fromSnakeToCamel } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
 
@@ -35,24 +34,19 @@ export class Connection {
    */
   public async getCollection(id = 'default'): Promise<Collection> {
     const res = await this.vhttp.get<CollectionResponse>([collection, id]);
-    const convertedData = fromSnakeToCamel(res.data) as CollectionBase;
-    const _collection = new Collection(this.vhttp, convertedData);
-    return _collection;
+    return new Collection(this.vhttp, res.data as CollectionBase);
   }
 
   /**
    * Get all Collections from db
    * @returns
-   * Returns an array of Collection objects 
+   * Returns an array of Collection objects
    */
   public async getCollections(): Promise<Collection[]> {
     const res = await this.vhttp.get<GetCollections>([collection]);
-    const collectionsResponse = fromSnakeToCamel(res.data);
-    const collections = collectionsResponse.collections.map(_collection => {
-      const convertedData = fromSnakeToCamel(_collection) as CollectionBase;
-      return new Collection(this.vhttp, convertedData);
-    });
-    return collections;
+    return res.data.collections.map(
+      coll => new Collection(this.vhttp, coll as CollectionBase)
+    );
   }
 
   /**
@@ -70,8 +64,7 @@ export class Connection {
         description,
       }
     );
-    const convertedData = fromSnakeToCamel(res.data) as CollectionBase;
-    return new Collection(this.vhttp, convertedData);
+    return new Collection(this.vhttp, res.data as CollectionBase);
   };
 
   /**
@@ -94,8 +87,7 @@ export class Connection {
         description,
       }
     );
-    const convertedData = fromSnakeToCamel(res.data) as CollectionBase;
-    return new Collection(this.vhttp, convertedData);
+    return new Collection(this.vhttp, res.data as CollectionBase);
   }
 
   /**

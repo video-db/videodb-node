@@ -32,6 +32,6 @@ export class Shot implements IShot {
       body
     );
 
-    return res.data.stream_url;
+    return res.data.streamUrl;
   };
 }

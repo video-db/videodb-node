@@ -1,6 +1,5 @@
 import { ApiPath } from '@/constants';
 import { GenerateStreamResponse } from '@/types/response';
-import { fromCamelToSnake } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import { AudioAsset, VideoAsset, ImageAsset, TextAsset } from './asset';
 import { Connection } from './connection';
@@ -27,11 +26,10 @@ export class Timeline implements ITimeline {
   }
 
   private getRequestData() {
-    const reqData = fromCamelToSnake({
+    return {
       requestType: 'compile',
       timeline: this.timeline,
-    });
-    return reqData;
+    };
   }
 
   /**
@@ -71,11 +69,11 @@ export class Timeline implements ITimeline {
     const reqData = this.getRequestData();
     const streamDataRes = await this.#vhttp.post<
       GenerateStreamResponse,
-      object
+      typeof reqData
     >([timeline], reqData);
 
-    this.streamUrl = streamDataRes.data.stream_url;
-    this.playerUrl = streamDataRes.data.player_url;
+    this.streamUrl = streamDataRes.data.streamUrl;
+    this.playerUrl = streamDataRes.data.playerUrl;
     return this.streamUrl;
   }
 }

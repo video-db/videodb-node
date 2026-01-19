@@ -1,18 +1,22 @@
 import { Shot } from '@/core/shot';
 import type { GenerateStreamResponse, SearchResponse } from '@/types/response';
+import type { SnakeKeysToCamelCase } from '@/utils';
 import { playStream } from '@/utils';
 import { VideodbError } from '@/utils/error';
 import { HttpClient } from '@/utils/httpClient';
 
+/** Camelcase version of SearchResponse for internal use */
+type SearchResponseCamel = SnakeKeysToCamelCase<SearchResponse>;
+
 export class SearchResult {
   #vhttp: HttpClient;
-  #searchResponse: SearchResponse;
+  #searchResponse: SearchResponseCamel;
   public shots: Shot[];
   public streamUrl?: string;
   public playerUrl?: string;
   public collectionId: string = 'default';
 
-  constructor(http: HttpClient, searchResponse: SearchResponse) {
+  constructor(http: HttpClient, searchResponse: SearchResponseCamel) {
     this.#vhttp = http;
     this.#searchResponse = searchResponse;
     this.shots = [];
@@ -21,7 +25,7 @@ export class SearchResult {
 
   #formatResults = () => {
     for (const result of this.#searchResponse.results) {
-      if (result.collection_id) this.collectionId = result.collection_id;
+      if (result.collectionId) this.collectionId = result.collectionId;
       for (const doc of result.docs) {
         this.shots.push(
           new Shot(this.#vhttp, {
@@ -29,7 +33,7 @@ export class SearchResult {
             start: doc.start,
             text: doc.text,
             searchScore: doc.score,
-            videoId: result.video_id,
+            videoId: result.videoId,
             videoTitle: result.title,
             videoLength: parseFloat(result.length),
           })
@@ -43,8 +47,8 @@ export class SearchResult {
     else if (this.shots.length) {
       const reqData = this.shots.map(shot => {
         return {
-          video_id: shot.meta.videoId,
-          collection_id: this.collectionId,
+          videoId: shot.meta.videoId,
+          collectionId: this.collectionId,
           shots: [[shot.meta.start, shot.meta.end]],
         };
       });
@@ -52,8 +56,8 @@ export class SearchResult {
         GenerateStreamResponse,
         typeof reqData
       >(['compile'], reqData);
-      this.streamUrl = res.data.stream_url;
-      this.playerUrl = res.data.player_url;
+      this.streamUrl = res.data.streamUrl;
+      this.playerUrl = res.data.playerUrl;
       return this.streamUrl;
     } else {
       throw new VideodbError('No shots found in the search result to compile');

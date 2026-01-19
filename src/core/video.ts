@@ -1,4 +1,3 @@
-import { fromSnakeToCamel } from './../utils/index';
 import { ApiPath, Workflows } from '@/constants';
 import type { IVideo, VideoBase } from '@/interfaces/core';
 import { Frame } from '@/core/image';
@@ -9,12 +8,13 @@ import {
   type GenerateStreamResponse,
   ListSceneCollection,
   SceneCollectionResponse,
+  SceneCollectionData,
   TranscriptResponse,
   GetSceneIndexResponse,
   NoDataResponse,
 } from '@/types/response';
 import type { Timeline, Transcript } from '@/types/video';
-import { fromCamelToSnake, playStream } from '@/utils';
+import { playStream, SnakeKeysToCamelCase } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import {
   DefaultIndexType,
@@ -31,7 +31,16 @@ import {
 import { SearchType, IndexType } from '@/types/search';
 import { SceneIndexRecords, SceneIndexes } from '@/types';
 
-const { video, stream, thumbnail, workflow, index, scene, scenes, transcription } = ApiPath;
+const {
+  video,
+  stream,
+  thumbnail,
+  workflow,
+  index,
+  scene,
+  scenes,
+  transcription,
+} = ApiPath;
 
 /**
  * The base Video class
@@ -112,7 +121,7 @@ export class Video implements IVideo {
       body
     );
 
-    return res.data.stream_url;
+    return res.data.streamUrl;
   };
 
   /**
@@ -146,20 +155,21 @@ export class Video implements IVideo {
       `?force=${String(forceCreate)}`,
     ]);
 
-    const transcript = fromSnakeToCamel(res.data) as unknown as Transcript;
-    this.transcript = transcript;
-    return transcript;
+    this.transcript = res.data as Transcript;
+    return this.transcript;
   };
 
   /**
    * Indexes the video semantically
    * @returns Whether the process was successful
    */
-  public indexSpokenWords = async (): Promise<{ success: boolean; message?: string }> => {
-    const reqData = fromCamelToSnake({ indexType: IndexTypeValues.spoken });
-    const res = await this.#vhttp.post<NoDataResponse, object>(
+  public indexSpokenWords = async (): Promise<{
+    success: boolean;
+    message?: string;
+  }> => {
+    const res = await this.#vhttp.post<NoDataResponse, { indexType: string }>(
       [video, this.meta.id, index],
-      reqData
+      { indexType: IndexTypeValues.spoken }
     );
 
     if (res.data?.success !== undefined) {
@@ -171,8 +181,9 @@ export class Video implements IVideo {
     return { success: true };
   };
 
+  /** Camelcase version of SceneCollectionData after HttpClient conversion */
   public _formatSceneCollectionData = (
-    sceneCollectionData: any
+    sceneCollectionData: SnakeKeysToCamelCase<SceneCollectionData>
   ): SceneCollection => {
     const scenes: Scene[] = [];
 
@@ -216,17 +227,13 @@ export class Video implements IVideo {
       extractionConfig: {},
       force: false,
     };
-    const extractScenePayload = fromCamelToSnake(
-      Object.assign({}, defaultConfig, config)
-    );
 
-    const res = await this.#vhttp.post<{ sceneCollection: object }, object>(
-      [video, this.meta.id, scenes],
-      extractScenePayload
-    );
+    const res = await this.#vhttp.post<
+      SceneCollectionResponse,
+      Partial<ExtractSceneConfig>
+    >([video, this.meta.id, scenes], { ...defaultConfig, ...config });
 
-    const data = fromSnakeToCamel(res.data.sceneCollection);
-    return this._formatSceneCollectionData(data);
+    return this._formatSceneCollectionData(res.data.sceneCollection);
   };
 
   public listSceneCollection = async () => {
@@ -235,10 +242,7 @@ export class Video implements IVideo {
       this.meta.id,
       scenes,
     ]);
-    const transformed = fromSnakeToCamel({
-      array: res.data.scene_collections,
-    }).array;
-    return transformed;
+    return res.data.sceneCollections;
   };
 
   public getSceneCollection = async (sceneCollectionId: string) => {
@@ -248,9 +252,7 @@ export class Video implements IVideo {
       scenes,
       sceneCollectionId,
     ]);
-    const transformed = fromSnakeToCamel(res.data.scene_collection);
-    const sceneCollection = this._formatSceneCollectionData(transformed);
-    return sceneCollection;
+    return this._formatSceneCollectionData(res.data.sceneCollection);
   };
 
   public deleteSceneCollection = async (sceneCollectionId: string) => {
@@ -273,20 +275,16 @@ export class Video implements IVideo {
       extractionType: SceneExtractionType.shotBased,
       extractionConfig: {},
     };
+    const payload: Record<string, unknown> = { ...defaultConfig, ...config };
     if (config.scenes) {
-      //@ts-ignore
-      config.scenes = config.scenes.map(scene => scene.getRequestData());
+      payload.scenes = config.scenes.map((s: Scene) => s.getRequestData());
     }
-    const indexScenesPayload = fromCamelToSnake(
-      Object.assign({}, defaultConfig, config)
-    );
-    console.log('this is payload', indexScenesPayload);
-    const res = await this.#vhttp.post<IndexScenesResponse, object>(
+    const res = await this.#vhttp.post<IndexScenesResponse, typeof payload>(
       [video, this.meta.id, index, scene],
-      indexScenesPayload
+      payload
     );
     if (res.data) {
-      return res.data.scene_index_id;
+      return res.data.sceneIndexId;
     }
   };
 
@@ -297,13 +295,12 @@ export class Video implements IVideo {
       index,
       scene,
     ]);
-    const transformed = fromSnakeToCamel({
-      array: res.data.scene_indexes,
-    }).array;
-    return transformed as SceneIndexes;
+    return res.data.sceneIndexes as SceneIndexes;
   };
 
-  public getSceneIndex = async (sceneIndexId: string): Promise<SceneIndexRecords> => {
+  public getSceneIndex = async (
+    sceneIndexId: string
+  ): Promise<SceneIndexRecords> => {
     const res = await this.#vhttp.get<GetSceneIndexResponse>([
       video,
       this.meta.id,
@@ -311,8 +308,7 @@ export class Video implements IVideo {
       scene,
       sceneIndexId,
     ]);
-
-    return fromSnakeToCamel(res.data).sceneIndexRecords as SceneIndexRecords;
+    return res.data.sceneIndexRecords as SceneIndexRecords;
   };
 
   public deleteSceneIndex = async (sceneIndexId: string) => {
@@ -332,15 +328,14 @@ export class Video implements IVideo {
    *
    */
   public addSubtitle = async (config?: Partial<SubtitleStyleProps>) => {
-    const subtitlePayload = fromCamelToSnake({
+    const res = await this.#vhttp.post<
+      GenerateStreamResponse,
+      { type: string; subtitleStyle: Partial<SubtitleStyleProps> }
+    >([video, this.meta.id, workflow], {
       type: Workflows.addSubtitles,
       subtitleStyle: { ...config },
     });
-    const res = await this.#vhttp.post<GenerateStreamResponse, object>(
-      [video, this.meta.id, workflow],
-      subtitlePayload
-    );
-    return res.data.stream_url;
+    return res.data.streamUrl;
   };
 
   /**
