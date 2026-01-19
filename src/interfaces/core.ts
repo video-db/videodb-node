@@ -24,8 +24,12 @@ export interface ICollection {
   getVideos: () => Promise<Video[]>;
   getVideo: (videoId: string) => Promise<Video>;
   deleteVideo: (videoId: string) => Promise<object>;
-  uploadFile: (data: FileUploadConfig) => Promise<Video | Audio | Image | undefined>;
-  uploadURL: (data: URLUploadConfig) => Promise<Video | Audio | Image | undefined>;
+  uploadFile: (
+    data: FileUploadConfig
+  ) => Promise<Video | Audio | Image | undefined>;
+  uploadURL: (
+    data: URLUploadConfig
+  ) => Promise<Video | Audio | Image | undefined>;
   search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
 }
 

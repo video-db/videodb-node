@@ -1,5 +1,9 @@
 import { HttpClientDefaultValues, ResponseStatus } from '@/constants';
-import type { ApiResponseOf, ErrorResponse, ResponseOf } from '@/types/response';
+import type {
+  ApiResponseOf,
+  ErrorResponse,
+  ResponseOf,
+} from '@/types/response';
 import {
   AuthenticationError,
   InvalidRequestError,
@@ -120,7 +124,10 @@ export class HttpClient {
     // Convert request data from camelCase to snake_case
     const convertedOptions = {
       ...options,
-      data: options.data !== undefined ? this.#convertRequestData(options.data) : undefined,
+      data:
+        options.data !== undefined
+          ? this.#convertRequestData(options.data)
+          : undefined,
     };
 
     try {
