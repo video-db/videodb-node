@@ -49,7 +49,7 @@ Initializes a VideoDB Instance
 
 #### Defined in
 
-[src/core/audio.ts:21](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/audio.ts#L21)
+[src/core/audio.ts:21](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/audio.ts#L21)
 
 ## Properties
 
@@ -63,7 +63,7 @@ Initializes a VideoDB Instance
 
 #### Defined in
 
-[src/core/audio.ts:13](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/audio.ts#L13)
+[src/core/audio.ts:13](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/audio.ts#L13)
 
 ## Methods
 
@@ -85,4 +85,4 @@ an InvalidRequestError if the request fails
 
 #### Defined in
 
-[src/core/audio.ts:31](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/audio.ts#L31)
+[src/core/audio.ts:31](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/audio.ts#L31)

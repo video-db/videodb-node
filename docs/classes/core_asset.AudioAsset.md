@@ -58,7 +58,7 @@ MediaAsset.constructor
 
 #### Defined in
 
-[src/core/asset.ts:83](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L83)
+[src/core/asset.ts:83](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L83)
 
 ## Properties
 
@@ -72,7 +72,7 @@ MediaAsset.assetId
 
 #### Defined in
 
-[src/core/asset.ts:31](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L31)
+[src/core/asset.ts:31](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L31)
 
 ___
 
@@ -82,7 +82,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:73](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L73)
+[src/core/asset.ts:73](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L73)
 
 ___
 
@@ -92,7 +92,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:72](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L72)
+[src/core/asset.ts:72](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L72)
 
 ___
 
@@ -102,7 +102,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:74](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L74)
+[src/core/asset.ts:74](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L74)
 
 ___
 
@@ -112,7 +112,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:75](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L75)
+[src/core/asset.ts:75](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L75)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:71](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L71)
+[src/core/asset.ts:71](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L71)
 
 ## Methods
 
@@ -145,4 +145,4 @@ ___
 
 #### Defined in
 
-[src/core/asset.ts:107](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/asset.ts#L107)
+[src/core/asset.ts:107](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/asset.ts#L107)

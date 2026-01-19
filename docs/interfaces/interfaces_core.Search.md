@@ -43,7 +43,7 @@ search types
 
 #### Defined in
 
-[src/interfaces/core.ts:133](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L133)
+[src/interfaces/core.ts:137](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L137)
 
 ___
 
@@ -67,4 +67,4 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:132](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L132)
+[src/interfaces/core.ts:136](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L136)

@@ -10,6 +10,12 @@ The base Image class
 
 Use this to initialize an Image stored in VideoDB
 
+## Hierarchy
+
+- **`Image`**
+
+  ↳ [`Frame`](core_image.Frame.md)
+
 ## Implements
 
 - [`IImage`](../interfaces/interfaces_core.IImage.md)
@@ -49,7 +55,7 @@ Initializes a VideoDB Instance
 
 #### Defined in
 
-[src/core/image.ts:21](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/image.ts#L21)
+[src/core/image.ts:19](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/image.ts#L19)
 
 ## Properties
 
@@ -57,13 +63,9 @@ Initializes a VideoDB Instance
 
 • **meta**: [`ImageBase`](../interfaces/interfaces_core.ImageBase.md)
 
-#### Implementation of
-
-[IImage](../interfaces/interfaces_core.IImage.md).[meta](../interfaces/interfaces_core.IImage.md#meta)
-
 #### Defined in
 
-[src/core/image.ts:13](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/image.ts#L13)
+[src/core/image.ts:11](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/image.ts#L11)
 
 ## Methods
 
@@ -85,4 +87,4 @@ an InvalidRequestError if the request fails
 
 #### Defined in
 
-[src/core/image.ts:31](https://github.com/video-db/videodb-node/blob/4dc9a20/src/core/image.ts#L31)
+[src/core/image.ts:29](https://github.com/omgate234/videodb-node/blob/047cbbf/src/core/image.ts#L29)

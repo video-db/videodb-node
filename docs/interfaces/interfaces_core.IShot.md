@@ -37,7 +37,7 @@ An awaited streaming URL
 
 #### Defined in
 
-[src/interfaces/core.ts:124](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L124)
+[src/interfaces/core.ts:128](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L128)
 
 ___
 
@@ -47,4 +47,4 @@ ___
 
 #### Defined in
 
-[src/interfaces/core.ts:119](https://github.com/video-db/videodb-node/blob/4dc9a20/src/interfaces/core.ts#L119)
+[src/interfaces/core.ts:123](https://github.com/omgate234/videodb-node/blob/047cbbf/src/interfaces/core.ts#L123)
