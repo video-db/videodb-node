@@ -30,3 +30,13 @@ export type KeywordVideoSearch = {
 export type KeywordCollectionSearch = {
   collectionId: string;
 } & KeywordSearchBase;
+
+export type SceneSearchBase = SearchBase;
+
+export type SceneVideoSearch = {
+  videoId: string;
+} & SceneSearchBase;
+
+export type SceneCollectionSearch = {
+  collectionId: string;
+} & SceneSearchBase;

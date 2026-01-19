@@ -73,6 +73,7 @@ export const TextStyleDefaultValues: TextStyleProps = {
 export enum SearchTypeValues {
   keyword = 'keyword',
   semantic = 'semantic',
+  scene = 'scene',
 }
 
 export enum IndexTypeValues {

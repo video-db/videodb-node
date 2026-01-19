@@ -10,6 +10,8 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "clean": "rm -rf ./dist/",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint ./src/ --fix",
     "prepare": "husky install",
     "test:watch": "jest --watch",

@@ -2,6 +2,8 @@ import { ApiPath } from '@/constants';
 import type { FrameBase, ImageBase, IImage } from '@/interfaces/core';
 import { HttpClient } from '@/utils/httpClient';
 
+const { image, generate_url } = ApiPath;
+
 /**
  * The base Image class
  * @remarks
@@ -28,9 +30,22 @@ export class Image implements IImage {
    */
   public delete = async () => {
     return await this.#vhttp.delete<Record<string, never>>([
-      ApiPath.image,
+      image,
       this.meta.id,
     ]);
+  };
+
+  /**
+   * Generate the signed url of the image
+   * @returns The signed url of the image
+   */
+  public generateUrl = async (): Promise<string | null> => {
+    const res = await this.#vhttp.post<{ signedUrl: string }, object>(
+      [image, this.meta.id, generate_url],
+      {},
+      { params: { collection_id: this.meta.collectionId } }
+    );
+    return res.data?.signedUrl || null;
   };
 }
 
