@@ -55,11 +55,15 @@ const {
  * The base class through which all videodb actions are possible
  */
 export class Collection implements ICollection {
-  public meta: CollectionBase;
+  public readonly id: string;
+  public readonly name?: string;
+  public readonly description?: string;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: CollectionBase) {
-    this.meta = data;
+    this.id = data.id;
+    this.name = data.name;
+    this.description = data.description;
     this.#vhttp = http;
   }
 
@@ -69,7 +73,7 @@ export class Collection implements ICollection {
    */
   public getVideos = async () => {
     const res = await this.#vhttp.get<GetVideos>([video], {
-      params: { collection_id: this.meta.id },
+      params: { collection_id: this.id },
     });
     return res.data.videos.map(vid => new Video(this.#vhttp, vid as VideoBase));
   };
@@ -85,7 +89,7 @@ export class Collection implements ICollection {
       throw new VideodbError('Video ID cannot be empty');
     }
     const res = await this.#vhttp.get<VideoResponse>([video, videoId], {
-      params: { collection_id: this.meta.id },
+      params: { collection_id: this.id },
     });
     return new Video(this.#vhttp, res.data as VideoBase);
   };
@@ -101,7 +105,7 @@ export class Collection implements ICollection {
       throw new VideodbError('Video ID cannot be empty');
     }
     return await this.#vhttp.delete<Record<string, never>>([video, videoId], {
-      params: { collection_id: this.meta.id },
+      params: { collection_id: this.id },
     });
   };
 
@@ -111,7 +115,7 @@ export class Collection implements ICollection {
    */
   public getAudios = async () => {
     const res = await this.#vhttp.get<GetAudios>([audio], {
-      params: { collection_id: this.meta.id },
+      params: { collection_id: this.id },
     });
     return res.data.audios.map(aud => new Audio(this.#vhttp, aud as AudioBase));
   };
@@ -127,7 +131,7 @@ export class Collection implements ICollection {
       throw new VideodbError('Audio ID cannot be empty');
     }
     const res = await this.#vhttp.get<AudioResponse>([audio, audioId], {
-      params: { collection_id: this.meta.id },
+      params: { collection_id: this.id },
     });
     return new Audio(this.#vhttp, res.data as AudioBase);
   };
@@ -143,7 +147,7 @@ export class Collection implements ICollection {
       throw new VideodbError('Audio ID cannot be empty');
     }
     return await this.#vhttp.delete<Record<string, never>>([audio, audioId], {
-      params: { collection_id: this.meta.id },
+      params: { collection_id: this.id },
     });
   };
 
@@ -153,7 +157,7 @@ export class Collection implements ICollection {
    */
   public getImages = async () => {
     const res = await this.#vhttp.get<GetImages>([image], {
-      params: { collection_id: this.meta.id },
+      params: { collection_id: this.id },
     });
     return res.data.images.map(img => new Image(this.#vhttp, img as ImageBase));
   };
@@ -169,7 +173,7 @@ export class Collection implements ICollection {
       throw new VideodbError('Image ID cannot be empty');
     }
     const res = await this.#vhttp.get<ImageResponse>([image, imageId], {
-      params: { collection_id: this.meta.id },
+      params: { collection_id: this.id },
     });
     return new Image(this.#vhttp, res.data as ImageBase);
   };
@@ -185,7 +189,7 @@ export class Collection implements ICollection {
       throw new VideodbError('Image ID cannot be empty');
     }
     return await this.#vhttp.delete<Record<string, never>>([image, imageId], {
-      params: { collection_id: this.meta.id },
+      params: { collection_id: this.id },
     });
   };
 
@@ -199,7 +203,7 @@ export class Collection implements ICollection {
    * @returns Video, Audio, or Image object. Returns undefined if callbackUrl is provided.
    */
   public uploadFile = async (data: FileUploadConfig) => {
-    return uploadToServer(this.#vhttp, this.meta.id, data);
+    return uploadToServer(this.#vhttp, this.id, data);
   };
 
   /**
@@ -212,7 +216,7 @@ export class Collection implements ICollection {
    * @returns Video, Audio, or Image object. Returns undefined if callbackUrl is provided.
    */
   public uploadURL = async (data: URLUploadConfig) => {
-    return uploadToServer(this.#vhttp, this.meta.id, data);
+    return uploadToServer(this.#vhttp, this.id, data);
   };
 
   /**
@@ -232,7 +236,7 @@ export class Collection implements ICollection {
     const searchFunc = s.getSearch(searchType ?? DefaultSearchType);
 
     const results = await searchFunc.searchInsideCollection({
-      collectionId: this.meta.id,
+      collectionId: this.id,
       query: query,
       searchType: searchType ?? DefaultSearchType,
       indexType: indexType ?? DefaultIndexType,
@@ -249,7 +253,7 @@ export class Collection implements ICollection {
   public delete = async () => {
     return await this.#vhttp.delete<Record<string, never>>([
       collection,
-      this.meta.id,
+      this.id,
     ]);
   };
 
@@ -266,7 +270,7 @@ export class Collection implements ICollection {
     sampleRate?: number
   ): Promise<RTStream> => {
     const res = await this.#vhttp.post<RTStreamBase, object>([rtstream], {
-      collectionId: this.meta.id,
+      collectionId: this.id,
       url,
       name,
       sampleRate,
@@ -306,7 +310,7 @@ export class Collection implements ICollection {
     callbackUrl?: string
   ): Promise<Image | undefined> => {
     const res = await this.#vhttp.post<ImageBase, object>(
-      [collection, this.meta.id, generate, image],
+      [collection, this.id, generate, image],
       { prompt, aspectRatio, callbackUrl }
     );
     if (res.data) {
@@ -327,7 +331,7 @@ export class Collection implements ICollection {
     callbackUrl?: string
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
-      [collection, this.meta.id, generate, audio],
+      [collection, this.id, generate, audio],
       { prompt, duration, audioType: 'music', callbackUrl }
     );
     if (res.data) {
@@ -350,7 +354,7 @@ export class Collection implements ICollection {
     callbackUrl?: string
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
-      [collection, this.meta.id, generate, audio],
+      [collection, this.id, generate, audio],
       { prompt, duration, audioType: 'sound_effect', config, callbackUrl }
     );
     if (res.data) {
@@ -373,7 +377,7 @@ export class Collection implements ICollection {
     callbackUrl?: string
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
-      [collection, this.meta.id, generate, audio],
+      [collection, this.id, generate, audio],
       { text: textContent, audioType: 'voice', voiceName, config, callbackUrl }
     );
     if (res.data) {
@@ -394,7 +398,7 @@ export class Collection implements ICollection {
     callbackUrl?: string
   ): Promise<Video | undefined> => {
     const res = await this.#vhttp.post<VideoBase, object>(
-      [collection, this.meta.id, generate, video],
+      [collection, this.id, generate, video],
       { prompt, duration, callbackUrl }
     );
     if (res.data) {
@@ -417,7 +421,7 @@ export class Collection implements ICollection {
     const res = await this.#vhttp.post<
       string | Record<string, unknown>,
       object
-    >([collection, this.meta.id, generate, text], {
+    >([collection, this.id, generate, text], {
       prompt,
       modelName,
       responseType,
@@ -438,7 +442,7 @@ export class Collection implements ICollection {
     callbackUrl?: string
   ): Promise<Video | undefined> => {
     const res = await this.#vhttp.post<VideoBase, object>(
-      [collection, this.meta.id, generate, video, dub],
+      [collection, this.id, generate, video, dub],
       { videoId, languageCode, callbackUrl }
     );
     if (res.data) {
@@ -455,7 +459,7 @@ export class Collection implements ICollection {
     query: string
   ): Promise<Array<{ video: Video }>> => {
     const res = await this.#vhttp.post<Array<{ video: VideoBase }>, object>(
-      [collection, this.meta.id, search, title],
+      [collection, this.id, search, title],
       { query, searchType: SearchTypeValues.scene }
     );
     return (res.data || []).map(result => ({
@@ -467,14 +471,14 @@ export class Collection implements ICollection {
    * Make the collection public
    */
   public makePublic = async (): Promise<void> => {
-    await this.#vhttp.patch([collection, this.meta.id], { isPublic: true });
+    await this.#vhttp.patch([collection, this.id], { isPublic: true });
   };
 
   /**
    * Make the collection private
    */
   public makePrivate = async (): Promise<void> => {
-    await this.#vhttp.patch([collection, this.meta.id], { isPublic: false });
+    await this.#vhttp.patch([collection, this.id], { isPublic: false });
   };
 
   /**
@@ -488,7 +492,7 @@ export class Collection implements ICollection {
     const res = await this.#vhttp.post<
       MeetingBase & { meetingId: string },
       object
-    >([collection, this.meta.id, meeting, record], {
+    >([collection, this.id, meeting, record], {
       meetingUrl: config.meetingUrl,
       botName: config.botName,
       botImageUrl: config.botImageUrl,
@@ -500,7 +504,7 @@ export class Collection implements ICollection {
     return new Meeting(this.#vhttp, {
       ...res.data,
       id: res.data.meetingId,
-      collectionId: this.meta.id,
+      collectionId: this.id,
     });
   };
 
@@ -512,7 +516,7 @@ export class Collection implements ICollection {
   public getMeeting = async (meetingId: string): Promise<Meeting> => {
     const meetingObj = new Meeting(this.#vhttp, {
       id: meetingId,
-      collectionId: this.meta.id,
+      collectionId: this.id,
     });
     await meetingObj.refresh();
     return meetingObj;

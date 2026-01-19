@@ -62,7 +62,15 @@ const {
  * Use this to initialize a video stored in videoDB
  */
 export class Video implements IVideo {
-  public meta: VideoBase;
+  public readonly id: string;
+  public readonly collectionId: string;
+  public readonly length: string;
+  public readonly name: string;
+  public readonly size: string;
+  public readonly streamUrl: string;
+  public readonly userId: string;
+  public readonly playerUrl: string;
+  public thumbnail?: string;
   public transcript?: Transcript;
   #vhttp: HttpClient;
 
@@ -72,7 +80,15 @@ export class Video implements IVideo {
    * @param data - Data needed to initialize a video instance
    */
   constructor(http: HttpClient, data: VideoBase) {
-    this.meta = data;
+    this.id = data.id;
+    this.collectionId = data.collectionId;
+    this.length = data.length;
+    this.name = data.name;
+    this.size = data.size;
+    this.streamUrl = data.streamUrl;
+    this.userId = data.userId;
+    this.playerUrl = data.playerUrl;
+    this.thumbnail = data.thumbnail;
     this.#vhttp = http;
   }
 
@@ -93,7 +109,7 @@ export class Video implements IVideo {
     const s = new SearchFactory(this.#vhttp);
     const searchFunc = s.getSearch(searchType ?? DefaultSearchType);
     const results = await searchFunc.searchInsideVideo({
-      videoId: this.meta.id,
+      videoId: this.id,
       query: query,
       searchType: searchType ?? DefaultSearchType,
       indexType: indexType ?? DefaultIndexType,
@@ -111,7 +127,7 @@ export class Video implements IVideo {
   public delete = async () => {
     return await this.#vhttp.delete<Record<string, never>>([
       video,
-      this.meta.id,
+      this.id,
     ]);
   };
 
@@ -121,17 +137,17 @@ export class Video implements IVideo {
    * @returns a streaming URL
    */
   public generateStream = async (timeline?: Timeline) => {
-    if (!timeline && this.meta.streamUrl) {
-      return this.meta.streamUrl;
+    if (!timeline && this.streamUrl) {
+      return this.streamUrl;
     }
 
     const body: { length: number; timeline?: Timeline } = {
-      length: Number(this.meta.length),
+      length: Number(this.length),
     };
     if (timeline) body.timeline = timeline;
 
     const res = await this.#vhttp.post<GenerateStreamResponse, typeof body>(
-      [video, this.meta.id, stream],
+      [video, this.id, stream],
       body
     );
 
@@ -144,11 +160,11 @@ export class Video implements IVideo {
    * @returns Image object if time is provided, else the thumbnail URL string
    */
   public generateThumbnail = async (time?: number): Promise<string | Image> => {
-    if (this.meta.thumbnail && time === undefined) return this.meta.thumbnail;
+    if (this.thumbnail && time === undefined) return this.thumbnail;
 
     if (time !== undefined) {
       const res = await this.#vhttp.post<ImageBase, object>(
-        [video, this.meta.id, thumbnail],
+        [video, this.id, thumbnail],
         { time }
       );
       return new Image(this.#vhttp, res.data);
@@ -156,11 +172,11 @@ export class Video implements IVideo {
 
     const res = await this.#vhttp.get<{ thumbnail: string; thumbnailUrl?: string }>([
       video,
-      this.meta.id,
+      this.id,
       thumbnail,
     ]);
-    this.meta.thumbnail = res.data.thumbnail || res.data.thumbnailUrl;
-    return this.meta.thumbnail!;
+    this.thumbnail = res.data.thumbnail || res.data.thumbnailUrl;
+    return this.thumbnail!;
   };
 
   /**
@@ -174,7 +190,7 @@ export class Video implements IVideo {
 
     const res = await this.#vhttp.get<TranscriptResponse>([
       video,
-      this.meta.id,
+      this.id,
       transcription,
       `?force=${String(forceCreate)}`,
     ]);
@@ -192,7 +208,7 @@ export class Video implements IVideo {
     force: boolean = false
   ): Promise<{ success: boolean; message: string } | Transcript> => {
     const res = await this.#vhttp.post<TranscriptResponse, object>(
-      [video, this.meta.id, transcription],
+      [video, this.id, transcription],
       { force }
     );
 
@@ -215,7 +231,7 @@ export class Video implements IVideo {
     message?: string;
   }> => {
     const res = await this.#vhttp.post<NoDataResponse, { indexType: string }>(
-      [video, this.meta.id, index],
+      [video, this.id, index],
       { indexType: IndexTypeValues.spoken }
     );
 
@@ -240,7 +256,7 @@ export class Video implements IVideo {
         frames.push(
           new Frame(this.#vhttp, {
             id: frameData.frameId,
-            videoId: this.meta.id,
+            videoId: this.id,
             sceneId: sceneData.sceneId,
             url: frameData.url,
             frameTime: frameData.frameTime,
@@ -251,7 +267,7 @@ export class Video implements IVideo {
       scenes.push(
         new Scene(this.#vhttp, {
           id: sceneData.sceneId,
-          videoId: this.meta.id,
+          videoId: this.id,
           start: sceneData.start,
           end: sceneData.end,
           frames: frames,
@@ -260,7 +276,7 @@ export class Video implements IVideo {
     }
     return new SceneCollection(this.#vhttp, {
       id: sceneCollectionData.sceneCollectionId,
-      videoId: this.meta.id,
+      videoId: this.id,
       scenes: scenes,
       config: sceneCollectionData.config,
     });
@@ -278,7 +294,7 @@ export class Video implements IVideo {
     const res = await this.#vhttp.post<
       SceneCollectionResponse,
       Partial<ExtractSceneConfig>
-    >([video, this.meta.id, scenes], { ...defaultConfig, ...config });
+    >([video, this.id, scenes], { ...defaultConfig, ...config });
 
     return this._formatSceneCollectionData(res.data.sceneCollection);
   };
@@ -286,7 +302,7 @@ export class Video implements IVideo {
   public listSceneCollection = async () => {
     const res = await this.#vhttp.get<ListSceneCollection>([
       video,
-      this.meta.id,
+      this.id,
       scenes,
     ]);
     return res.data.sceneCollections;
@@ -295,7 +311,7 @@ export class Video implements IVideo {
   public getSceneCollection = async (sceneCollectionId: string) => {
     const res = await this.#vhttp.get<SceneCollectionResponse>([
       video,
-      this.meta.id,
+      this.id,
       scenes,
       sceneCollectionId,
     ]);
@@ -305,7 +321,7 @@ export class Video implements IVideo {
   public deleteSceneCollection = async (sceneCollectionId: string) => {
     const res = await this.#vhttp.delete([
       video,
-      this.meta.id,
+      this.id,
       scenes,
       sceneCollectionId,
     ]);
@@ -327,7 +343,7 @@ export class Video implements IVideo {
       payload.scenes = config.scenes.map((s: Scene) => s.getRequestData());
     }
     const res = await this.#vhttp.post<IndexScenesResponse, typeof payload>(
-      [video, this.meta.id, index, scene],
+      [video, this.id, index, scene],
       payload
     );
     if (res.data) {
@@ -338,7 +354,7 @@ export class Video implements IVideo {
   public listSceneIndex = async () => {
     const res = await this.#vhttp.get<ListSceneIndex>([
       video,
-      this.meta.id,
+      this.id,
       index,
       scene,
     ]);
@@ -350,7 +366,7 @@ export class Video implements IVideo {
   ): Promise<SceneIndexRecords> => {
     const res = await this.#vhttp.get<GetSceneIndexResponse>([
       video,
-      this.meta.id,
+      this.id,
       index,
       scene,
       sceneIndexId,
@@ -361,7 +377,7 @@ export class Video implements IVideo {
   public deleteSceneIndex = async (sceneIndexId: string) => {
     const res = await this.#vhttp.delete([
       video,
-      this.meta.id,
+      this.id,
       index,
       scene,
       sceneIndexId,
@@ -378,7 +394,7 @@ export class Video implements IVideo {
     const res = await this.#vhttp.post<
       GenerateStreamResponse,
       { type: string; subtitleStyle: Partial<SubtitleStyleProps> }
-    >([video, this.meta.id, workflow], {
+    >([video, this.id, workflow], {
       type: Workflows.addSubtitles,
       subtitleStyle: { ...config },
     });
@@ -390,7 +406,7 @@ export class Video implements IVideo {
    * @returns a URL that can be opened in browser
    */
   public play = () => {
-    return playStream(this.meta.streamUrl);
+    return playStream(this.streamUrl);
   };
 
   /**
@@ -400,7 +416,7 @@ export class Video implements IVideo {
   public removeStorage = async () => {
     return await this.#vhttp.delete<Record<string, never>>([
       video,
-      this.meta.id,
+      this.id,
       storage,
     ]);
   };
@@ -412,7 +428,7 @@ export class Video implements IVideo {
   public getThumbnails = async (): Promise<Image[]> => {
     const res = await this.#vhttp.get<ImageBase[]>([
       video,
-      this.meta.id,
+      this.id,
       thumbnails,
     ]);
     return (res.data || []).map(thumb => new Image(this.#vhttp, thumb));
@@ -429,7 +445,7 @@ export class Video implements IVideo {
     end?: number
   ): Promise<string> => {
     const res = await this.#vhttp.get<TranscriptResponse>(
-      [video, this.meta.id, transcription],
+      [video, this.id, transcription],
       {
         params: {
           start,
@@ -457,7 +473,7 @@ export class Video implements IVideo {
     const res = await this.#vhttp.post<
       { translatedTranscript: unknown[] },
       object
-    >([collection, this.meta.collectionId, video, this.meta.id, translate], {
+    >([collection, this.collectionId, video, this.id, translate], {
       language,
       additionalNotes,
       callbackUrl,
@@ -475,13 +491,13 @@ export class Video implements IVideo {
     insertVideo: Video,
     timestamp: number
   ): Promise<string | null> => {
-    const videoLength = Number(this.meta.length);
+    const videoLength = Number(this.length);
     if (timestamp > videoLength) {
       timestamp = videoLength;
     }
 
     const preShot = new Shot(this.#vhttp, {
-      videoId: this.meta.id,
+      videoId: this.id,
       videoLength: timestamp,
       videoTitle: '',
       start: 0,
@@ -489,15 +505,15 @@ export class Video implements IVideo {
     });
 
     const insertedShot = new Shot(this.#vhttp, {
-      videoId: insertVideo.meta.id,
-      videoLength: Number(insertVideo.meta.length),
+      videoId: insertVideo.id,
+      videoLength: Number(insertVideo.length),
       videoTitle: '',
       start: 0,
-      end: Number(insertVideo.meta.length),
+      end: Number(insertVideo.length),
     });
 
     const postShot = new Shot(this.#vhttp, {
-      videoId: this.meta.id,
+      videoId: this.id,
       videoLength: videoLength - timestamp,
       videoTitle: '',
       start: timestamp,
@@ -509,9 +525,9 @@ export class Video implements IVideo {
     const res = await this.#vhttp.post<{ streamUrl: string }, object[]>(
       [compile],
       allShots.map(shot => ({
-        videoId: shot.meta.videoId,
-        collectionId: this.meta.collectionId,
-        shots: [[shot.meta.start, shot.meta.end]],
+        videoId: shot.videoId,
+        collectionId: this.collectionId,
+        shots: [[shot.start, shot.end]],
       }))
     );
     return res.data?.streamUrl || null;
@@ -525,14 +541,14 @@ export class Video implements IVideo {
     const { Meeting } = await import('./meeting');
     const res = await this.#vhttp.get<MeetingBase & { meetingId: string }>([
       video,
-      this.meta.id,
+      this.id,
       meeting,
     ]);
     if (res.data) {
       return new Meeting(this.#vhttp, {
         ...res.data,
         id: res.data.meetingId,
-        collectionId: this.meta.collectionId,
+        collectionId: this.collectionId,
       });
     }
     return null;
@@ -555,7 +571,7 @@ export class Video implements IVideo {
     callbackUrl?: string
   ): Promise<Video | undefined> => {
     const res = await this.#vhttp.post<VideoBase, object>(
-      [video, this.meta.id, reframe],
+      [video, this.id, reframe],
       { start, end, target, mode, callbackUrl }
     );
 
@@ -586,14 +602,14 @@ export class Video implements IVideo {
    * @returns Download response data
    */
   public download = async (name?: string): Promise<Record<string, unknown>> => {
-    if (!this.meta.streamUrl) {
+    if (!this.streamUrl) {
       throw new VideodbError('Video does not have a stream_url');
     }
 
-    const downloadName = name || this.meta.name || `video_${this.meta.id}`;
+    const downloadName = name || this.name || `video_${this.id}`;
     const res = await this.#vhttp.post<Record<string, unknown>, object>(
       [ApiPath.download],
-      { streamLink: this.meta.streamUrl, name: downloadName }
+      { streamLink: this.streamUrl, name: downloadName }
     );
     return res.data;
   };

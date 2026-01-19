@@ -21,7 +21,12 @@ interface TranscriptResponse {
  * Use this to initialize an audio stored in VideoDB
  */
 export class Audio implements IAudio {
-  public meta: AudioBase;
+  public readonly id: string;
+  public readonly collectionId: string;
+  public readonly length: string;
+  public readonly name: string;
+  public readonly size: string;
+  public readonly userId: string;
   public transcript?: TranscriptSegment[];
   public transcriptText?: string;
   #vhttp: HttpClient;
@@ -32,7 +37,12 @@ export class Audio implements IAudio {
    * @param data - Data needed to initialize an audio instance
    */
   constructor(http: HttpClient, data: AudioBase) {
-    this.meta = data;
+    this.id = data.id;
+    this.collectionId = data.collectionId;
+    this.length = data.length;
+    this.name = data.name;
+    this.size = data.size;
+    this.userId = data.userId;
     this.#vhttp = http;
   }
 
@@ -44,7 +54,7 @@ export class Audio implements IAudio {
   public delete = async () => {
     return await this.#vhttp.delete<Record<string, never>>([
       audio,
-      this.meta.id,
+      this.id,
     ]);
   };
 
@@ -54,9 +64,9 @@ export class Audio implements IAudio {
    */
   public generateUrl = async (): Promise<string | null> => {
     const res = await this.#vhttp.post<{ signedUrl: string }, object>(
-      [audio, this.meta.id, generate_url],
+      [audio, this.id, generate_url],
       {},
-      { params: { collection_id: this.meta.collectionId } }
+      { params: { collection_id: this.collectionId } }
     );
     return res.data?.signedUrl || null;
   };
@@ -75,7 +85,7 @@ export class Audio implements IAudio {
       return;
     }
     const res = await this.#vhttp.get<TranscriptResponse>(
-      [audio, this.meta.id, transcription],
+      [audio, this.id, transcription],
       {
         params: {
           start,
@@ -135,7 +145,7 @@ export class Audio implements IAudio {
     languageCode?: string
   ): Promise<{ success: boolean; message: string } | TranscriptResponse> => {
     const res = await this.#vhttp.post<TranscriptResponse, object>(
-      [audio, this.meta.id, transcription],
+      [audio, this.id, transcription],
       { force: !!force, languageCode }
     );
     const transcript = res.data?.wordTimestamps;

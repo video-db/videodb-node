@@ -46,9 +46,12 @@ class SceneSearch implements Search<SceneVideoSearch, SceneCollectionSearch> {
     return new SearchResult(this.#vhttp, res.data);
   };
 
-  searchInsideCollection = async (_data: SceneCollectionSearch) => {
-    throw new Error(
-      'Method not implemented. Scene search is not supported for Collection'
+  searchInsideCollection = (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _: SceneCollectionSearch
+  ): Promise<SearchResult> => {
+    return Promise.reject(
+      new Error('Scene search is not supported for Collection')
     );
   };
 }
@@ -123,9 +126,12 @@ class KeywordSearch
     return new SearchResult(this.#vhttp, res.data);
   };
 
-  searchInsideCollection = async (data: KeywordCollectionSearch) => {
-    throw new Error(
-      'Method not implemented. Keyword search is not supported for Collection'
+  searchInsideCollection = (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _: KeywordCollectionSearch
+  ): Promise<SearchResult> => {
+    return Promise.reject(
+      new Error('Keyword search is not supported for Collection')
     );
   };
 }

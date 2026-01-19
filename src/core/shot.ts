@@ -11,10 +11,25 @@ const { video, stream } = ApiPath;
  * A shot is a clip of a specific video
  */
 export class Shot implements IShot {
-  meta: ShotBase;
+  public readonly videoId: string;
+  public readonly videoLength: number;
+  public readonly videoTitle: string;
+  public readonly start: number;
+  public readonly end: number;
+  public readonly text?: string;
+  public readonly searchScore?: number;
+  public readonly streamUrl?: string;
   #vhttp: HttpClient;
-  constructor(http: HttpClient, meta: ShotBase) {
-    this.meta = meta;
+
+  constructor(http: HttpClient, data: ShotBase) {
+    this.videoId = data.videoId;
+    this.videoLength = data.videoLength;
+    this.videoTitle = data.videoTitle;
+    this.start = data.start;
+    this.end = data.end;
+    this.text = data.text;
+    this.searchScore = data.searchScore;
+    this.streamUrl = data.streamUrl;
     this.#vhttp = http;
   }
 
@@ -24,12 +39,12 @@ export class Shot implements IShot {
    */
   generateStream = async () => {
     const body = {
-      length: this.meta.videoLength,
-      timeline: [[this.meta.start, this.meta.end]] as Timeline,
+      length: this.videoLength,
+      timeline: [[this.start, this.end]] as Timeline,
     };
 
     const res = await this.#vhttp.post<GenerateStreamResponse, typeof body>(
-      [video, this.meta.videoId, stream],
+      [video, this.videoId, stream],
       body
     );
 

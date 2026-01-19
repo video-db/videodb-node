@@ -47,9 +47,9 @@ export class SearchResult {
     else if (this.shots.length) {
       const reqData = this.shots.map(shot => {
         return {
-          videoId: shot.meta.videoId,
+          videoId: shot.videoId,
           collectionId: this.collectionId,
-          shots: [[shot.meta.start, shot.meta.end]],
+          shots: [[shot.start, shot.end]],
         };
       });
       const res = await this.#vhttp.post<
