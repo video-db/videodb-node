@@ -5,7 +5,7 @@ import {
   type PermissionTypeValue,
   type PermissionStatusValue,
   type BinaryChannel,
-  type StartCaptureClientConfig,
+  type StartCaptureSessionClientConfig,
   type CaptureClientOptions,
   type TrackTypeValue,
 } from './types';
@@ -26,18 +26,17 @@ import {
  * // List available channels
  * const channels = await client.listChannels();
  *
- * // Start capture
- * await client.startCapture({
+ * // Start capture session (sessionId from backend CaptureSession)
+ * await client.startCaptureSession({
+ *   sessionId: 'ss-xxx', // Required: from CaptureSession.id
  *   channels: [
  *     { channelId: 'mic:default', type: 'audio', record: true, transcript: true },
- *     { channelId: 'display:1', type: 'video', record: true, store: true },
+ *     { channelId: 'display:1', type: 'video', record: true },
  *   ],
- *   primaryVideoChannelId: 'display:1',
- *   wssConnectionId: ws.connectionId,
  * });
  *
  * // Stop capture
- * await client.stopCapture();
+ * await client.stopCaptureSession();
  *
  * // Cleanup
  * await client.shutdown();
@@ -121,7 +120,9 @@ export class CaptureClient extends EventEmitter {
     const validPermissions = Object.values(PermissionType);
     if (!validPermissions.includes(kind)) {
       throw new Error(
-        `Invalid permission type: ${kind}. Valid types: ${validPermissions.join(', ')}`
+        `Invalid permission type: ${kind}. Valid types: ${validPermissions.join(
+          ', '
+        )}`
       );
     }
 
@@ -147,13 +148,19 @@ export class CaptureClient extends EventEmitter {
   }
 
   /**
-   * Start capturing
-   * @param config - Capture configuration
+   * Start capture session
+   * @param config - Capture session configuration (sessionId is required)
    */
-  public async startCapture(config: StartCaptureClientConfig): Promise<void> {
+  public async startCaptureSession(
+    config: StartCaptureSessionClientConfig
+  ): Promise<void> {
     await this.ensureInitialized();
 
     // Validate configuration
+    if (!config.sessionId) {
+      throw new Error('sessionId is required');
+    }
+
     if (!config.channels || !Array.isArray(config.channels)) {
       throw new Error('channels array is required');
     }
@@ -162,28 +169,19 @@ export class CaptureClient extends EventEmitter {
       throw new Error('channels array cannot be empty');
     }
 
-    // Find a primary video channel if not specified
-    let primaryVideoChannelId = config.primaryVideoChannelId;
-    if (!primaryVideoChannelId) {
-      const videoChannel = config.channels.find(c => c.type === 'video');
-      if (videoChannel) {
-        primaryVideoChannelId = videoChannel.channelId;
-      }
-    }
+    this.currentSessionId = config.sessionId;
 
     await this.binaryManager.sendCommand('startRecording', {
       uploadToken: this.sessionToken,
-      sessionId: this.currentSessionId || `session_${Date.now()}`,
+      sessionId: config.sessionId,
       channels: config.channels,
-      primary_video_channel_id: primaryVideoChannelId,
-      ws_connection_id: config.wssConnectionId,
     });
   }
 
   /**
-   * Stop the current capture
+   * Stop the current capture session
    */
-  public async stopCapture(): Promise<void> {
+  public async stopCaptureSession(): Promise<void> {
     if (!this.isInitialized) {
       return;
     }
@@ -224,7 +222,9 @@ export class CaptureClient extends EventEmitter {
     const invalidTracks = tracks.filter(t => !validTracks.includes(t));
     if (invalidTracks.length > 0) {
       throw new Error(
-        `Invalid track(s): ${invalidTracks.join(', ')}. Valid tracks: ${validTracks.join(', ')}`
+        `Invalid track(s): ${invalidTracks.join(
+          ', '
+        )}. Valid tracks: ${validTracks.join(', ')}`
       );
     }
 
@@ -252,7 +252,9 @@ export class CaptureClient extends EventEmitter {
     const invalidTracks = tracks.filter(t => !validTracks.includes(t));
     if (invalidTracks.length > 0) {
       throw new Error(
-        `Invalid track(s): ${invalidTracks.join(', ')}. Valid tracks: ${validTracks.join(', ')}`
+        `Invalid track(s): ${invalidTracks.join(
+          ', '
+        )}. Valid tracks: ${validTracks.join(', ')}`
       );
     }
 

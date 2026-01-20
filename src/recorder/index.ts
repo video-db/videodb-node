@@ -14,18 +14,17 @@
  * await client.requestPermission('microphone');
  * await client.requestPermission('screen_capture');
  *
- * // List available channels
+ * // List available channels (returns mic:default, system_audio:default, display:1, etc.)
  * const channels = await client.listChannels();
  * console.log(channels);
  *
- * // Start capture
- * await client.startCapture({
+ * // Start capture session (sessionId from backend CaptureSession)
+ * await client.startCaptureSession({
+ *   sessionId: 'ss-xxx', // Required: from CaptureSession.id
  *   channels: [
  *     { channelId: 'mic:default', type: 'audio', record: true, transcript: true },
- *     { channelId: 'display:1', type: 'video', record: true, store: true },
+ *     { channelId: 'display:1', type: 'video', record: true },
  *   ],
- *   primaryVideoChannelId: 'display:1',
- *   wssConnectionId: ws.connectionId,
  * });
  *
  * // Listen for events
@@ -34,7 +33,7 @@
  * });
  *
  * // Stop capture
- * await client.stopCapture();
+ * await client.stopCaptureSession();
  *
  * // Cleanup
  * await client.shutdown();
@@ -71,7 +70,7 @@ export {
   type BinaryEvent,
   type BinaryMessage,
   type CaptureClientEvents,
-  type StartCaptureClientConfig,
+  type StartCaptureSessionClientConfig,
   type CaptureClientOptions,
   type TrackTypeValue,
 } from './types';

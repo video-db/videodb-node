@@ -146,15 +146,14 @@ export interface CaptureClientEvents {
 }
 
 /**
- * Start capture configuration
+ * Start capture session configuration
+ * Matches API: POST /capture/session/start
  */
-export interface StartCaptureClientConfig {
+export interface StartCaptureSessionClientConfig {
+  /** Session ID from backend CaptureSession (required) */
+  sessionId: string;
   /** Channels to capture */
   channels: RecordingChannelConfig[];
-  /** Primary video channel ID */
-  primaryVideoChannelId?: string;
-  /** WebSocket connection ID for real-time events */
-  wssConnectionId?: string;
 }
 
 /**

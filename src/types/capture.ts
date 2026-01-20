@@ -1,5 +1,5 @@
 /**
- * Capture and Channel type definitions
+ * Capture Session and Channel type definitions
  */
 
 /**
@@ -15,9 +15,9 @@ export interface ConnectionConfig {
 }
 
 /**
- * Capture status values (matches spec: created|starting|active|stopped|exported|failed)
+ * CaptureSession status values
  */
-export const CaptureStatus = {
+export const CaptureSessionStatus = {
   created: 'created',
   starting: 'starting',
   active: 'active',
@@ -26,7 +26,8 @@ export const CaptureStatus = {
   failed: 'failed',
 } as const;
 
-export type CaptureStatusType = (typeof CaptureStatus)[keyof typeof CaptureStatus];
+export type CaptureSessionStatusType =
+  (typeof CaptureSessionStatus)[keyof typeof CaptureSessionStatus];
 
 /**
  * Channel type values
@@ -47,93 +48,65 @@ export const PermissionKind = {
   accessibility: 'accessibility',
 } as const;
 
-export type PermissionKindType = (typeof PermissionKind)[keyof typeof PermissionKind];
+export type PermissionKindType =
+  (typeof PermissionKind)[keyof typeof PermissionKind];
 
 /**
- * Channel configuration for creating captures
+ * Channel configuration for starting capture sessions
+ *
+ * Available channel IDs (v1 scope):
+ * - mic:default (audio)
+ * - system_audio:default (audio)
+ * - display:1, display:2, ... (video)
  */
 export interface ChannelConfig {
-  /** Unique identifier for the channel (e.g., 'mic:default', 'display:1') */
+  /** Channel identifier (e.g., 'mic:default', 'system_audio:default', 'display:1') */
   channelId: string;
   /** Type of the channel */
   type: ChannelTypeValue;
   /** Whether to record this channel */
   record?: boolean;
-  /** Whether to enable transcription for this channel */
+  /** Whether to enable transcription for this channel (audio only) */
   transcript?: boolean;
   /** Whether to store the recorded content */
   store?: boolean;
 }
 
 /**
- * Base channel data from API
+ * Configuration for creating a capture session
  */
-export interface ChannelBase {
-  channelId: string;
-  type: ChannelTypeValue;
-  rtstreamId?: string;
-  status?: string;
-}
-
-/**
- * Base capture data from API
- */
-export interface CaptureBase {
-  id: string;
-  status?: CaptureStatusType;
-  clientSessionId?: string;
-  endUserId?: string;
-  collectionId?: string;
-  callbackUrl?: string;
-  metadata?: Record<string, unknown>;
-  exportedVideoId?: string;
-  channels?: ChannelBase[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-/**
- * Configuration for creating a capture
- */
-export interface CreateCaptureConfig {
-  /** End user identifier */
+export interface CreateCaptureSessionConfig {
+  /** End user identifier (prefer non-PII or hashed) */
   endUserId: string;
-  /** Client-provided session identifier */
-  clientSessionId: string;
-  /** Collection ID to store the capture (default: 'default') */
-  collectionId?: string;
-  /** Callback URL for capture completion notification */
+  /** Callback URL for capture session lifecycle notifications */
   callbackUrl?: string;
   /** Optional metadata passthrough */
   metadata?: Record<string, unknown>;
 }
 
 /**
- * Configuration for listing captures
+ * Configuration for listing capture sessions
  */
-export interface ListCapturesConfig {
-  /** Filter by collection ID */
-  collectionId?: string;
+export interface ListCaptureSessionsConfig {
+  /** Filter by status */
+  status?: CaptureSessionStatusType;
   /** Filter by end user ID */
   endUserId?: string;
-  /** Filter by status */
-  status?: CaptureStatusType;
-  /** Maximum number of captures to return */
+  /** Maximum number of sessions to return */
   limit?: number;
   /** Cursor for pagination */
   cursor?: string;
 }
 
 /**
- * Configuration for starting a capture
+ * Configuration for starting a capture session (client-side)
+ * Matches API: POST /capture/session/start
  */
-export interface StartCaptureConfig {
+export interface StartCaptureSessionConfig {
+  /** Session ID from CaptureSession.id */
+  sessionId: string;
   /** Channels to capture */
   channels: ChannelConfig[];
-  /** Primary video channel ID for the capture */
-  primaryVideoChannelId?: string;
-  /** WebSocket connection ID for real-time events */
-  wssConnectionId?: string;
 }
 
 /**
@@ -141,11 +114,13 @@ export interface StartCaptureConfig {
  */
 export interface TranscriptSegment {
   /** Start time in milliseconds */
-  start: number;
+  startMs: number;
   /** End time in milliseconds */
-  end: number;
+  endMs: number;
   /** Transcript text */
   text: string;
+  /** Whether this is a final transcript */
+  isFinal?: boolean;
   /** Speaker identifier */
   speaker?: string;
   /** Confidence score */
@@ -190,45 +165,53 @@ export interface TranscriptStatusResult {
 }
 
 /**
- * Configuration for scene indexing
+ * Batch configuration for indexing
  */
-export interface SceneIndexConfig {
-  /** Type of scene extraction */
-  extractionType?: string;
-  /** Extraction configuration */
-  extractionConfig?: Record<string, unknown>;
+export interface BatchConfig {
+  /** Batch type: 'time', 'word', 'sentence', or 'shot' */
+  type: 'time' | 'word' | 'sentence' | 'shot';
+  /** Batch value (seconds for time, count for word/sentence) */
+  value: number;
+  /** Number of frames to extract (for visual indexing) */
+  frameCount?: number;
+}
+
+/**
+ * Configuration for visual indexing (scene indexing)
+ */
+export interface IndexVisualsConfig {
+  /** Batch configuration */
+  batchConfig: BatchConfig;
   /** Prompt for scene description */
   prompt?: string;
+  /** Socket ID for real-time updates */
+  socketId?: string;
   /** Model name for scene analysis */
   modelName?: string;
   /** Model configuration */
   modelConfig?: Record<string, unknown>;
   /** Name for the scene index */
   name?: string;
-  /** Socket ID for real-time updates */
-  socketId?: string;
 }
 
 /**
  * Configuration for spoken word indexing
  */
-export interface SpokenIndexConfig {
+export interface IndexSpokenWordsConfig {
+  /** Batch configuration */
+  batchConfig: BatchConfig;
   /** Prompt for spoken word analysis */
   prompt?: string;
-  /** Segmenter type (time, word, sentence) */
-  segmenter?: string;
-  /** Segment length */
-  length?: number;
+  /** Socket ID for real-time updates */
+  socketId?: string;
+  /** Whether to auto-start transcript if not running (default: true) */
+  autoStartTranscript?: boolean;
   /** Model name for analysis */
   modelName?: string;
   /** Model configuration */
   modelConfig?: Record<string, unknown>;
   /** Name for the spoken index */
   name?: string;
-  /** Socket ID for real-time updates */
-  socketId?: string;
-  /** Whether to auto-start transcript if not running */
-  autoStartTranscript?: boolean;
 }
 
 /**
@@ -239,8 +222,7 @@ export interface SceneIndexBase {
   rtstreamId: string;
   status?: string;
   name?: string;
-  extractionType?: string;
-  extractionConfig?: Record<string, unknown>;
+  batchConfig?: BatchConfig;
   prompt?: string;
 }
 
@@ -253,7 +235,7 @@ export interface SpokenIndexBase {
   status?: string;
   name?: string;
   prompt?: string;
-  segmenter?: string;
+  batchConfig?: BatchConfig;
 }
 
 /**
@@ -263,7 +245,7 @@ export const WebSocketChannel = {
   transcript: 'transcript',
   sceneIndex: 'scene_index',
   spokenIndex: 'spoken_index',
-  capture: 'capture',
+  captureSession: 'capture_session',
   alert: 'alert',
 } as const;
 

@@ -1,8 +1,7 @@
 import { ApiPath, TranscodeMode } from '@/constants';
 import { Collection } from '@/core/collection';
 import { Meeting } from '@/core/meeting';
-import { CaptureSession, type CaptureSessionBase } from '@/core/captureSession';
-import { Capture } from '@/core/capture';
+import { CaptureSession } from '@/core/captureSession';
 import { WebSocketConnection } from '@/core/websocket';
 import type {
   CollectionBase,
@@ -10,20 +9,14 @@ import type {
   RecordMeetingConfig,
   VideoConfig,
   AudioConfig,
-  CaptureBase,
+  CaptureSessionBase,
   RTStreamBase,
 } from '@/interfaces/core';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { CollectionResponse, GetCollections } from '@/types/response';
-import type {
-  CreateCaptureConfig,
-  ListCapturesConfig,
-} from '@/types/capture';
+import type { ListCaptureSessionsConfig } from '@/types/capture';
 import { HttpClient, type HttpClientAuthConfig } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
-
-// Re-export for convenience
-export type { CreateCaptureConfig, ListCapturesConfig };
 
 const {
   collection,
@@ -41,7 +34,6 @@ const {
   websocket,
   capture,
   session,
-  token,
 } = ApiPath;
 
 class VdbHttpClient extends HttpClient {
@@ -418,161 +410,85 @@ export class Connection {
   };
 
   /**
-   * Create a capture session for video recording
-   * @param endUserId - ID of the end user
-   * @param clientId - Client-provided session ID
-   * @param collectionId - ID of the collection (default: "default")
-   * @param callbackUrl - URL to receive callback when recording completes (optional)
+   * Get an existing capture session by ID
+   * @param collectionId - ID of the collection containing the session
+   * @param sessionId - ID of the capture session to retrieve
    * @returns CaptureSession object
    *
    * @example
    * ```typescript
-   * const session = await conn.createCaptureSession('user123', 'client456');
-   * const token = await session.generateSessionToken(3600);
+   * const session = await conn.getCaptureSession('col-xxx', 'ss-xxx');
+   * await session.refresh();
+   * console.log(session.status);
    * ```
    */
-  public createCaptureSession = async (
-    endUserId: string,
-    clientId: string,
-    collectionId: string = 'default',
-    callbackUrl?: string
+  public getCaptureSession = async (
+    collectionId: string,
+    sessionId: string
   ): Promise<CaptureSession> => {
-    const data: Record<string, unknown> = {
-      endUserId,
-      clientId,
-    };
-    if (callbackUrl) data.callbackUrl = callbackUrl;
+    const res = await this.vhttp.get<
+      CaptureSessionBase & { rtstreams?: RTStreamBase[] }
+    >([collection, collectionId, capture, session, sessionId]);
 
-    const res = await this.vhttp.post<
-      CaptureSessionBase & { sessionId: string },
-      typeof data
-    >([collection, collectionId, capture, session], data);
-
-    return new CaptureSession(this.vhttp, {
-      id: res.data.sessionId,
-      collectionId,
-      endUserId: res.data.endUserId,
-      clientId: res.data.clientId,
+    const sessionObj = new CaptureSession(this.vhttp, {
+      id: res.data.id || sessionId,
+      collectionId: res.data.collectionId || collectionId,
       status: res.data.status,
-    });
-  };
-
-  /**
-   * Create a new capture for video recording
-   * @param config - Capture configuration
-   * @returns Capture object
-   *
-   * @example
-   * ```typescript
-   * const cap = await conn.capture({
-   *   endUserId: 'user_abc',
-   *   clientSessionId: 'cs_123',
-   *   collectionId: 'col-xxx',
-   * });
-   *
-   * const token = await cap.generateSessionToken({ expiresIn: 600 });
-   * ```
-   */
-  public capture = async (config: CreateCaptureConfig): Promise<Capture> => {
-    const {
-      endUserId,
-      clientSessionId,
-      collectionId = 'default',
-      callbackUrl,
-      metadata,
-    } = config;
-    const data: Record<string, unknown> = {
-      endUserId,
-      clientSessionId,
-    };
-    if (callbackUrl) data.callbackUrl = callbackUrl;
-    if (metadata) data.metadata = metadata;
-
-    const res = await this.vhttp.post<
-      CaptureBase & { rtstreams?: RTStreamBase[] },
-      typeof data
-    >([collection, collectionId, capture], data);
-
-    const cap = new Capture(this.vhttp, {
-      id: res.data.id,
-      status: res.data.status,
-      clientSessionId: res.data.clientSessionId,
       endUserId: res.data.endUserId,
-      collectionId,
       callbackUrl: res.data.callbackUrl,
       metadata: res.data.metadata,
       exportedVideoId: res.data.exportedVideoId,
-      channels: res.data.channels,
       createdAt: res.data.createdAt,
-      updatedAt: res.data.updatedAt,
     });
 
-    // Populate rtstreams if available
+    // Populate rtstreams if present in response
     if (res.data.rtstreams) {
-      await cap.refresh();
+      await sessionObj.refresh();
     }
 
-    return cap;
+    return sessionObj;
   };
 
   /**
-   * Get an existing capture by ID
-   * @param captureId - ID of the capture to retrieve
-   * @returns Capture object
-   *
-   * @example
-   * ```typescript
-   * const cap = await conn.getCapture('c-xxx');
-   * console.log(cap.status);
-   * ```
-   */
-  public getCapture = async (captureId: string): Promise<Capture> => {
-    const cap = new Capture(this.vhttp, {
-      id: captureId,
-    });
-    await cap.refresh();
-    return cap;
-  };
-
-  /**
-   * List all captures
+   * List all capture sessions in a collection
+   * @param collectionId - ID of the collection
    * @param config - Filter configuration
    * @returns Object with items array and optional nextCursor for pagination
    *
    * @example
    * ```typescript
-   * const { items, nextCursor } = await conn.listCaptures({
-   *   endUserId: 'user_abc',
+   * const { items, nextCursor } = await conn.listCaptureSessions('col-xxx', {
+   *   status: 'active',
    *   limit: 10,
    * });
    * ```
    */
-  public listCaptures = async (
-    config: ListCapturesConfig = {}
-  ): Promise<{ items: Capture[]; nextCursor?: string }> => {
+  public listCaptureSessions = async (
+    collectionId: string,
+    config: ListCaptureSessionsConfig = {}
+  ): Promise<{ items: CaptureSession[]; nextCursor?: string }> => {
     const params: Record<string, unknown> = {};
-    if (config.collectionId) params.collection_id = config.collectionId;
     if (config.endUserId) params.end_user_id = config.endUserId;
     if (config.status) params.status = config.status;
     if (config.limit) params.limit = config.limit;
     if (config.cursor) params.cursor = config.cursor;
 
     const res = await this.vhttp.get<{
-      captures: CaptureBase[];
+      sessions: Array<CaptureSessionBase & { id: string }>;
       nextCursor?: string;
-    }>([capture], { params });
+    }>([collection, collectionId, capture, session], { params });
 
-    const items = (res.data?.captures || []).map(
-      cap =>
-        new Capture(this.vhttp, {
-          id: cap.id,
-          status: cap.status,
-          clientSessionId: cap.clientSessionId,
-          endUserId: cap.endUserId,
-          collectionId: cap.collectionId,
-          channels: cap.channels,
-          createdAt: cap.createdAt,
-          updatedAt: cap.updatedAt,
+    const items = (res.data?.sessions || []).map(
+      sess =>
+        new CaptureSession(this.vhttp, {
+          id: sess.id,
+          collectionId: collectionId,
+          status: sess.status,
+          endUserId: sess.endUserId,
+          callbackUrl: sess.callbackUrl,
+          metadata: sess.metadata,
+          exportedVideoId: sess.exportedVideoId,
+          createdAt: sess.createdAt,
         })
     );
 

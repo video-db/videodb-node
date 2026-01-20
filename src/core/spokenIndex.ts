@@ -1,5 +1,6 @@
 import { ApiPath } from '@/constants';
 import type { SpokenIndexBase } from '@/interfaces/core';
+import type { BatchConfig } from '@/types/capture';
 import { HttpClient } from '@/utils/httpClient';
 
 /**
@@ -8,8 +9,8 @@ import { HttpClient } from '@/utils/httpClient';
  * @example
  * ```typescript
  * const spokenIndex = await rtstream.indexSpokenWords({
+ *   batchConfig: { type: 'word', value: 10 },
  *   prompt: 'Extract key topics',
- *   segmenter: 'sentence',
  *   socketId: ws.connectionId,
  * });
  *
@@ -22,7 +23,7 @@ export class SpokenIndex {
   public status?: string;
   public name?: string;
   public prompt?: string;
-  public segmenter?: string;
+  public batchConfig?: BatchConfig;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: SpokenIndexBase) {
@@ -32,7 +33,7 @@ export class SpokenIndex {
     this.status = data.status;
     this.name = data.name;
     this.prompt = data.prompt;
-    this.segmenter = data.segmenter;
+    this.batchConfig = data.batchConfig;
   }
 
   /**

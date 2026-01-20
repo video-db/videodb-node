@@ -1,5 +1,6 @@
 import { ApiPath } from '@/constants';
 import type { SceneIndexBase } from '@/interfaces/core';
+import type { BatchConfig } from '@/types/capture';
 import { HttpClient } from '@/utils/httpClient';
 
 /**
@@ -28,9 +29,8 @@ export interface AlertData {
  *
  * @example
  * ```typescript
- * const sceneIndex = await rtstream.indexScenes({
- *   extractionType: 'time_based',
- *   extractionConfig: { time: 2, frameCount: 1 },
+ * const sceneIndex = await rtstream.indexVisuals({
+ *   batchConfig: { type: 'time', value: 2, frameCount: 1 },
  *   prompt: 'Describe the scene',
  *   socketId: ws.connectionId,
  * });
@@ -46,8 +46,7 @@ export class SceneIndex {
   public rtstreamId: string;
   public status?: string;
   public name?: string;
-  public extractionType?: string;
-  public extractionConfig?: Record<string, unknown>;
+  public batchConfig?: BatchConfig;
   public prompt?: string;
   #vhttp: HttpClient;
 
@@ -57,8 +56,7 @@ export class SceneIndex {
     this.rtstreamId = data.rtstreamId;
     this.status = data.status;
     this.name = data.name;
-    this.extractionType = data.extractionType;
-    this.extractionConfig = data.extractionConfig;
+    this.batchConfig = data.batchConfig;
     this.prompt = data.prompt;
   }
 

@@ -109,35 +109,31 @@ export {
   type WebSocketStreamFilter,
 } from './core/websocket';
 export { CaptureSession, type CaptureSessionBase } from './core/captureSession';
-
-// New capture classes
-export { Capture, type CaptureChannel } from './core/capture';
 export { SceneIndex, type SceneData, type AlertData } from './core/sceneIndex';
 export { SpokenIndex } from './core/spokenIndex';
 
-// Capture types
+// Capture session types
 export {
   type ConnectionConfig,
-  CaptureStatus,
+  CaptureSessionStatus,
   ChannelType,
   PermissionKind,
   TranscriptStatusValues,
   WebSocketChannel,
-  type CaptureStatusType,
+  type CaptureSessionStatusType,
   type ChannelTypeValue,
   type PermissionKindType,
   type ChannelConfig,
-  type ChannelBase,
-  type CaptureBase,
-  type CreateCaptureConfig,
-  type ListCapturesConfig,
-  type StartCaptureConfig,
+  type CreateCaptureSessionConfig,
+  type ListCaptureSessionsConfig,
+  type StartCaptureSessionConfig,
   type TranscriptSegment as CaptureTranscriptSegment,
   type TranscriptStatus as CaptureTranscriptStatus,
   type StopTranscriptResult as CaptureStopTranscriptResult,
   type TranscriptStatusResult as CaptureTranscriptStatusResult,
-  type SceneIndexConfig,
-  type SpokenIndexConfig,
+  type BatchConfig,
+  type IndexVisualsConfig,
+  type IndexSpokenWordsConfig,
   type SceneIndexBase,
   type SpokenIndexBase,
   type WebSocketChannelType,

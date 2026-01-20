@@ -7,6 +7,7 @@ import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { StreamableURL, Timeline, Transcript } from '@/types/video';
 import { AudioAsset, VideoAsset } from '..';
 import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
+import type { BatchConfig, CaptureSessionStatusType } from '@/types/capture';
 
 /**
  * Base type for all collection objects
@@ -181,19 +182,20 @@ export interface MeetingBase {
  */
 export interface RTStreamBase {
   id: string;
+  /** Stable key for RTStream lookup (e.g., 'mic:default', 'display:1') */
   name?: string;
   collectionId?: string;
   createdAt?: string;
   sampleRate?: number;
   status?: string;
-  /** Channel ID this rtstream is associated with */
+  /** Channel ID (may differ from name in some contexts) */
   channelId?: string;
   /** Media types this rtstream handles */
   mediaTypes?: string[];
 }
 
 /**
- * Base type for RTStreamSceneIndex objects
+ * Base type for RTStreamSceneIndex objects (legacy)
  */
 export interface RTStreamSceneIndexBase {
   rtstreamIndexId: string;
@@ -206,16 +208,21 @@ export interface RTStreamSceneIndexBase {
 }
 
 /**
- * Configuration for RTStream scene indexing
+ * Configuration for RTStream visual indexing
  */
-export interface IndexScenesConfig {
-  extractionType?: string;
-  extractionConfig?: Record<string, unknown>;
+export interface IndexVisualsConfig {
+  /** Batch configuration */
+  batchConfig: BatchConfig;
+  /** Prompt for scene description */
   prompt?: string;
+  /** Model name for scene analysis */
   modelName?: string;
+  /** Model configuration */
   modelConfig?: Record<string, unknown>;
+  /** Name for the scene index */
   name?: string;
-  wsConnectionId?: string;
+  /** WebSocket connection ID for real-time delivery */
+  socketId?: string;
 }
 
 /**
@@ -237,13 +244,20 @@ export interface RTStreamShotBase {
  * Configuration for RTStream index spoken words
  */
 export interface RTStreamIndexSpokenWordsConfig {
+  /** Batch configuration */
+  batchConfig: BatchConfig;
+  /** Prompt for spoken word analysis */
   prompt?: string;
-  segmenter?: string;
-  length?: number;
+  /** Model name for analysis */
   modelName?: string;
+  /** Model configuration */
   modelConfig?: Record<string, unknown>;
+  /** Name for the spoken index */
   name?: string;
-  wsConnectionId?: string;
+  /** WebSocket connection ID for real-time delivery */
+  socketId?: string;
+  /** Whether to auto-start transcript if not running (default: true) */
+  autoStartTranscript?: boolean;
 }
 
 /**
@@ -251,6 +265,7 @@ export interface RTStreamIndexSpokenWordsConfig {
  */
 export interface RTStreamSearchConfig {
   query: string;
+  indexType?: string;
   indexId?: string;
   resultThreshold?: number;
   scoreThreshold?: number;
@@ -290,34 +305,27 @@ export interface RecordMeetingConfig {
 }
 
 /**
- * Base type for Capture objects
+ * Base type for CaptureSession objects
  */
-export interface CaptureBase {
+export interface CaptureSessionBase {
   id: string;
-  status?: string;
-  clientSessionId?: string;
+  collectionId: string;
+  status?: CaptureSessionStatusType;
   endUserId?: string;
-  collectionId?: string;
   callbackUrl?: string;
   metadata?: Record<string, unknown>;
   exportedVideoId?: string;
-  channels?: Array<{
-    channelId: string;
-    type: string;
-    rtstreamId?: string;
-    status?: string;
-  }>;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
 }
 
 /**
- * Capture interface for reference
+ * CaptureSession interface for reference
  */
-export interface ICapture extends CaptureBase {
+export interface ICaptureSession extends CaptureSessionBase {
   rtstreams: RTStreamBase[];
   generateSessionToken: (config?: { expiresIn?: number }) => Promise<string>;
   refresh: () => Promise<void>;
+  getRtstream: (name: string) => RTStreamBase | null;
 }
 
 /**
@@ -328,8 +336,7 @@ export interface SceneIndexBase {
   rtstreamId: string;
   status?: string;
   name?: string;
-  extractionType?: string;
-  extractionConfig?: Record<string, unknown>;
+  batchConfig?: BatchConfig;
   prompt?: string;
 }
 
@@ -357,7 +364,7 @@ export interface SpokenIndexBase {
   status?: string;
   name?: string;
   prompt?: string;
-  segmenter?: string;
+  batchConfig?: BatchConfig;
 }
 
 /**

@@ -1,16 +1,15 @@
-import { ApiPath, Segmenter } from '@/constants';
-import { SceneExtractionType } from '@/core/config';
+import { ApiPath } from '@/constants';
 import { SceneIndex } from '@/core/sceneIndex';
 import { SpokenIndex } from '@/core/spokenIndex';
 import type {
   RTStreamBase,
   RTStreamSceneIndexBase,
   RTStreamShotBase,
-  IndexScenesConfig,
-  RTStreamIndexSpokenWordsConfig,
   RTStreamSearchConfig,
-  SpokenIndexBase,
+  IndexVisualsConfig,
+  RTStreamIndexSpokenWordsConfig,
 } from '@/interfaces/core';
+import type { BatchConfig } from '@/types/capture';
 import { HttpClient } from '@/utils/httpClient';
 import { playStream } from '@/utils';
 
@@ -137,7 +136,7 @@ export class RTStreamSearchResult {
 }
 
 /**
- * RTStreamSceneIndex class to interact with the rtstream scene index
+ * RTStreamSceneIndex class to interact with the rtstream scene index (legacy)
  */
 export class RTStreamSceneIndex {
   public rtstreamIndexId: string;
@@ -316,6 +315,33 @@ export class RTStreamSceneIndex {
 }
 
 /**
+ * Helper function to convert BatchConfig to API extraction format
+ */
+function batchConfigToExtractionConfig(batchConfig: BatchConfig): {
+  extractionType: string;
+  extractionConfig: Record<string, unknown>;
+} {
+  if (batchConfig.type === 'time' || batchConfig.type === 'shot') {
+    return {
+      extractionType: 'time_based',
+      extractionConfig: {
+        time: batchConfig.value,
+        frame_count: batchConfig.frameCount || 1,
+      },
+    };
+  } else {
+    // word or sentence
+    return {
+      extractionType: 'transcript',
+      extractionConfig: {
+        segmenter: batchConfig.type,
+        segmentation_value: batchConfig.value,
+      },
+    };
+  }
+}
+
+/**
  * RTStream class to interact with the RTStream
  */
 export class RTStream {
@@ -381,23 +407,38 @@ export class RTStream {
   };
 
   /**
-   * Index scenes from the rtstream
-   * @param config - Configuration for scene indexing
+   * Index visuals (scenes) from the rtstream
+   * @param config - Configuration for visual indexing
    * @returns SceneIndex object
+   *
+   * @example
+   * ```typescript
+   * const sceneIndex = await rtstream.indexVisuals({
+   *   batchConfig: { type: 'time', value: 2, frameCount: 2 },
+   *   prompt: 'Describe the scene',
+   *   socketId: ws.connectionId,
+   * });
+   *
+   * await sceneIndex.start();
+   * ```
    */
-  public indexScenes = async (
-    config: Partial<IndexScenesConfig> = {}
+  public indexVisuals = async (
+    config: IndexVisualsConfig
   ): Promise<SceneIndex | null> => {
-    const defaultConfig: IndexScenesConfig = {
-      extractionType: SceneExtractionType.timeBased,
-      extractionConfig: { time: 2, frame_count: 5 },
-      prompt: 'Describe the scene',
-      modelName: undefined,
-      modelConfig: {},
-      name: undefined,
+    const { extractionType, extractionConfig } = batchConfigToExtractionConfig(
+      config.batchConfig
+    );
+
+    const payload: Record<string, unknown> = {
+      extractionType,
+      extractionConfig,
+      prompt: config.prompt || 'Describe the scene',
     };
 
-    const payload = { ...defaultConfig, ...config };
+    if (config.modelName) payload.modelName = config.modelName;
+    if (config.modelConfig) payload.modelConfig = config.modelConfig;
+    if (config.name) payload.name = config.name;
+    if (config.socketId) payload.wsConnectionId = config.socketId;
 
     const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof payload>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
@@ -409,8 +450,7 @@ export class RTStream {
     return new SceneIndex(this.#vhttp, {
       id: res.data.rtstreamIndexId,
       rtstreamId: this.id,
-      extractionType: res.data.extractionType,
-      extractionConfig: res.data.extractionConfig,
+      batchConfig: config.batchConfig,
       prompt: res.data.prompt,
       name: res.data.name,
       status: res.data.status,
@@ -431,8 +471,6 @@ export class RTStream {
         new SceneIndex(this.#vhttp, {
           id: index.rtstreamIndexId,
           rtstreamId: this.id,
-          extractionType: index.extractionType,
-          extractionConfig: index.extractionConfig,
           prompt: index.prompt,
           name: index.name,
           status: index.status,
@@ -456,8 +494,6 @@ export class RTStream {
     return new SceneIndex(this.#vhttp, {
       id: res.data.rtstreamIndexId,
       rtstreamId: this.id,
-      extractionType: res.data.extractionType,
-      extractionConfig: res.data.extractionConfig,
       prompt: res.data.prompt,
       name: res.data.name,
       status: res.data.status,
@@ -468,36 +504,44 @@ export class RTStream {
    * Index spoken words from the rtstream transcript
    * @param config - Configuration for spoken words indexing
    * @returns SpokenIndex object
+   *
+   * @example
+   * ```typescript
+   * const spokenIndex = await rtstream.indexSpokenWords({
+   *   batchConfig: { type: 'word', value: 10 },
+   *   prompt: 'Summarize what the speaker is saying',
+   *   socketId: ws.connectionId,
+   *   autoStartTranscript: true,
+   * });
+   *
+   * await spokenIndex.start();
+   * ```
    */
   public indexSpokenWords = async (
-    config: Partial<
-      RTStreamIndexSpokenWordsConfig & { autoStartTranscript?: boolean }
-    > = {}
+    config: RTStreamIndexSpokenWordsConfig
   ): Promise<SpokenIndex | null> => {
-    const extractionConfig: Record<string, unknown> = {
-      segmenter: config.segmenter ?? Segmenter.word,
-      segmentation_value: config.length ?? 10,
-    };
+    const { extractionType, extractionConfig } = batchConfigToExtractionConfig(
+      config.batchConfig
+    );
 
     const data: Record<string, unknown> = {
-      extractionType: SceneExtractionType.transcript,
+      extractionType,
       extractionConfig,
       prompt: config.prompt,
-      modelName: config.modelName,
-      modelConfig: config.modelConfig ?? {},
-      name: config.name,
     };
-    if (config.wsConnectionId) {
-      data.wsConnectionId = config.wsConnectionId;
-    }
+
+    if (config.modelName) data.modelName = config.modelName;
+    if (config.modelConfig) data.modelConfig = config.modelConfig;
+    if (config.name) data.name = config.name;
+    if (config.socketId) data.wsConnectionId = config.socketId;
     if (config.autoStartTranscript !== undefined) {
       data.autoStartTranscript = config.autoStartTranscript;
     }
 
-    const res = await this.#vhttp.post<SpokenIndexBase, typeof data>(
-      [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.spoken],
-      data
-    );
+    const res = await this.#vhttp.post<
+      { id: string; status?: string; name?: string; prompt?: string },
+      typeof data
+    >([ApiPath.rtstream, this.id, ApiPath.index, ApiPath.spoken], data);
 
     if (!res.data) return null;
 
@@ -507,51 +551,7 @@ export class RTStream {
       status: res.data.status,
       name: res.data.name,
       prompt: res.data.prompt,
-      segmenter: res.data.segmenter,
-    });
-  };
-
-  /**
-   * Index spoken words from the rtstream transcript (legacy method)
-   * @param config - Configuration for spoken words indexing
-   * @returns RTStreamSceneIndex object (for backward compatibility)
-   * @deprecated Use indexSpokenWords instead
-   */
-  public indexSpokenWordsLegacy = async (
-    config: Partial<RTStreamIndexSpokenWordsConfig> = {}
-  ): Promise<RTStreamSceneIndex | null> => {
-    const extractionConfig: Record<string, unknown> = {
-      segmenter: config.segmenter ?? Segmenter.word,
-      segmentation_value: config.length ?? 10,
-    };
-
-    const data: Record<string, unknown> = {
-      extractionType: SceneExtractionType.transcript,
-      extractionConfig,
-      prompt: config.prompt,
-      modelName: config.modelName,
-      modelConfig: config.modelConfig ?? {},
-      name: config.name,
-    };
-    if (config.wsConnectionId) {
-      data.wsConnectionId = config.wsConnectionId;
-    }
-
-    const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
-      [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
-      data
-    );
-
-    if (!res.data) return null;
-
-    return new RTStreamSceneIndex(this.#vhttp, {
-      rtstreamIndexId: res.data.rtstreamIndexId,
-      rtstreamId: this.id,
-      extractionType: res.data.extractionType,
-      extractionConfig: res.data.extractionConfig,
-      prompt: res.data.prompt,
-      name: res.data.name,
-      status: res.data.status,
+      batchConfig: config.batchConfig,
     });
   };
 
@@ -640,8 +640,6 @@ export class RTStream {
 
   /**
    * Get transcript segments within a time range
-   * This is the spec-compliant method for: `rtstream.getTranscript({ fromMs, toMs, limit })`
-   *
    * @param config - Configuration for segment retrieval
    * @param config.fromMs - Start time in milliseconds
    * @param config.toMs - End time in milliseconds
@@ -669,12 +667,6 @@ export class RTStream {
   };
 
   /**
-   * Alias for getTranscriptSegments - matches spec signature
-   * @see getTranscriptSegments
-   */
-  public pullTranscript = this.getTranscriptSegments;
-
-  /**
    * Search across scene index records for the rtstream
    * @param config - Search configuration
    * @returns RTStreamSearchResult object
@@ -684,6 +676,7 @@ export class RTStream {
   ): Promise<RTStreamSearchResult> => {
     const data: Record<string, unknown> = { query: config.query };
 
+    if (config.indexType !== undefined) data.indexType = config.indexType;
     if (config.indexId !== undefined) data.sceneIndexId = config.indexId;
     if (config.resultThreshold !== undefined)
       data.resultThreshold = config.resultThreshold;
