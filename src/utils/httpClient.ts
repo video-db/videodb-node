@@ -25,6 +25,16 @@ const POLLING_INTERVAL = 5000;
 const MAX_POLLING_TIME = 500000;
 
 /**
+ * Authentication configuration for HttpClient
+ */
+export interface HttpClientAuthConfig {
+  /** API key for backend mode - full API access */
+  apiKey?: string;
+  /** Session token for client mode - limited access */
+  sessionToken?: string;
+}
+
+/**
  * Api initialization to make axios config
  * options available to all child classes
  * internally.
@@ -32,23 +42,53 @@ const MAX_POLLING_TIME = 500000;
  * Handles automatic conversion between camelCase (SDK) and snake_case (API):
  * - Request data: camelCase → snake_case
  * - Response data: snake_case → camelCase
+ *
+ * Supports dual authentication modes:
+ * - API key: Full backend access
+ * - Session token: Limited client access (backend handles distinguishing)
  */
 export class HttpClient {
   #db: AxiosInstance;
   #baseURL: string;
-  #apiKey: string;
+  #authConfig: HttpClientAuthConfig;
 
-  protected constructor(baseURL: string, apiKey: string) {
+  /**
+   * Create an HttpClient with auth configuration
+   * @param baseURL - Base URL for the API
+   * @param authConfig - Authentication configuration (apiKey or sessionToken)
+   */
+  protected constructor(baseURL: string, authConfig: HttpClientAuthConfig);
+  /**
+   * Create an HttpClient with API key (legacy signature)
+   * @param baseURL - Base URL for the API
+   * @param apiKey - API key for authentication
+   * @deprecated Use the object-based constructor instead
+   */
+  protected constructor(baseURL: string, apiKey: string);
+  protected constructor(
+    baseURL: string,
+    authConfigOrApiKey: HttpClientAuthConfig | string
+  ) {
+    // Handle both signatures
+    const authConfig: HttpClientAuthConfig =
+      typeof authConfigOrApiKey === 'string'
+        ? { apiKey: authConfigOrApiKey }
+        : authConfigOrApiKey;
+
+    // Get the token to use (apiKey or sessionToken)
+    // Both use the same header - backend handles distinguishing
+    const token = authConfig.apiKey || authConfig.sessionToken;
+
     this.#db = axios.create({
       baseURL,
       headers: {
-        'x-access-token': apiKey,
+        'x-access-token': token || '',
         'x-videodb-client': SDK_CLIENT_HEADER,
       },
       timeout: HttpClientDefaultValues.timeout,
     });
     this.#baseURL = baseURL;
-    this.#apiKey = apiKey;
+    this.#authConfig = authConfig;
   }
 
   #sleep = (ms: number): Promise<void> => {

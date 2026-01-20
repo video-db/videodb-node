@@ -2,6 +2,7 @@ import { ApiPath, TranscodeMode } from '@/constants';
 import { Collection } from '@/core/collection';
 import { Meeting } from '@/core/meeting';
 import { CaptureSession, type CaptureSessionBase } from '@/core/captureSession';
+import { Capture } from '@/core/capture';
 import { WebSocketConnection } from '@/core/websocket';
 import type {
   CollectionBase,
@@ -9,11 +10,20 @@ import type {
   RecordMeetingConfig,
   VideoConfig,
   AudioConfig,
+  CaptureBase,
+  RTStreamBase,
 } from '@/interfaces/core';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { CollectionResponse, GetCollections } from '@/types/response';
-import { HttpClient } from '@/utils/httpClient';
+import type {
+  CreateCaptureConfig,
+  ListCapturesConfig,
+} from '@/types/capture';
+import { HttpClient, type HttpClientAuthConfig } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
+
+// Re-export for convenience
+export type { CreateCaptureConfig, ListCapturesConfig };
 
 const {
   collection,
@@ -31,23 +41,41 @@ const {
   websocket,
   capture,
   session,
+  token,
 } = ApiPath;
 
 class VdbHttpClient extends HttpClient {
-  constructor(baseURL: string, apiKey: string) {
-    super(baseURL, apiKey);
+  constructor(baseURL: string, authConfig: HttpClientAuthConfig);
+  constructor(baseURL: string, apiKey: string);
+  constructor(baseURL: string, authConfigOrApiKey: HttpClientAuthConfig | string) {
+    super(baseURL, authConfigOrApiKey as HttpClientAuthConfig);
   }
 }
 
 /**
- * Initalizon precedes connection
- * establishment. Is used to get the
- * primary collection.
+ * Connection class for initializing the VideoDB SDK
+ * Supports dual authentication modes:
+ * - API key: Full backend access
+ * - Session token: Limited client access
  */
 export class Connection {
   public vhttp: HttpClient;
-  constructor(baseURL: string, ApiKey: string) {
-    this.vhttp = new VdbHttpClient(baseURL, ApiKey);
+
+  /**
+   * Create a connection with auth configuration
+   * @param baseURL - Base URL for the API
+   * @param authConfig - Authentication configuration (apiKey or sessionToken)
+   */
+  constructor(baseURL: string, authConfig: HttpClientAuthConfig);
+  /**
+   * Create a connection with API key (legacy signature)
+   * @param baseURL - Base URL for the API
+   * @param apiKey - API key for authentication
+   * @deprecated Use the object-based constructor instead
+   */
+  constructor(baseURL: string, apiKey: string);
+  constructor(baseURL: string, authConfigOrApiKey: HttpClientAuthConfig | string) {
+    this.vhttp = new VdbHttpClient(baseURL, authConfigOrApiKey as HttpClientAuthConfig);
   }
 
   /**
@@ -427,5 +455,130 @@ export class Connection {
       clientId: res.data.clientId,
       status: res.data.status,
     });
+  };
+
+  /**
+   * Create a new capture for video recording
+   * @param config - Capture configuration
+   * @returns Capture object
+   *
+   * @example
+   * ```typescript
+   * const cap = await conn.capture({
+   *   endUserId: 'user_abc',
+   *   clientSessionId: 'cs_123',
+   *   collectionId: 'col-xxx',
+   * });
+   *
+   * const token = await cap.generateSessionToken({ expiresIn: 600 });
+   * ```
+   */
+  public capture = async (config: CreateCaptureConfig): Promise<Capture> => {
+    const {
+      endUserId,
+      clientSessionId,
+      collectionId = 'default',
+      callbackUrl,
+      metadata,
+    } = config;
+    const data: Record<string, unknown> = {
+      endUserId,
+      clientSessionId,
+    };
+    if (callbackUrl) data.callbackUrl = callbackUrl;
+    if (metadata) data.metadata = metadata;
+
+    const res = await this.vhttp.post<
+      CaptureBase & { rtstreams?: RTStreamBase[] },
+      typeof data
+    >([collection, collectionId, capture], data);
+
+    const cap = new Capture(this.vhttp, {
+      id: res.data.id,
+      status: res.data.status,
+      clientSessionId: res.data.clientSessionId,
+      endUserId: res.data.endUserId,
+      collectionId,
+      callbackUrl: res.data.callbackUrl,
+      metadata: res.data.metadata,
+      exportedVideoId: res.data.exportedVideoId,
+      channels: res.data.channels,
+      createdAt: res.data.createdAt,
+      updatedAt: res.data.updatedAt,
+    });
+
+    // Populate rtstreams if available
+    if (res.data.rtstreams) {
+      await cap.refresh();
+    }
+
+    return cap;
+  };
+
+  /**
+   * Get an existing capture by ID
+   * @param captureId - ID of the capture to retrieve
+   * @returns Capture object
+   *
+   * @example
+   * ```typescript
+   * const cap = await conn.getCapture('c-xxx');
+   * console.log(cap.status);
+   * ```
+   */
+  public getCapture = async (captureId: string): Promise<Capture> => {
+    const cap = new Capture(this.vhttp, {
+      id: captureId,
+    });
+    await cap.refresh();
+    return cap;
+  };
+
+  /**
+   * List all captures
+   * @param config - Filter configuration
+   * @returns Object with items array and optional nextCursor for pagination
+   *
+   * @example
+   * ```typescript
+   * const { items, nextCursor } = await conn.listCaptures({
+   *   endUserId: 'user_abc',
+   *   limit: 10,
+   * });
+   * ```
+   */
+  public listCaptures = async (
+    config: ListCapturesConfig = {}
+  ): Promise<{ items: Capture[]; nextCursor?: string }> => {
+    const params: Record<string, unknown> = {};
+    if (config.collectionId) params.collection_id = config.collectionId;
+    if (config.endUserId) params.end_user_id = config.endUserId;
+    if (config.status) params.status = config.status;
+    if (config.limit) params.limit = config.limit;
+    if (config.cursor) params.cursor = config.cursor;
+
+    const res = await this.vhttp.get<{
+      captures: CaptureBase[];
+      nextCursor?: string;
+    }>([capture], { params });
+
+    const items = (res.data?.captures || []).map(
+      cap =>
+        new Capture(this.vhttp, {
+          id: cap.id,
+          status: cap.status,
+          clientSessionId: cap.clientSessionId,
+          endUserId: cap.endUserId,
+          collectionId: cap.collectionId,
+          channels: cap.channels,
+          createdAt: cap.createdAt,
+          updatedAt: cap.updatedAt,
+        })
+    );
+
+    return {
+      items,
+      nextCursor: res.data?.nextCursor,
+    };
   };
 }

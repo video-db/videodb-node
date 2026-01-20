@@ -8,6 +8,16 @@ export interface WebSocketMessage {
 }
 
 /**
+ * Filter configuration for WebSocket stream
+ */
+export interface WebSocketStreamFilter {
+  /** Channel type to filter (e.g., 'transcript', 'scene_index') */
+  channel?: string;
+  /** Specific ID to filter (e.g., rtstream ID, index ID) */
+  id?: string;
+}
+
+/**
  * WebSocketConnection class for real-time event streaming from VideoDB
  *
  * @example
@@ -225,6 +235,126 @@ export class WebSocketConnection {
         break;
       }
       yield message;
+    }
+  }
+
+  /**
+   * Async generator that yields filtered messages
+   * Use this with for-await-of loop to receive messages matching the filter
+   *
+   * @param filter - Filter configuration with optional channel and id properties
+   *
+   * @example
+   * ```typescript
+   * // Listen for transcript events from a specific rtstream
+   * for await (const ev of ws.stream({ channel: 'transcript', id: 'rts-xxx' })) {
+   *   console.log('Transcript:', ev.data.text);
+   * }
+   *
+   * // Listen for all scene index events
+   * for await (const ev of ws.stream({ channel: 'scene_index' })) {
+   *   console.log('Scene:', ev);
+   * }
+   * ```
+   */
+  public async *stream(
+    filter: WebSocketStreamFilter = {}
+  ): AsyncGenerator<WebSocketMessage, void, unknown> {
+    if (!this._connection) {
+      throw new Error('WebSocket is not connected. Call connect() first.');
+    }
+
+    const matchesFilter = (message: WebSocketMessage): boolean => {
+      // If no filter, match all messages
+      if (!filter.channel && !filter.id) {
+        return true;
+      }
+
+      // Check channel filter
+      if (filter.channel) {
+        const msgChannel =
+          message.channel || message.type || message.event_type;
+        if (msgChannel !== filter.channel) {
+          return false;
+        }
+      }
+
+      // Check ID filter
+      if (filter.id) {
+        const msgId =
+          message.id ||
+          message.rtstream_id ||
+          message.rtstreamId ||
+          message.index_id ||
+          message.indexId;
+        if (msgId !== filter.id) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    // Create a filtered queue for messages that match
+    const filteredQueue: WebSocketMessage[] = [];
+    const filteredResolvers: Array<(value: WebSocketMessage | null) => void> =
+      [];
+
+    // Handler for incoming messages
+    const messageHandler = (message: WebSocketMessage) => {
+      if (matchesFilter(message)) {
+        if (filteredResolvers.length > 0) {
+          const resolver = filteredResolvers.shift();
+          if (resolver) resolver(message);
+        } else {
+          filteredQueue.push(message);
+        }
+      }
+    };
+
+    // Register the handler
+    this._messageHandlers.push(messageHandler);
+
+    try {
+      while (this.isConnected) {
+        // First check if there are queued filtered messages
+        if (filteredQueue.length > 0) {
+          yield filteredQueue.shift()!;
+          continue;
+        }
+
+        // Wait for the next matching message
+        const currentConnection = this._connection;
+        const message = await new Promise<WebSocketMessage | null>(resolve => {
+          if (!this.isConnected || !currentConnection) {
+            resolve(null);
+            return;
+          }
+
+          filteredResolvers.push(resolve);
+
+          // Listen for close
+          const closeHandler = () => {
+            const idx = filteredResolvers.indexOf(resolve);
+            if (idx !== -1) {
+              filteredResolvers.splice(idx, 1);
+              resolve(null);
+            }
+          };
+          currentConnection.once('close', closeHandler);
+        });
+
+        if (message === null) {
+          break;
+        }
+        yield message;
+      }
+    } finally {
+      // Cleanup: remove our handler
+      const idx = this._messageHandlers.indexOf(messageHandler);
+      if (idx !== -1) {
+        this._messageHandlers.splice(idx, 1);
+      }
     }
   }
 }

@@ -186,6 +186,10 @@ export interface RTStreamBase {
   createdAt?: string;
   sampleRate?: number;
   status?: string;
+  /** Channel ID this rtstream is associated with */
+  channelId?: string;
+  /** Media types this rtstream handles */
+  mediaTypes?: string[];
 }
 
 /**
@@ -283,4 +287,83 @@ export interface RecordMeetingConfig {
   callbackUrl?: string;
   callbackData?: Record<string, unknown>;
   timeZone?: string;
+}
+
+/**
+ * Base type for Capture objects
+ */
+export interface CaptureBase {
+  id: string;
+  status?: string;
+  clientSessionId?: string;
+  endUserId?: string;
+  collectionId?: string;
+  callbackUrl?: string;
+  metadata?: Record<string, unknown>;
+  exportedVideoId?: string;
+  channels?: Array<{
+    channelId: string;
+    type: string;
+    rtstreamId?: string;
+    status?: string;
+  }>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * Capture interface for reference
+ */
+export interface ICapture extends CaptureBase {
+  rtstreams: RTStreamBase[];
+  generateSessionToken: (config?: { expiresIn?: number }) => Promise<string>;
+  refresh: () => Promise<void>;
+}
+
+/**
+ * Base type for SceneIndex objects
+ */
+export interface SceneIndexBase {
+  id: string;
+  rtstreamId: string;
+  status?: string;
+  name?: string;
+  extractionType?: string;
+  extractionConfig?: Record<string, unknown>;
+  prompt?: string;
+}
+
+/**
+ * SceneIndex interface for reference
+ */
+export interface ISceneIndex extends SceneIndexBase {
+  start: () => Promise<void>;
+  stop: () => Promise<void>;
+  createAlert: (config: { eventId: string; callbackUrl: string }) => Promise<string>;
+  getScenes: (
+    start?: number,
+    end?: number,
+    page?: number,
+    pageSize?: number
+  ) => Promise<{ scenes: unknown[]; nextPage: boolean } | null>;
+}
+
+/**
+ * Base type for SpokenIndex objects
+ */
+export interface SpokenIndexBase {
+  id: string;
+  rtstreamId: string;
+  status?: string;
+  name?: string;
+  prompt?: string;
+  segmenter?: string;
+}
+
+/**
+ * SpokenIndex interface for reference
+ */
+export interface ISpokenIndex extends SpokenIndexBase {
+  start: () => Promise<void>;
+  stop: () => Promise<void>;
 }

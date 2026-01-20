@@ -73,7 +73,7 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "typedocOptions": {
     "entryPoints": ["./src/"],
     "entryPointStrategy": "expand",
