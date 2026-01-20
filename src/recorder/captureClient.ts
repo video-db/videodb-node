@@ -147,7 +147,7 @@ export class CaptureClient extends EventEmitter {
     }>('getChannels', {});
 
     return result.channels.map(channel => {
-      const channelId = channel.id as string;
+      const channelId = channel.channel_id as string;
 
       const extras = { ...channel };
       return {
