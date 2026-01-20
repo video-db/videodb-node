@@ -126,11 +126,16 @@ export class CaptureClient extends EventEmitter {
       );
     }
 
-    const result = await this.binaryManager.sendCommand<{
-      status: PermissionStatusValue;
-    }>('requestPermission', { permission: kind });
+    const result = await this.binaryManager.sendCommand<
+      Record<string, unknown>
+    >('requestPermission', { permission: kind });
 
-    return result.status;
+    const status =
+      (result.status as PermissionStatusValue) ??
+      (result.permission_status as PermissionStatusValue) ??
+      (typeof result === 'string' ? result : undefined);
+
+    return status as PermissionStatusValue;
   }
 
   /**
@@ -188,9 +193,9 @@ export class CaptureClient extends EventEmitter {
       channel_id:
         (channel as { channel_id?: string }).channel_id ?? channel.channelId,
       type: channel.type,
-      record: channel.record,
-      transcript: channel.transcript,
-      store: channel.store,
+      record: channel.record ?? true,
+      transcript: channel.transcript ?? false,
+      store: channel.store ?? true,
     }));
 
     if (channels.some(ch => !ch.channel_id)) {
