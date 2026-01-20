@@ -137,14 +137,34 @@ export class CaptureClient extends EventEmitter {
    * List available capture channels (microphones, displays, etc.)
    * @returns Array of available channels
    */
-  public async listChannels(): Promise<BinaryChannel[]> {
+  public async listChannels(): Promise<
+    Array<BinaryChannel & Record<string, unknown>>
+  > {
     await this.ensureInitialized();
 
     const result = await this.binaryManager.sendCommand<{
-      channels: BinaryChannel[];
+      channels: Array<Record<string, unknown>>;
     }>('getChannels', {});
 
-    return result.channels;
+    return result.channels.map(channel => {
+      const channelId = channel.id as string;
+
+      const extras = { ...channel };
+      delete extras.id;
+      delete extras.channel_id;
+      delete extras.name;
+      delete extras.channel_name;
+      delete extras.is_default;
+      delete extras.type;
+
+      return {
+        channelId,
+        type: channel.type as 'audio' | 'video',
+        name: (channel.name ?? channel.channel_name ?? 'Unknown') as string,
+        isDefault: channel.is_default as boolean | undefined,
+        ...extras,
+      };
+    });
   }
 
   /**
@@ -171,10 +191,28 @@ export class CaptureClient extends EventEmitter {
 
     this.currentSessionId = config.sessionId;
 
+    const channels = config.channels.map(channel => ({
+      channel_id:
+        (channel as { channel_id?: string }).channel_id ?? channel.channelId,
+      type: channel.type,
+      record: channel.record,
+      transcript: channel.transcript,
+      store: channel.store,
+    }));
+
+    if (channels.some(ch => !ch.channel_id)) {
+      throw new Error('channels must include channelId for each channel');
+    }
+
+    const primaryVideo = channels.find(ch => ch.type === 'video');
+
     await this.binaryManager.sendCommand('startRecording', {
       uploadToken: this.sessionToken,
       sessionId: config.sessionId,
-      channels: config.channels,
+      channels,
+      ...(primaryVideo
+        ? { primary_video_channel_id: primaryVideo.channel_id }
+        : {}),
     });
   }
 

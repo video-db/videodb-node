@@ -70,7 +70,7 @@ export interface RecordingChannelConfig {
  */
 export const PermissionType = {
   microphone: 'microphone',
-  screenCapture: 'screen_capture',
+  screenCapture: 'screen-capture',
   accessibility: 'accessibility',
 } as const;
 

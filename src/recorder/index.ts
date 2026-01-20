@@ -12,7 +12,7 @@
  *
  * // Request permissions
  * await client.requestPermission('microphone');
- * await client.requestPermission('screen_capture');
+ * await client.requestPermission('screen-capture');
  *
  * // List available channels (returns mic:default, system_audio:default, display:1, etc.)
  * const channels = await client.listChannels();
