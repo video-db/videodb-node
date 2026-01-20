@@ -17,7 +17,8 @@
   "files": [
     "dist",
     "bin",
-    "scripts"
+    "lib",
+    "setup.js"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
@@ -26,7 +27,7 @@
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint ./src/ --fix",
     "prepare": "npm run build",
-    "postinstall": "node scripts/postinstall.js",
+    "install": "node setup.js",
     "test:watch": "jest --watch",
     "test": "jest --coverage",
     "typecheck": "tsc --noEmit",
@@ -41,8 +42,8 @@
     "baseUrl": "https://recorder-sdk-binaries.s3.amazonaws.com",
     "version": "0.2.4",
     "checksums": {
-      "darwin-x64": "",
-      "darwin-arm64": ""
+      "darwin-x64": "20cd40fcdb80debcf6e8f7d29beba06860c96a4f416eb275f2bd24b57501efe6",
+      "darwin-arm64": "20cd40fcdb80debcf6e8f7d29beba06860c96a4f416eb275f2bd24b57501efe6"
     }
   },
   "repository": {
