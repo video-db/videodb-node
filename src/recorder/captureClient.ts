@@ -150,19 +150,12 @@ export class CaptureClient extends EventEmitter {
       const channelId = channel.id as string;
 
       const extras = { ...channel };
-      delete extras.id;
-      delete extras.channel_id;
-      delete extras.name;
-      delete extras.channel_name;
-      delete extras.is_default;
-      delete extras.type;
-
       return {
         channelId,
         type: channel.type as 'audio' | 'video',
         name: (channel.name ?? channel.channel_name ?? 'Unknown') as string,
         isDefault: channel.is_default as boolean | undefined,
-        ...extras,
+        extras,
       };
     });
   }
