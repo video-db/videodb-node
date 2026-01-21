@@ -63,6 +63,12 @@ export const ApiPath = {
   session: 'session',
   token: 'token',
   websocket: 'websocket',
+  transcript: 'transcript',
+  sceneIndex: 'scene_index',
+  spokenIndex: 'spoken_index',
+  spoken: 'spoken',
+  start: 'start',
+  stop: 'stop',
 } as const;
 
 export const ResponseStatus = {
