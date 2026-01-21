@@ -263,7 +263,7 @@ export class HttpClient {
   ) => {
     return await this.#makeRequest<R>({
       method: 'DELETE',
-      url: urlSeries.join('/') + '/',
+      url: urlSeries.join('/'),
       ...options,
     });
   };
@@ -275,7 +275,7 @@ export class HttpClient {
   ) => {
     return await this.#makeRequest<R, D>({
       method: 'POST',
-      url: urlSeries.join('/') + '/',
+      url: urlSeries.join('/'),
       data,
       headers: new AxiosHeaders({
         'Content-Type': 'application/json',
@@ -292,7 +292,7 @@ export class HttpClient {
   ) => {
     return await this.#makeRequest<R, D>({
       method: 'PUT',
-      url: urlSeries.join('/') + '/',
+      url: urlSeries.join('/'),
       data,
       headers: new AxiosHeaders({
         'Content-Type': 'application/json',
@@ -309,7 +309,7 @@ export class HttpClient {
   ) => {
     return await this.#makeRequest<R, D>({
       method: 'PATCH',
-      url: urlSeries.join('/') + '/',
+      url: urlSeries.join('/'),
       data,
       headers: new AxiosHeaders({
         'Content-Type': 'application/json',
