@@ -97,11 +97,6 @@ export {
   RTStreamSceneIndex,
   RTStreamSearchResult,
   RTStreamShot,
-  TranscriptStatus,
-  type TranscriptStatusType,
-  type StopTranscriptResult,
-  type TranscriptStatusResult,
-  type TranscriptSegment,
 } from './core/rtstream';
 export {
   WebSocketConnection,

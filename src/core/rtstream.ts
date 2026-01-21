@@ -1,59 +1,12 @@
 import { ApiPath } from '@/constants';
-import { SceneIndex } from '@/core/sceneIndex';
-import { SpokenIndex } from '@/core/spokenIndex';
 import type {
   RTStreamBase,
   RTStreamSceneIndexBase,
   RTStreamShotBase,
   RTStreamSearchConfig,
-  IndexVisualsConfig,
-  RTStreamIndexSpokenWordsConfig,
 } from '@/interfaces/core';
-import type { BatchConfig } from '@/types/capture';
 import { HttpClient } from '@/utils/httpClient';
 import { playStream } from '@/utils';
-
-/**
- * Transcript status values
- */
-export const TranscriptStatus = {
-  inactive: 'inactive',
-  active: 'active',
-  stopping: 'stopping',
-  stopped: 'stopped',
-} as const;
-
-export type TranscriptStatusType =
-  (typeof TranscriptStatus)[keyof typeof TranscriptStatus];
-
-/**
- * Result from stopping transcript
- */
-export interface StopTranscriptResult {
-  status: TranscriptStatusType;
-  blockedBy?: string;
-}
-
-/**
- * Transcript status response
- */
-export interface TranscriptStatusResult {
-  status: TranscriptStatusType;
-  socketId?: string;
-  blockedBy?: string;
-  stopRequested?: boolean;
-}
-
-/**
- * Transcript segment data
- */
-export interface TranscriptSegment {
-  start: number;
-  end: number;
-  text: string;
-  speaker?: string;
-  confidence?: number;
-}
 
 /**
  * RTStreamShot class for rtstream search results
@@ -315,33 +268,6 @@ export class RTStreamSceneIndex {
 }
 
 /**
- * Helper function to convert BatchConfig to API extraction format
- */
-function batchConfigToExtractionConfig(batchConfig: BatchConfig): {
-  extractionType: string;
-  extractionConfig: Record<string, unknown>;
-} {
-  if (batchConfig.type === 'time' || batchConfig.type === 'shot') {
-    return {
-      extractionType: 'time_based',
-      extractionConfig: {
-        time: batchConfig.value,
-        frameCount: batchConfig.frameCount || 1,
-      },
-    };
-  } else {
-    // word or sentence
-    return {
-      extractionType: 'transcript',
-      extractionConfig: {
-        segmenter: batchConfig.type,
-        segmentationValue: batchConfig.value,
-      },
-    };
-  }
-}
-
-/**
  * RTStream class to interact with the RTStream
  */
 export class RTStream {
@@ -407,14 +333,15 @@ export class RTStream {
   };
 
   /**
-   * Index visuals (scenes) from the rtstream
-   * @param config - Configuration for visual indexing
-   * @returns SceneIndex object
+   * Index scenes from the rtstream
+   * @param config - Configuration for scene indexing
+   * @returns RTStreamSceneIndex object
    *
    * @example
    * ```typescript
-   * const sceneIndex = await rtstream.indexVisuals({
-   *   batchConfig: { type: 'time', value: 2, frameCount: 2 },
+   * const sceneIndex = await rtstream.indexScenes({
+   *   extractionType: 'time_based',
+   *   extractionConfig: { time: 2, frameCount: 5 },
    *   prompt: 'Describe the scene',
    *   socketId: ws.connectionId,
    * });
@@ -422,35 +349,38 @@ export class RTStream {
    * await sceneIndex.start();
    * ```
    */
-  public indexVisuals = async (
-    config: IndexVisualsConfig
-  ): Promise<SceneIndex | null> => {
-    const { extractionType, extractionConfig } = batchConfigToExtractionConfig(
-      config.batchConfig
-    );
-
-    const payload: Record<string, unknown> = {
-      extractionType,
-      extractionConfig,
-      prompt: config.prompt || 'Describe the scene',
+  public indexScenes = async (config: {
+    extractionType?: 'time_based' | 'shot' | 'transcript';
+    extractionConfig?: Record<string, unknown>;
+    prompt?: string;
+    modelName?: string;
+    modelConfig?: Record<string, unknown>;
+    name?: string;
+    socketId?: string;
+  }): Promise<RTStreamSceneIndex | null> => {
+    const data: Record<string, unknown> = {
+      extractionType: config.extractionType ?? 'time_based',
+      extractionConfig: config.extractionConfig ?? { time: 2, frameCount: 5 },
+      prompt: config.prompt ?? 'Describe the scene',
+      modelName: config.modelName,
+      modelConfig: config.modelConfig ?? {},
+      name: config.name,
     };
 
-    if (config.modelName) payload.modelName = config.modelName;
-    if (config.modelConfig) payload.modelConfig = config.modelConfig;
-    if (config.name) payload.name = config.name;
-    if (config.socketId) payload.socketId = config.socketId;
+    if (config.socketId) data.socketId = config.socketId;
 
-    const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof payload>(
+    const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
-      payload
+      data
     );
 
     if (!res.data) return null;
 
-    return new SceneIndex(this.#vhttp, {
-      id: res.data.rtstreamIndexId,
+    return new RTStreamSceneIndex(this.#vhttp, {
+      rtstreamIndexId: res.data.rtstreamIndexId,
       rtstreamId: this.id,
-      batchConfig: config.batchConfig,
+      extractionType: res.data.extractionType,
+      extractionConfig: res.data.extractionConfig,
       prompt: res.data.prompt,
       name: res.data.name,
       status: res.data.status,
@@ -459,18 +389,20 @@ export class RTStream {
 
   /**
    * List all scene indexes for the rtstream
-   * @returns List of SceneIndex objects
+   * @returns List of RTStreamSceneIndex objects
    */
-  public listSceneIndexes = async (): Promise<SceneIndex[]> => {
+  public listSceneIndexes = async (): Promise<RTStreamSceneIndex[]> => {
     const res = await this.#vhttp.get<{
       sceneIndexes: RTStreamSceneIndexBase[];
     }>([ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene]);
 
     return (res.data?.sceneIndexes || []).map(
       index =>
-        new SceneIndex(this.#vhttp, {
-          id: index.rtstreamIndexId,
+        new RTStreamSceneIndex(this.#vhttp, {
+          rtstreamIndexId: index.rtstreamIndexId,
           rtstreamId: this.id,
+          extractionType: index.extractionType,
+          extractionConfig: index.extractionConfig,
           prompt: index.prompt,
           name: index.name,
           status: index.status,
@@ -481,9 +413,11 @@ export class RTStream {
   /**
    * Get a scene index by its ID
    * @param indexId - ID of the scene index
-   * @returns SceneIndex object
+   * @returns RTStreamSceneIndex object
    */
-  public getSceneIndex = async (indexId: string): Promise<SceneIndex> => {
+  public getSceneIndex = async (
+    indexId: string
+  ): Promise<RTStreamSceneIndex> => {
     const res = await this.#vhttp.get<RTStreamSceneIndexBase>([
       ApiPath.rtstream,
       this.id,
@@ -491,9 +425,11 @@ export class RTStream {
       indexId,
     ]);
 
-    return new SceneIndex(this.#vhttp, {
-      id: res.data.rtstreamIndexId,
+    return new RTStreamSceneIndex(this.#vhttp, {
+      rtstreamIndexId: res.data.rtstreamIndexId,
       rtstreamId: this.id,
+      extractionType: res.data.extractionType,
+      extractionConfig: res.data.extractionConfig,
       prompt: res.data.prompt,
       name: res.data.name,
       status: res.data.status,
@@ -503,138 +439,129 @@ export class RTStream {
   /**
    * Index spoken words from the rtstream transcript
    * @param config - Configuration for spoken words indexing
-   * @returns SpokenIndex object
+   * @returns RTStreamSceneIndex object
    *
    * @example
    * ```typescript
-   * const spokenIndex = await rtstream.indexSpokenWords({
-   *   batchConfig: { type: 'word', value: 10 },
-   *   prompt: 'Summarize what the speaker is saying',
+   * const sceneIndex = await rtstream.indexSpokenWords({
+   *   prompt: 'Summarize what is being said',
+   *   segmenter: 'word',
+   *   length: 10,
    *   socketId: ws.connectionId,
-   *   autoStartTranscript: true,
    * });
    *
-   * await spokenIndex.start();
+   * await sceneIndex.start();
    * ```
    */
-  public indexSpokenWords = async (
-    config: RTStreamIndexSpokenWordsConfig
-  ): Promise<SpokenIndex | null> => {
-    const { extractionType, extractionConfig } = batchConfigToExtractionConfig(
-      config.batchConfig
-    );
-
-    const data: Record<string, unknown> = {
-      extractionType,
-      extractionConfig,
-      prompt: config.prompt,
+  public indexSpokenWords = async (config: {
+    prompt?: string;
+    segmenter?: 'time' | 'word' | 'sentence';
+    length?: number;
+    modelName?: string;
+    modelConfig?: Record<string, unknown>;
+    name?: string;
+    socketId?: string;
+  }): Promise<RTStreamSceneIndex | null> => {
+    const extractionConfig = {
+      segmenter: config.segmenter ?? 'word',
+      segmentationValue: config.length ?? 10,
     };
 
-    if (config.modelName) data.modelName = config.modelName;
-    if (config.modelConfig) data.modelConfig = config.modelConfig;
-    if (config.name) data.name = config.name;
-    if (config.socketId) data.socketId = config.socketId;
-    if (config.autoStartTranscript !== undefined) {
-      data.autoStartTranscript = config.autoStartTranscript;
-    }
+    const data: Record<string, unknown> = {
+      extractionType: 'transcript',
+      extractionConfig,
+      prompt: config.prompt,
+      modelName: config.modelName,
+      modelConfig: config.modelConfig ?? {},
+      name: config.name,
+    };
 
-    const res = await this.#vhttp.post<
-      { id: string; status?: string; name?: string; prompt?: string },
-      typeof data
-    >([ApiPath.rtstream, this.id, ApiPath.index, ApiPath.spoken], data);
+    if (config.socketId) data.socketId = config.socketId;
+
+    const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
+      [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
+      data
+    );
 
     if (!res.data) return null;
 
-    return new SpokenIndex(this.#vhttp, {
-      id: res.data.id,
+    return new RTStreamSceneIndex(this.#vhttp, {
+      rtstreamIndexId: res.data.rtstreamIndexId,
       rtstreamId: this.id,
-      status: res.data.status,
-      name: res.data.name,
+      extractionType: res.data.extractionType,
+      extractionConfig: res.data.extractionConfig,
       prompt: res.data.prompt,
-      batchConfig: config.batchConfig,
+      name: res.data.name,
+      status: res.data.status,
     });
   };
 
   /**
-   * Get transcript segments within a time range
+   * Get transcription data from the rtstream
    * @param config - Configuration for transcript retrieval
-   * @param config.fromMs - Start time in milliseconds (optional)
-   * @param config.toMs - End time in milliseconds (optional)
-   * @param config.limit - Maximum number of segments to return (optional, default: 500)
-   * @returns Array of transcript segments
+   * @param config.page - Page number (default: 1)
+   * @param config.pageSize - Items per page (default: 100, max: 1000)
+   * @param config.start - Start timestamp filter (optional)
+   * @param config.end - End timestamp filter (optional)
+   * @param config.since - For polling - only get transcriptions after this timestamp (optional)
+   * @param config.engine - Transcription engine (optional)
+   * @returns Transcription data with segments and metadata
    *
    * @example
    * ```typescript
-   * const segments = await rtstream.getTranscript({ fromMs: 0, toMs: 60000, limit: 500 });
-   * for (const seg of segments) {
-   *   console.log(seg.text);
-   * }
+   * const data = await rtstream.getTranscript({ page: 1, pageSize: 100 });
+   * console.log(data);
    * ```
    */
   public getTranscript = async (
-    config: { fromMs?: number; toMs?: number; limit?: number } = {}
-  ): Promise<TranscriptSegment[]> => {
-    const params: Record<string, unknown> = {};
-    if (config.fromMs !== undefined) params.from_ms = config.fromMs;
-    if (config.toMs !== undefined) params.to_ms = config.toMs;
-    if (config.limit !== undefined) params.limit = config.limit;
+    config: {
+      page?: number;
+      pageSize?: number;
+      start?: number;
+      end?: number;
+      since?: number;
+      engine?: string;
+    } = {}
+  ): Promise<Record<string, unknown>> => {
+    const params: Record<string, unknown> = {
+      engine: config.engine,
+      page: config.page ?? 1,
+      page_size: config.pageSize ?? 100,
+    };
+    if (config.start !== undefined) params.start = config.start;
+    if (config.end !== undefined) params.end = config.end;
+    if (config.since !== undefined) params.since = config.since;
 
-    const res = await this.#vhttp.get<{ segments: TranscriptSegment[] }>(
+    const res = await this.#vhttp.get<Record<string, unknown>>(
       [ApiPath.rtstream, this.id, ApiPath.transcription],
       { params }
     );
-    return res.data?.segments || [];
+    return res.data || {};
   };
 
   /**
-   * Start transcript processing for the rtstream
-   * @param config - Optional configuration
-   * @param config.socketId - WebSocket connection ID for real-time updates
+   * Start transcription for the rtstream
+   * @param socketId - WebSocket connection ID for real-time updates (optional)
    */
-  public startTranscript = async (
-    config: { socketId?: string } = {}
-  ): Promise<void> => {
-    const data: Record<string, unknown> = { action: 'start' };
-    if (config.socketId) {
-      data.socketId = config.socketId;
-    }
+  public startTranscript = async (socketId?: string): Promise<void> => {
     await this.#vhttp.patch<void, Record<string, unknown>>(
       [ApiPath.rtstream, this.id, ApiPath.transcription, ApiPath.status],
-      data
+      { action: 'start', socketId }
     );
   };
 
   /**
-   * Stop transcript processing for the rtstream
-   * @param config - Optional configuration
-   * @param config.mode - Stop mode: 'graceful' (wait for dependencies) or 'force' (immediate)
-   * @returns Result with status and optional blockedBy if graceful stop is blocked
+   * Stop transcription for the rtstream
+   * @param mode - Stop mode: 'graceful' or 'force' (default: 'graceful')
    */
   public stopTranscript = async (
-    config: { mode?: 'graceful' | 'force' } = {}
-  ): Promise<StopTranscriptResult> => {
-    const { mode = 'graceful' } = config;
-    const res = await this.#vhttp.patch<StopTranscriptResult, object>(
+    mode: 'graceful' | 'force' = 'graceful'
+  ): Promise<void> => {
+    await this.#vhttp.patch<void, object>(
       [ApiPath.rtstream, this.id, ApiPath.transcription, ApiPath.status],
       { action: 'stop', mode }
     );
-    return res.data;
   };
-
-  /**
-   * Get the current transcript status
-   * @returns Transcript status including socketId if active and blockedBy if stopping is blocked
-   */
-  public getTranscriptStatus = async (): Promise<TranscriptStatusResult> => {
-    const res = await this.#vhttp.get<TranscriptStatusResult>([
-      ApiPath.rtstream,
-      this.id,
-      ApiPath.transcription,
-      ApiPath.status,
-    ]);
-    return res.data;
-  };
-
 
   /**
    * Search across scene index records for the rtstream
