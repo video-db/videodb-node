@@ -362,10 +362,26 @@ export class Collection implements ICollection {
 
   /**
    * List all rtstreams in the collection
+   * @param options - Query options: limit (default 10), offset (default 0), status, name, ordering
    * @returns List of RTStream objects
    */
-  public listRtstreams = async (): Promise<RTStream[]> => {
-    const res = await this.#vhttp.get<{ results: RTStreamBase[] }>([rtstream]);
+  public listRtstreams = async (options?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+    name?: string;
+    ordering?: string;
+  }): Promise<RTStream[]> => {
+    const params: Record<string, string | number> = {};
+    if (options?.limit !== undefined) params.limit = options.limit;
+    if (options?.offset !== undefined) params.offset = options.offset;
+    if (options?.status !== undefined) params.status = options.status;
+    if (options?.name !== undefined) params.name = options.name;
+    if (options?.ordering !== undefined) params.ordering = options.ordering;
+
+    const res = await this.#vhttp.get<{ results: RTStreamBase[] }>([rtstream], {
+      params,
+    });
     return (res.data?.results || []).map(rt => new RTStream(this.#vhttp, rt));
   };
 
