@@ -8,21 +8,35 @@ export interface WebSocketMessage {
 }
 
 /**
+ * Filter configuration for WebSocket stream
+ */
+export interface WebSocketStreamFilter {
+  /** Channel type to filter (e.g., 'transcript', 'scene_index') */
+  channel?: string;
+  /** Specific ID to filter (e.g., rtstream ID, index ID) */
+  id?: string;
+}
+
+export interface WebSocketLogger {
+  debug?: (message: string) => void;
+  info?: (message: string) => void;
+  warn?: (message: string) => void;
+  error?: (message: string) => void;
+}
+
+/**
  * WebSocketConnection class for real-time event streaming from VideoDB
  *
  * @example
  * ```typescript
  * const conn = videodb.connect(apiKey);
  * const ws = await conn.connectWebsocket();
+ * await ws.connect();
  *
- * // Using async iteration
  * for await (const message of ws.receive()) {
  *   console.log('Received:', message);
  * }
  *
- * // Or manually
- * await ws.connect();
- * ws.onMessage((msg) => console.log(msg));
  * await ws.close();
  * ```
  */
@@ -35,9 +49,11 @@ export class WebSocketConnection {
   private _errorHandlers: Array<(error: Error) => void> = [];
   private _messageQueue: WebSocketMessage[] = [];
   private _resolvers: Array<(value: WebSocketMessage) => void> = [];
+  private _logger?: WebSocketLogger;
 
-  constructor(url: string) {
+  constructor(url: string, logger?: WebSocketLogger) {
     this.url = url;
+    this._logger = logger;
   }
 
   /**
@@ -45,38 +61,43 @@ export class WebSocketConnection {
    * @returns Promise that resolves to this WebSocketConnection instance
    */
   public async connect(): Promise<WebSocketConnection> {
+    this._logger?.debug?.(`Connecting to WebSocket URL: ${this.url}`);
+
     return new Promise((resolve, reject) => {
       try {
         this._connection = new WebSocket(this.url);
 
-        this._connection.on('open', () => {
-          // Wait for the init message with connection_id
-        });
+        this._connection.on('open', () => {});
 
         this._connection.on('message', (data: Data) => {
+          const dataStr = String(data);
           try {
-            const message = JSON.parse(data.toString()) as WebSocketMessage;
+            const message = JSON.parse(dataStr) as WebSocketMessage;
 
-            // First message should contain connection_id
             if (!this.connectionId && message.connection_id) {
               this.connectionId = message.connection_id as string;
+              this._logger?.info?.(
+                `WebSocket connected with ID: ${this.connectionId}`
+              );
               resolve(this);
               return;
             }
 
-            // Handle subsequent messages
             this._handleMessage(message);
           } catch {
-            // Non-JSON message
-            const rawMessage: WebSocketMessage = { raw: data.toString() };
+            this._logger?.warn?.(`Received non-JSON message: ${dataStr}`);
+            const rawMessage: WebSocketMessage = { raw: dataStr };
             this._handleMessage(rawMessage);
           }
         });
 
         this._connection.on('error', (event: ErrorEvent) => {
           const error = new Error(event.message);
+          this._logger?.error?.(`WebSocket error: ${event.message}`);
           this._errorHandlers.forEach(handler => handler(error));
           if (!this.connectionId) {
+            this._connection?.close();
+            this._connection = null;
             reject(error);
           }
         });
@@ -86,6 +107,10 @@ export class WebSocketConnection {
           this._connection = null;
         });
       } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this._logger?.error?.(
+          `Failed to create WebSocket connection: ${errorMsg}`
+        );
         reject(error);
       }
     });
@@ -95,15 +120,12 @@ export class WebSocketConnection {
    * Handle incoming message - either queue it or pass to handler
    */
   private _handleMessage(message: WebSocketMessage): void {
-    // Notify all registered handlers
     this._messageHandlers.forEach(handler => handler(message));
 
-    // If there are waiting resolvers, resolve the first one
     if (this._resolvers.length > 0) {
       const resolver = this._resolvers.shift();
       if (resolver) resolver(message);
     } else {
-      // Otherwise queue the message
       this._messageQueue.push(message);
     }
   }
@@ -194,23 +216,18 @@ export class WebSocketConnection {
     }
 
     while (this.isConnected) {
-      // First check if there are queued messages
       if (this._messageQueue.length > 0) {
         yield this._messageQueue.shift()!;
         continue;
       }
 
-      // Wait for the next message
+      const currentConnection = this._connection;
       const message = await new Promise<WebSocketMessage | null>(resolve => {
-        if (!this.isConnected) {
+        if (!this.isConnected || !currentConnection) {
           resolve(null);
           return;
         }
 
-        // Add resolver to queue
-        this._resolvers.push(resolve);
-
-        // Also listen for close
         const closeHandler = () => {
           const idx = this._resolvers.indexOf(resolve);
           if (idx !== -1) {
@@ -218,7 +235,8 @@ export class WebSocketConnection {
             resolve(null);
           }
         };
-        this._connection?.once('close', closeHandler);
+        currentConnection.once('close', closeHandler);
+        this._resolvers.push(resolve);
       });
 
       if (message === null) {
@@ -226,5 +244,132 @@ export class WebSocketConnection {
       }
       yield message;
     }
+  }
+
+  /**
+   * Async generator that yields filtered messages
+   * Use this with for-await-of loop to receive messages matching the filter
+   *
+   * @param filter - Filter configuration with optional channel and id properties
+   *
+   * @example
+   * ```typescript
+   * // Listen for transcript events from a specific rtstream
+   * for await (const ev of ws.stream({ channel: 'transcript', id: 'rts-xxx' })) {
+   *   console.log('Transcript:', ev.data.text);
+   * }
+   *
+   * // Listen for all scene index events
+   * for await (const ev of ws.stream({ channel: 'scene_index' })) {
+   *   console.log('Scene:', ev);
+   * }
+   * ```
+   */
+  public async *stream(
+    filter: WebSocketStreamFilter = {}
+  ): AsyncGenerator<WebSocketMessage, void, unknown> {
+    if (!this._connection) {
+      throw new Error('WebSocket is not connected. Call connect() first.');
+    }
+
+    const matchesFilter = (message: WebSocketMessage): boolean => {
+      if (!filter.channel && !filter.id) {
+        return true;
+      }
+
+      if (filter.channel) {
+        const msgChannel =
+          message.channel || message.type || message.event_type;
+        if (msgChannel !== filter.channel) {
+          return false;
+        }
+      }
+
+      if (filter.id) {
+        const msgId =
+          message.id ||
+          message.rtstream_id ||
+          message.rtstreamId ||
+          message.index_id ||
+          message.indexId;
+        if (msgId !== filter.id) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    const filteredQueue: WebSocketMessage[] = [];
+    const filteredResolvers: Array<(value: WebSocketMessage | null) => void> =
+      [];
+
+    const messageHandler = (message: WebSocketMessage) => {
+      if (matchesFilter(message)) {
+        if (filteredResolvers.length > 0) {
+          const resolver = filteredResolvers.shift();
+          if (resolver) resolver(message);
+        } else {
+          filteredQueue.push(message);
+        }
+      }
+    };
+
+    this._messageHandlers.push(messageHandler);
+
+    try {
+      while (this.isConnected) {
+        if (filteredQueue.length > 0) {
+          yield filteredQueue.shift()!;
+          continue;
+        }
+
+        const currentConnection = this._connection;
+        const message = await new Promise<WebSocketMessage | null>(resolve => {
+          if (!this.isConnected || !currentConnection) {
+            resolve(null);
+            return;
+          }
+
+          const closeHandler = () => {
+            const idx = filteredResolvers.indexOf(resolve);
+            if (idx !== -1) {
+              filteredResolvers.splice(idx, 1);
+              resolve(null);
+            }
+          };
+          currentConnection.once('close', closeHandler);
+          filteredResolvers.push(resolve);
+        });
+
+        if (message === null) {
+          break;
+        }
+        yield message;
+      }
+    } finally {
+      const idx = this._messageHandlers.indexOf(messageHandler);
+      if (idx !== -1) {
+        this._messageHandlers.splice(idx, 1);
+      }
+    }
+  }
+
+  /**
+   * Async dispose method for use with `await using` syntax (TypeScript 5.2+)
+   * Enables automatic cleanup when exiting scope
+   *
+   * @example
+   * ```typescript
+   * await using ws = await conn.connectWebsocket();
+   * await ws.connect();
+   * for await (const message of ws.receive()) {
+   *   console.log(message);
+   * }
+   * // Connection automatically closed when scope exits
+   * ```
+   */
+  async [Symbol.asyncDispose](): Promise<void> {
+    await this.close();
   }
 }
