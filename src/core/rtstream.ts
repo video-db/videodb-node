@@ -360,7 +360,7 @@ export class RTStream {
       name: config.name,
     };
 
-    if (config.socketId) data.socketId = config.socketId;
+    if (config.socketId) data.wsConnectionId = config.socketId;
 
     const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
@@ -450,7 +450,7 @@ export class RTStream {
       autoStartTranscript: config.autoStartTranscript ?? true,
     };
 
-    if (config.socketId) data.socketId = config.socketId;
+    if (config.socketId) data.wsConnectionId = config.socketId;
 
     const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
@@ -520,7 +520,7 @@ export class RTStream {
   public startTranscript = async (socketId?: string): Promise<void> => {
     await this.#vhttp.patch<void, Record<string, unknown>>(
       [ApiPath.rtstream, this.id, ApiPath.transcription, ApiPath.status],
-      { action: 'start', socketId }
+      { action: 'start', wsConnectionId: socketId }
     );
   };
 
