@@ -2,7 +2,7 @@ import { ApiPath, TranscodeMode } from '@/constants';
 import { Collection } from '@/core/collection';
 import { Meeting } from '@/core/meeting';
 import { CaptureSession } from '@/core/captureSession';
-import { WebSocketConnection, type WebSocketLogger } from '@/core/websocket';
+import { WebSocketConnection } from '@/core/websocket';
 import type {
   CollectionBase,
   MeetingBase,
@@ -387,7 +387,6 @@ export class Connection {
   /**
    * Connect to the VideoDB WebSocket service for real-time events
    * @param collectionId - ID of the collection (default: "default")
-   * @param logger - Optional logger for debug output
    * @returns WebSocketConnection object (call .connect() to establish connection)
    *
    * @example
@@ -401,8 +400,7 @@ export class Connection {
    * ```
    */
   public connectWebsocket = async (
-    collectionId: string = 'default',
-    logger?: WebSocketLogger
+    collectionId: string = 'default'
   ): Promise<WebSocketConnection> => {
     const res = await this.vhttp.get<{ websocketUrl: string }>([
       collection,
@@ -413,7 +411,7 @@ export class Connection {
     if (!wsUrl) {
       throw new Error('Failed to get WebSocket URL from server');
     }
-    return new WebSocketConnection(wsUrl, logger);
+    return new WebSocketConnection(wsUrl);
   };
 
   /**

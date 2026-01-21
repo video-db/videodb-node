@@ -17,13 +17,6 @@ export interface WebSocketStreamFilter {
   id?: string;
 }
 
-export interface WebSocketLogger {
-  debug?: (message: string) => void;
-  info?: (message: string) => void;
-  warn?: (message: string) => void;
-  error?: (message: string) => void;
-}
-
 /**
  * WebSocketConnection class for real-time event streaming from VideoDB
  *
@@ -49,11 +42,9 @@ export class WebSocketConnection {
   private _errorHandlers: Array<(error: Error) => void> = [];
   private _messageQueue: WebSocketMessage[] = [];
   private _resolvers: Array<(value: WebSocketMessage) => void> = [];
-  private _logger?: WebSocketLogger;
 
-  constructor(url: string, logger?: WebSocketLogger) {
+  constructor(url: string) {
     this.url = url;
-    this._logger = logger;
   }
 
   /**
@@ -61,8 +52,6 @@ export class WebSocketConnection {
    * @returns Promise that resolves to this WebSocketConnection instance
    */
   public async connect(): Promise<WebSocketConnection> {
-    this._logger?.debug?.(`Connecting to WebSocket URL: ${this.url}`);
-
     return new Promise((resolve, reject) => {
       try {
         this._connection = new WebSocket(this.url);
@@ -76,16 +65,12 @@ export class WebSocketConnection {
 
             if (!this.connectionId && message.connection_id) {
               this.connectionId = message.connection_id as string;
-              this._logger?.info?.(
-                `WebSocket connected with ID: ${this.connectionId}`
-              );
               resolve(this);
               return;
             }
 
             this._handleMessage(message);
           } catch {
-            this._logger?.warn?.(`Received non-JSON message: ${dataStr}`);
             const rawMessage: WebSocketMessage = { raw: dataStr };
             this._handleMessage(rawMessage);
           }
@@ -93,7 +78,6 @@ export class WebSocketConnection {
 
         this._connection.on('error', (event: ErrorEvent) => {
           const error = new Error(event.message);
-          this._logger?.error?.(`WebSocket error: ${event.message}`);
           this._errorHandlers.forEach(handler => handler(error));
           if (!this.connectionId) {
             this._connection?.close();
@@ -107,10 +91,6 @@ export class WebSocketConnection {
           this._connection = null;
         });
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        this._logger?.error?.(
-          `Failed to create WebSocket connection: ${errorMsg}`
-        );
         reject(error);
       }
     });

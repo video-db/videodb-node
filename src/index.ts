@@ -102,7 +102,6 @@ export {
   WebSocketConnection,
   type WebSocketMessage,
   type WebSocketStreamFilter,
-  type WebSocketLogger,
 } from './core/websocket';
 export { CaptureSession, type CaptureSessionBase } from './core/captureSession';
 export { SceneIndex, type SceneData, type AlertData } from './core/sceneIndex';
