@@ -8,9 +8,14 @@ import type {
   MeetingBase,
   RTStreamBase,
   RecordMeetingConfig,
+  CaptureSessionBase,
 } from '@/interfaces/core';
 import { IndexType, SearchType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
+import type {
+  CreateCaptureSessionConfig,
+  CaptureSessionStatusType,
+} from '@/types/capture';
 import type {
   GetVideos,
   GetAudios,
@@ -32,6 +37,7 @@ import { Video } from './video';
 import { Audio } from './audio';
 import { Image } from './image';
 import { Meeting } from './meeting';
+import { CaptureSession } from './captureSession';
 import { RTStream, RTStreamSearchResult, RTStreamShot } from './rtstream';
 import { VideodbError } from '@/utils/error';
 
@@ -586,5 +592,50 @@ export class Collection implements ICollection {
     });
     await meetingObj.refresh();
     return meetingObj;
+  };
+
+  /**
+   * Create a capture session for video recording
+   * @param config - Capture session configuration
+   * @returns CaptureSession object
+   *
+   * @example
+   * ```typescript
+   * const coll = await conn.getCollection('col-xxx');
+   *
+   * const session = await coll.createCaptureSession({
+   *   endUserId: 'user_abc',
+   *   callbackUrl: 'https://example.com/webhook',
+   *   metadata: { clientName: 'desktop-app' },
+   * });
+   *
+   * const token = await session.generateSessionToken({ expiresIn: 600 });
+   * // Send token to desktop client
+   * ```
+   */
+  public createCaptureSession = async (
+    config: CreateCaptureSessionConfig
+  ): Promise<CaptureSession> => {
+    const data: Record<string, unknown> = {
+      endUserId: config.endUserId,
+    };
+    if (config.callbackUrl) data.callbackUrl = config.callbackUrl;
+    if (config.wsConnectionId) data.wsConnectionId = config.wsConnectionId;
+    if (config.metadata) data.metadata = config.metadata;
+
+    const res = await this.#vhttp.post<
+      { sessionId: string; endUserId?: string; status?: string; createdAt?: number },
+      typeof data
+    >([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session], data);
+
+    return new CaptureSession(this.#vhttp, {
+      id: res.data.sessionId,
+      collectionId: this.id,
+      endUserId: res.data.endUserId,
+      status: res.data.status as CaptureSessionStatusType | undefined,
+      callbackUrl: config.callbackUrl,
+      metadata: config.metadata,
+      createdAt: res.data.createdAt,
+    });
   };
 }
