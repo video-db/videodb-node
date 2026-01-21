@@ -5,6 +5,10 @@ import type {
   RTStreamShotBase,
   RTStreamSearchConfig,
 } from '@/interfaces/core';
+import type {
+  IndexVisualsConfig,
+  IndexSpokenWordsConfig,
+} from '@/types/capture';
 import { HttpClient } from '@/utils/httpClient';
 import { playStream } from '@/utils';
 
@@ -89,7 +93,7 @@ export class RTStreamSearchResult {
 }
 
 /**
- * RTStreamSceneIndex class to interact with the rtstream scene index (legacy)
+ * RTStreamSceneIndex class to interact with the rtstream scene index
  */
 export class RTStreamSceneIndex {
   public rtstreamIndexId: string;
@@ -333,35 +337,24 @@ export class RTStream {
   };
 
   /**
-   * Index scenes from the rtstream
-   * @param config - Configuration for scene indexing
+   * Index visuals from the rtstream (scene indexing)
+   * @param config - Configuration for visual indexing
    * @returns RTStreamSceneIndex object
-   *
-   * @example
-   * ```typescript
-   * const sceneIndex = await rtstream.indexScenes({
-   *   extractionType: 'time_based',
-   *   extractionConfig: { time: 2, frameCount: 5 },
-   *   prompt: 'Describe the scene',
-   *   socketId: ws.connectionId,
-   * });
-   *
-   * await sceneIndex.start();
-   * ```
    */
-  public indexScenes = async (config: {
-    extractionType?: 'time_based' | 'shot' | 'transcript';
-    extractionConfig?: Record<string, unknown>;
-    prompt?: string;
-    modelName?: string;
-    modelConfig?: Record<string, unknown>;
-    name?: string;
-    socketId?: string;
-  }): Promise<RTStreamSceneIndex | null> => {
+  public indexVisuals = async (
+    config: IndexVisualsConfig
+  ): Promise<RTStreamSceneIndex | null> => {
+    const extractionType =
+      config.batchConfig.type === 'time' ? 'time_based' : config.batchConfig.type;
+    const extractionConfig: Record<string, unknown> = {
+      time: config.batchConfig.value,
+      frameCount: config.batchConfig.frameCount ?? 1,
+    };
+
     const data: Record<string, unknown> = {
-      extractionType: config.extractionType ?? 'time_based',
-      extractionConfig: config.extractionConfig ?? { time: 2, frameCount: 5 },
-      prompt: config.prompt ?? 'Describe the scene',
+      extractionType,
+      extractionConfig,
+      prompt: config.prompt,
       modelName: config.modelName,
       modelConfig: config.modelConfig ?? {},
       name: config.name,
@@ -415,9 +408,7 @@ export class RTStream {
    * @param indexId - ID of the scene index
    * @returns RTStreamSceneIndex object
    */
-  public getSceneIndex = async (
-    indexId: string
-  ): Promise<RTStreamSceneIndex> => {
+  public getSceneIndex = async (indexId: string): Promise<RTStreamSceneIndex> => {
     const res = await this.#vhttp.get<RTStreamSceneIndexBase>([
       ApiPath.rtstream,
       this.id,
@@ -437,34 +428,16 @@ export class RTStream {
   };
 
   /**
-   * Index spoken words from the rtstream transcript
-   * @param config - Configuration for spoken words indexing
+   * Index audio from the rtstream transcript
+   * @param config - Configuration for audio indexing
    * @returns RTStreamSceneIndex object
-   *
-   * @example
-   * ```typescript
-   * const sceneIndex = await rtstream.indexSpokenWords({
-   *   prompt: 'Summarize what is being said',
-   *   segmenter: 'word',
-   *   length: 10,
-   *   socketId: ws.connectionId,
-   * });
-   *
-   * await sceneIndex.start();
-   * ```
    */
-  public indexSpokenWords = async (config: {
-    prompt?: string;
-    segmenter?: 'time' | 'word' | 'sentence';
-    length?: number;
-    modelName?: string;
-    modelConfig?: Record<string, unknown>;
-    name?: string;
-    socketId?: string;
-  }): Promise<RTStreamSceneIndex | null> => {
+  public indexAudio = async (
+    config: IndexSpokenWordsConfig
+  ): Promise<RTStreamSceneIndex | null> => {
     const extractionConfig = {
-      segmenter: config.segmenter ?? 'word',
-      segmentationValue: config.length ?? 10,
+      segmenter: config.batchConfig.type,
+      segmentationValue: config.batchConfig.value,
     };
 
     const data: Record<string, unknown> = {
@@ -474,6 +447,7 @@ export class RTStream {
       modelName: config.modelName,
       modelConfig: config.modelConfig ?? {},
       name: config.name,
+      autoStartTranscript: config.autoStartTranscript ?? true,
     };
 
     if (config.socketId) data.socketId = config.socketId;
