@@ -326,7 +326,7 @@ function batchConfigToExtractionConfig(batchConfig: BatchConfig): {
       extractionType: 'time_based',
       extractionConfig: {
         time: batchConfig.value,
-        frame_count: batchConfig.frameCount || 1,
+        frameCount: batchConfig.frameCount || 1,
       },
     };
   } else {
@@ -335,7 +335,7 @@ function batchConfigToExtractionConfig(batchConfig: BatchConfig): {
       extractionType: 'transcript',
       extractionConfig: {
         segmenter: batchConfig.type,
-        segmentation_value: batchConfig.value,
+        segmentationValue: batchConfig.value,
       },
     };
   }
@@ -438,7 +438,7 @@ export class RTStream {
     if (config.modelName) payload.modelName = config.modelName;
     if (config.modelConfig) payload.modelConfig = config.modelConfig;
     if (config.name) payload.name = config.name;
-    if (config.socketId) payload.wsConnectionId = config.socketId;
+    if (config.socketId) payload.socketId = config.socketId;
 
     const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof payload>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
@@ -533,7 +533,7 @@ export class RTStream {
     if (config.modelName) data.modelName = config.modelName;
     if (config.modelConfig) data.modelConfig = config.modelConfig;
     if (config.name) data.name = config.name;
-    if (config.socketId) data.wsConnectionId = config.socketId;
+    if (config.socketId) data.socketId = config.socketId;
     if (config.autoStartTranscript !== undefined) {
       data.autoStartTranscript = config.autoStartTranscript;
     }
@@ -556,37 +556,34 @@ export class RTStream {
   };
 
   /**
-   * Get transcription data from the rtstream
-   * @param page - Page number (default: 1)
-   * @param pageSize - Items per page (default: 100, max: 1000)
-   * @param start - Start timestamp filter (optional)
-   * @param end - End timestamp filter (optional)
-   * @param since - For polling - only get transcriptions after this timestamp (optional)
-   * @param engine - Transcription engine (optional)
-   * @returns Transcription data with segments and metadata
+   * Get transcript segments within a time range
+   * @param config - Configuration for transcript retrieval
+   * @param config.fromMs - Start time in milliseconds (optional)
+   * @param config.toMs - End time in milliseconds (optional)
+   * @param config.limit - Maximum number of segments to return (optional, default: 500)
+   * @returns Array of transcript segments
+   *
+   * @example
+   * ```typescript
+   * const segments = await rtstream.getTranscript({ fromMs: 0, toMs: 60000, limit: 500 });
+   * for (const seg of segments) {
+   *   console.log(seg.text);
+   * }
+   * ```
    */
   public getTranscript = async (
-    page: number = 1,
-    pageSize: number = 100,
-    start?: number,
-    end?: number,
-    since?: number,
-    engine?: string
-  ): Promise<Record<string, unknown>> => {
-    const params: Record<string, unknown> = {
-      page,
-      page_size: pageSize,
-    };
-    if (engine !== undefined) params.engine = engine;
-    if (start !== undefined) params.start = start;
-    if (end !== undefined) params.end = end;
-    if (since !== undefined) params.since = since;
+    config: { fromMs?: number; toMs?: number; limit?: number } = {}
+  ): Promise<TranscriptSegment[]> => {
+    const params: Record<string, unknown> = {};
+    if (config.fromMs !== undefined) params.from_ms = config.fromMs;
+    if (config.toMs !== undefined) params.to_ms = config.toMs;
+    if (config.limit !== undefined) params.limit = config.limit;
 
-    const res = await this.#vhttp.get<Record<string, unknown>>(
+    const res = await this.#vhttp.get<{ segments: TranscriptSegment[] }>(
       [ApiPath.rtstream, this.id, ApiPath.transcription],
       { params }
     );
-    return res.data;
+    return res.data?.segments || [];
   };
 
   /**
@@ -602,7 +599,7 @@ export class RTStream {
       data.socketId = config.socketId;
     }
     await this.#vhttp.patch<void, Record<string, unknown>>(
-      [ApiPath.rtstream, this.id, ApiPath.transcript, ApiPath.status],
+      [ApiPath.rtstream, this.id, ApiPath.transcription, ApiPath.status],
       data
     );
   };
@@ -618,7 +615,7 @@ export class RTStream {
   ): Promise<StopTranscriptResult> => {
     const { mode = 'graceful' } = config;
     const res = await this.#vhttp.patch<StopTranscriptResult, object>(
-      [ApiPath.rtstream, this.id, ApiPath.transcript, ApiPath.status],
+      [ApiPath.rtstream, this.id, ApiPath.transcription, ApiPath.status],
       { action: 'stop', mode }
     );
     return res.data;
@@ -632,39 +629,12 @@ export class RTStream {
     const res = await this.#vhttp.get<TranscriptStatusResult>([
       ApiPath.rtstream,
       this.id,
-      ApiPath.transcript,
+      ApiPath.transcription,
       ApiPath.status,
     ]);
     return res.data;
   };
 
-  /**
-   * Get transcript segments within a time range
-   * @param config - Configuration for segment retrieval
-   * @param config.fromMs - Start time in milliseconds
-   * @param config.toMs - End time in milliseconds
-   * @param config.limit - Maximum number of segments to return
-   * @returns Array of transcript segments
-   *
-   * @example
-   * ```typescript
-   * const segments = await rtstream.getTranscriptSegments({ fromMs: 0, toMs: 60000, limit: 500 });
-   * ```
-   */
-  public getTranscriptSegments = async (
-    config: { fromMs?: number; toMs?: number; limit?: number } = {}
-  ): Promise<TranscriptSegment[]> => {
-    const params: Record<string, unknown> = {};
-    if (config.fromMs !== undefined) params.from_ms = config.fromMs;
-    if (config.toMs !== undefined) params.to_ms = config.toMs;
-    if (config.limit !== undefined) params.limit = config.limit;
-
-    const res = await this.#vhttp.get<{ segments: TranscriptSegment[] }>(
-      [ApiPath.rtstream, this.id, ApiPath.transcript],
-      { params }
-    );
-    return res.data?.segments || [];
-  };
 
   /**
    * Search across scene index records for the rtstream

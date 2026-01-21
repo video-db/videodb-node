@@ -620,6 +620,7 @@ export class Collection implements ICollection {
       endUserId: config.endUserId,
     };
     if (config.callbackUrl) data.callbackUrl = config.callbackUrl;
+    if (config.wsConnectionId) data.wsConnectionId = config.wsConnectionId;
     if (config.metadata) data.metadata = config.metadata;
 
     const res = await this.#vhttp.post<

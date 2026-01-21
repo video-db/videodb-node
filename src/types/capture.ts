@@ -80,6 +80,8 @@ export interface CreateCaptureSessionConfig {
   endUserId: string;
   /** Callback URL for capture session lifecycle notifications */
   callbackUrl?: string;
+  /** WebSocket connection ID for real-time status updates */
+  wsConnectionId?: string;
   /** Optional metadata passthrough */
   metadata?: Record<string, unknown>;
 }

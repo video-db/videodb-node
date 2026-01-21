@@ -14,7 +14,7 @@ import type {
 } from '@/interfaces/core';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { CollectionResponse, GetCollections } from '@/types/response';
-import type { ListCaptureSessionsConfig } from '@/types/capture';
+import type { ListCaptureSessionsConfig, CreateCaptureSessionConfig } from '@/types/capture';
 import { HttpClient, type HttpClientAuthConfig } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
 
@@ -235,12 +235,17 @@ export class Connection {
    * @param eventPrompt - Prompt for the event
    * @param label - Label for the event
    * @returns Event ID
+   *
+   * @example
+   * ```typescript
+   * const eventId = await conn.createEvent('Detect when someone enters the room', 'room_entry');
+   * ```
    */
   public createEvent = async (
     eventPrompt: string,
     label: string
   ): Promise<string | undefined> => {
-    const res = await this.vhttp.post<{ eventId: string }, object>(
+    const res = await this.vhttp.post<{ eventId?: string }, object>(
       [rtstream, event],
       { eventPrompt, label }
     );
@@ -411,20 +416,20 @@ export class Connection {
 
   /**
    * Get an existing capture session by ID
-   * @param collectionId - ID of the collection containing the session
-   * @param sessionId - ID of the capture session to retrieve
+   * @param sessionId - ID of the capture session (cap-xxx)
+   * @param collectionId - ID of the collection (default: "default")
    * @returns CaptureSession object
    *
    * @example
    * ```typescript
-   * const session = await conn.getCaptureSession('col-xxx', 'ss-xxx');
+   * const session = await conn.getCaptureSession('cap-xxx');
    * await session.refresh();
    * console.log(session.status);
    * ```
    */
   public getCaptureSession = async (
-    collectionId: string,
-    sessionId: string
+    sessionId: string,
+    collectionId: string = 'default'
   ): Promise<CaptureSession> => {
     const res = await this.vhttp.get<
       CaptureSessionBase & { rtstreams?: RTStreamBase[] }
@@ -451,22 +456,19 @@ export class Connection {
 
   /**
    * List all capture sessions in a collection
-   * @param collectionId - ID of the collection
+   * @param collectionId - ID of the collection (default: "default")
    * @param config - Filter configuration
-   * @returns Object with items array and optional nextCursor for pagination
+   * @returns List of CaptureSession objects
    *
    * @example
    * ```typescript
-   * const { items, nextCursor } = await conn.listCaptureSessions('col-xxx', {
-   *   status: 'active',
-   *   limit: 10,
-   * });
+   * const sessions = await conn.listCaptureSessions('default', { status: 'active' });
    * ```
    */
   public listCaptureSessions = async (
-    collectionId: string,
+    collectionId: string = 'default',
     config: ListCaptureSessionsConfig = {}
-  ): Promise<{ items: CaptureSession[]; nextCursor?: string }> => {
+  ): Promise<CaptureSession[]> => {
     const params: Record<string, unknown> = {};
     if (config.endUserId) params.end_user_id = config.endUserId;
     if (config.status) params.status = config.status;
@@ -475,10 +477,9 @@ export class Connection {
 
     const res = await this.vhttp.get<{
       sessions: Array<CaptureSessionBase & { id: string }>;
-      nextCursor?: string;
     }>([collection, collectionId, capture, session], { params });
 
-    const items = (res.data?.sessions || []).map(
+    return (res.data?.sessions || []).map(
       sess =>
         new CaptureSession(this.vhttp, {
           id: sess.id,
@@ -491,10 +492,27 @@ export class Connection {
           createdAt: sess.createdAt,
         })
     );
+  };
 
-    return {
-      items,
-      nextCursor: res.data?.nextCursor,
-    };
+  /**
+   * Create a capture session (convenience method)
+   * Creates in the default collection
+   * @param config - Capture session configuration
+   * @returns CaptureSession object
+   *
+   * @example
+   * ```typescript
+   * const session = await conn.createCaptureSession({
+   *   endUserId: 'user_abc',
+   *   callbackUrl: 'https://example.com/webhook',
+   * });
+   * const token = await session.generateSessionToken({ expiresIn: 600 });
+   * ```
+   */
+  public createCaptureSession = async (
+    config: CreateCaptureSessionConfig
+  ): Promise<CaptureSession> => {
+    const coll = await this.getCollection('default');
+    return coll.createCaptureSession(config);
   };
 }
