@@ -31,23 +31,13 @@ export interface WebSocketLogger {
  * ```typescript
  * const conn = videodb.connect(apiKey);
  * const ws = await conn.connectWebsocket();
+ * await ws.connect();
  *
- * // Using async iteration
  * for await (const message of ws.receive()) {
  *   console.log('Received:', message);
  * }
  *
- * // Or manually
- * await ws.connect();
- * ws.onMessage((msg) => console.log(msg));
  * await ws.close();
- *
- * // Using with async dispose (TypeScript 5.2+)
- * await using ws = await conn.connectWebsocket();
- * for await (const message of ws.receive()) {
- *   console.log(message);
- * }
- * // Automatically closes when scope exits
  * ```
  */
 export class WebSocketConnection {
@@ -372,10 +362,11 @@ export class WebSocketConnection {
    * @example
    * ```typescript
    * await using ws = await conn.connectWebsocket();
+   * await ws.connect();
    * for await (const message of ws.receive()) {
    *   console.log(message);
    * }
-   * // Connection automatically closed here
+   * // Connection automatically closed when scope exits
    * ```
    */
   async [Symbol.asyncDispose](): Promise<void> {
