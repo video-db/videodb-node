@@ -1,11 +1,13 @@
 import { ApiPath } from '@/constants';
 import { RTStream } from '@/core/rtstream';
 import type { CaptureSessionBase, RTStreamBase } from '@/interfaces/core';
-import type {
-  CaptureSessionStatusType,
-  GenerateSessionTokenConfig,
-} from '@/types/capture';
+import type { CaptureSessionStatusType } from '@/types/capture';
 import { HttpClient } from '@/utils/httpClient';
+
+/**
+ * RTStream category for filtering
+ */
+export type RTStreamCategory = 'mics' | 'displays' | 'system_audio' | 'cameras';
 
 /**
  * CaptureSession class for managing video capture sessions
@@ -22,12 +24,12 @@ import { HttpClient } from '@/utils/httpClient';
  *   metadata: { clientName: 'desktop-app' },
  * });
  *
- * // Generate token for client
- * const token = await session.generateSessionToken({ expiresIn: 600 });
+ * // Generate client token (account-scoped, can be used for WS too)
+ * const token = await conn.generateClientToken(86400);
  *
  * // After capture starts, refresh to get RTStreams
  * await session.refresh();
- * const mic = session.getRtstream('mic:default');
+ * const mics = session.getRtstream('mics');
  * ```
  */
 export class CaptureSession {
@@ -54,36 +56,6 @@ export class CaptureSession {
     this.createdAt = data.createdAt;
     this.rtstreams = [];
   }
-
-  /**
-   * Generate a session token for the capture session
-   * @param config - Token generation configuration
-   * @param config.expiresIn - Token expiration time in seconds (default: 600)
-   * @returns The session token string
-   *
-   * @example
-   * ```typescript
-   * const token = await session.generateSessionToken({ expiresIn: 3600 });
-   * // Send token to desktop client
-   * ```
-   */
-  public generateSessionToken = async (
-    config: GenerateSessionTokenConfig = {}
-  ): Promise<string> => {
-    const { expiresIn = 600 } = config;
-    const res = await this.#vhttp.post<{ token: string }, object>(
-      [
-        ApiPath.collection,
-        this.collectionId,
-        ApiPath.capture,
-        ApiPath.session,
-        this.id,
-        ApiPath.token,
-      ],
-      { expiresIn }
-    );
-    return res.data.token;
-  };
 
   /**
    * Refresh the capture session data from the server
@@ -137,22 +109,47 @@ export class CaptureSession {
   };
 
   /**
-   * Get RTStream by channel ID
-   * @param channelId - The channel ID to search for (e.g., 'mic:default', 'display:1')
-   * @returns The RTStream associated with the channel, or null if not found
+   * Get RTStreams by category
+   * @param category - Category to filter by ('mics', 'displays', 'system_audio', 'cameras')
+   * @returns Array of RTStream objects matching the category
    *
    * @example
    * ```typescript
-   * const mic = session.getRtstream('mic:default');
-   * const display = session.getRtstream('display:1');
+   * const mics = session.getRtstream('mics');
+   * const displays = session.getRtstream('displays');
+   * const systemAudio = session.getRtstream('system_audio');
    *
-   * if (mic) {
-   *   await mic.startTranscript({ socketId: ws.connectionId });
+   * if (mics.length > 0) {
+   *   await mics[0].startTranscript(ws.connectionId);
    * }
    * ```
    */
-  public getRtstream = (channelId: string): RTStream | null => {
-    return this.rtstreams.find(rts => rts.name === channelId) || null;
+  public getRtstream = (category: RTStreamCategory): RTStream[] => {
+    const filtered: RTStream[] = [];
+
+    for (const rts of this.rtstreams) {
+      const name = (rts.name || '').toLowerCase();
+      let isMatch = false;
+
+      if (category === 'mics' && name.includes('mic')) {
+        isMatch = true;
+      } else if (
+        category === 'displays' &&
+        (name.includes('screen') || name.includes('display'))
+      ) {
+        isMatch = true;
+      } else if (category === 'system_audio' && name.includes('system')) {
+        isMatch = true;
+      } else if (category === 'cameras' && name.includes('camera')) {
+        isMatch = true;
+      }
+
+      if (isMatch) {
+        filtered.push(rts);
+      }
+    }
+
+    return filtered;
   };
 
   /**

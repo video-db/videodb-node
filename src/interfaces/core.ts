@@ -319,13 +319,17 @@ export interface CaptureSessionBase {
 }
 
 /**
+ * RTStream category for filtering
+ */
+export type RTStreamCategory = 'mics' | 'displays' | 'system_audio' | 'cameras';
+
+/**
  * CaptureSession interface for reference
  */
 export interface ICaptureSession extends CaptureSessionBase {
   rtstreams: RTStreamBase[];
-  generateSessionToken: (config?: { expiresIn?: number }) => Promise<string>;
   refresh: () => Promise<void>;
-  getRtstream: (name: string) => RTStreamBase | null;
+  getRtstream: (category: RTStreamCategory) => RTStreamBase[];
 }
 
 /**

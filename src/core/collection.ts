@@ -625,7 +625,7 @@ export class Collection implements ICollection {
    *   metadata: { clientName: 'desktop-app' },
    * });
    *
-   * const token = await session.generateSessionToken({ expiresIn: 600 });
+   * const token = await conn.generateClientToken(86400);
    * // Send token to desktop client
    * ```
    */

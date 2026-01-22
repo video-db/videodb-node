@@ -103,7 +103,11 @@ export {
   type WebSocketMessage,
   type WebSocketStreamFilter,
 } from './core/websocket';
-export { CaptureSession, type CaptureSessionBase } from './core/captureSession';
+export {
+  CaptureSession,
+  type CaptureSessionBase,
+  type RTStreamCategory,
+} from './core/captureSession';
 export { SceneIndex, type SceneData, type AlertData } from './core/sceneIndex';
 export { SpokenIndex } from './core/spokenIndex';
 
@@ -133,7 +137,6 @@ export {
   type SpokenIndexBase,
   type WebSocketChannelType,
   type WebSocketStreamFilter as CaptureWebSocketStreamFilter,
-  type GenerateSessionTokenConfig,
   type SceneData as CaptureSceneData,
   type GetScenesResult,
   type AlertConfig,

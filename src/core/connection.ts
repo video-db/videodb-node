@@ -506,7 +506,7 @@ export class Connection {
    *   endUserId: 'user_abc',
    *   callbackUrl: 'https://example.com/webhook',
    * });
-   * const token = await session.generateSessionToken({ expiresIn: 600 });
+   * const token = await conn.generateClientToken(86400);
    * ```
    */
   public createCaptureSession = async (
@@ -514,5 +514,34 @@ export class Connection {
   ): Promise<CaptureSession> => {
     const coll = await this.getCollection('default');
     return coll.createCaptureSession(config);
+  };
+
+  /**
+   * Generate a client token for capture operations
+   * This is an account-scoped token that can be used for capture sessions and WebSocket connections
+   *
+   * @param expiresIn - Token expiration time in seconds (default: 86400 = 24 hours)
+   * @returns Client token string (st-xxx format)
+   *
+   * @example
+   * ```typescript
+   * // Generate a token valid for 24 hours
+   * const token = await conn.generateClientToken();
+   *
+   * // Generate a token valid for 1 hour
+   * const token = await conn.generateClientToken(3600);
+   *
+   * // Use with CaptureClient
+   * const client = new CaptureClient({ sessionToken: token });
+   * ```
+   */
+  public generateClientToken = async (
+    expiresIn: number = 86400
+  ): Promise<string> => {
+    const res = await this.vhttp.post<{ token: string }, object>(
+      [capture, session, ApiPath.token],
+      { expiresIn }
+    );
+    return res.data.token;
   };
 }
