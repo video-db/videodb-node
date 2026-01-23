@@ -1,0 +1,227 @@
+name: Generate Node SDK from Python
+
+on:
+  repository_dispatch:
+    types: [python-updated]
+
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Python SDK branch to clone (has the updated code)'
+        required: true
+        default: 'main'
+      target_branch:
+        description: 'Target branch for PR (will be created from main if not exists)'
+        required: true
+        default: 'main'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Node SDK
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set branch info
+        id: branches
+        run: |
+          if [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
+            SOURCE_BRANCH="${{ github.event.client_payload.source_branch }}"
+            TARGET_BRANCH="${{ github.event.client_payload.target_branch }}"
+            TRIGGER_TYPE="${{ github.event.client_payload.trigger_type }}"
+          else
+            SOURCE_BRANCH="${{ inputs.source_branch }}"
+            TARGET_BRANCH="${{ inputs.target_branch }}"
+            TRIGGER_TYPE="manual"
+          fi
+
+          echo "source_branch=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
+          echo "target_branch=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+          echo "trigger_type=$TRIGGER_TYPE" >> $GITHUB_OUTPUT
+
+          echo "Source branch (Python SDK): $SOURCE_BRANCH"
+          echo "Target branch (Node SDK): $TARGET_BRANCH"
+          echo "Trigger type: $TRIGGER_TYPE"
+
+      - name: Setup target branch
+        id: setup_branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TARGET_BRANCH="${{ steps.branches.outputs.target_branch }}"
+
+          # Check if target branch exists in Node SDK
+          if git ls-remote --exit-code --heads origin "$TARGET_BRANCH" > /dev/null 2>&1; then
+            echo "Branch $TARGET_BRANCH exists, checking out"
+            git checkout "$TARGET_BRANCH"
+            git pull origin "$TARGET_BRANCH"
+            echo "branch_created=false" >> $GITHUB_OUTPUT
+          else
+            echo "Branch $TARGET_BRANCH does not exist, creating from main"
+            git checkout main
+            git pull origin main
+            git checkout -b "$TARGET_BRANCH"
+            git push -u origin "$TARGET_BRANCH"
+            echo "branch_created=true" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Currently on branch: $(git branch --show-current)"
+
+      - name: Clone Python SDK
+        env:
+          GH_TOKEN: ${{ secrets.SDK_SYNC_PAT }}
+        run: |
+          SOURCE_BRANCH="${{ steps.branches.outputs.source_branch }}"
+          PYTHON_REPO="${{ github.repository_owner }}/videodb-python"
+
+          echo "Cloning Python SDK from $PYTHON_REPO @ $SOURCE_BRANCH"
+
+          # Clone the Python SDK at the source branch
+          git clone --depth 1 --branch "$SOURCE_BRANCH" \
+            "https://x-access-token:${GH_TOKEN}@github.com/${PYTHON_REPO}.git" python-sdk
+
+          # Remove .git directory - makes it READ-ONLY reference
+          rm -rf python-sdk/.git
+
+          echo "Python SDK cloned as read-only reference"
+          ls -la python-sdk/videodb/
+
+      - name: Fetch Python SDK diff
+        env:
+          GH_TOKEN: ${{ secrets.SDK_SYNC_PAT }}
+        run: |
+          TRIGGER_TYPE="${{ steps.branches.outputs.trigger_type }}"
+          SOURCE_BRANCH="${{ steps.branches.outputs.source_branch }}"
+          TARGET_BRANCH="${{ steps.branches.outputs.target_branch }}"
+          PYTHON_REPO="${{ github.repository_owner }}/videodb-python"
+
+          if [[ "$TRIGGER_TYPE" == "code_change" ]]; then
+            # For code changes, fetch diff using SHAs from payload
+            BEFORE_SHA="${{ github.event.client_payload.before_sha }}"
+            AFTER_SHA="${{ github.event.client_payload.after_sha }}"
+
+            if [[ -n "$BEFORE_SHA" && -n "$AFTER_SHA" ]]; then
+              echo "Fetching diff for code change: $BEFORE_SHA...$AFTER_SHA"
+              gh api \
+                -H "Accept: application/vnd.github.v3.diff" \
+                "/repos/$PYTHON_REPO/compare/${BEFORE_SHA}...${AFTER_SHA}" \
+                > python.diff 2>/dev/null || touch python.diff
+            else
+              touch python.diff
+            fi
+          else
+            # For spec changes, compare target_branch vs source_branch
+            echo "Fetching diff for spec change: $TARGET_BRANCH...$SOURCE_BRANCH"
+            gh api \
+              -H "Accept: application/vnd.github.v3.diff" \
+              "/repos/$PYTHON_REPO/compare/${TARGET_BRANCH}...${SOURCE_BRANCH}" \
+              > python.diff 2>/dev/null || touch python.diff
+          fi
+
+          echo "Diff size: $(wc -l < python.diff) lines"
+
+      - name: Fetch prompt and build context
+        run: |
+          # Fetch static prompt from agent-toolkit
+          curl -sL https://raw.githubusercontent.com/video-db/agent-toolkit/main/context/prompts/python-to-node.txt > static_prompt.txt
+
+          # Build full prompt with dynamic content
+          cat > codex_prompt.md << 'PROMPT_EOF'
+          ## Git Diff of Python SDK Changes
+
+          The following diff shows what changed in the Python SDK:
+
+          ```diff
+          PROMPT_EOF
+
+          cat python.diff >> codex_prompt.md
+
+          cat >> codex_prompt.md << 'PROMPT_EOF'
+          ```
+
+          ---
+
+          PROMPT_EOF
+
+          # Append static instructions
+          cat static_prompt.txt >> codex_prompt.md
+
+          echo "Prompt built successfully"
+
+      - name: Run Codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          model: o4-mini
+          sandbox: workspace-write
+          prompt-file: codex_prompt.md
+
+      - name: Check for changes and create PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if there are changes
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes generated by Codex"
+            exit 0
+          fi
+
+          # Clean up temporary files - DO NOT commit these
+          rm -f python.diff static_prompt.txt codex_prompt.md
+          rm -rf python-sdk
+
+          # Get branch info
+          TARGET_BRANCH="${{ steps.branches.outputs.target_branch }}"
+          SOURCE_BRANCH="${{ steps.branches.outputs.source_branch }}"
+          TRIGGER_TYPE="${{ steps.branches.outputs.trigger_type }}"
+
+          # Create work branch
+          WORK_BRANCH="auto/python-sync-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$WORK_BRANCH"
+          git add -A
+
+          # Commit
+          git commit -m "feat: sync with Python SDK
+
+          Source: videodb-python@${SOURCE_BRANCH}
+          Target: ${TARGET_BRANCH}
+          Trigger: ${TRIGGER_TYPE}
+
+          Generated by OpenAI Codex"
+
+          # Push
+          git push origin "$WORK_BRANCH"
+
+          # Create PR targeting the target branch
+          gh pr create \
+            --base "$TARGET_BRANCH" \
+            --title "feat: sync with Python SDK" \
+            --body "## Summary
+
+          Automated SDK update to match Python SDK changes.
+
+          **Python SDK branch**: \`$SOURCE_BRANCH\`
+          **Target branch**: \`$TARGET_BRANCH\`
+          **Trigger type**: \`$TRIGGER_TYPE\`
+
+          ## Review Checklist
+
+          - [ ] TypeScript types are correct
+          - [ ] Async/await patterns match existing code
+          - [ ] camelCase naming convention followed
+          - [ ] No breaking changes introduced
+          - [ ] Tests pass locally
+
+          ---
+          *Generated by [OpenAI Codex](https://github.com/openai/codex)*"
