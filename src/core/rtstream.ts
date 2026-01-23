@@ -198,13 +198,18 @@ export class RTStreamSceneIndex {
    * Create an event alert
    * @param eventId - ID of the event
    * @param callbackUrl - URL to receive the alert callback
+   * @param socketId - WebSocket connection ID for real-time alerts (optional)
    * @returns Alert ID
    */
   public createAlert = async (
     eventId: string,
-    callbackUrl: string
+    callbackUrl: string,
+    socketId?: string
   ): Promise<string | null> => {
-    const res = await this.#vhttp.post<{ alertId: string }, object>(
+    const data: Record<string, unknown> = { eventId, callbackUrl };
+    if (socketId) data.wsConnectionId = socketId;
+
+    const res = await this.#vhttp.post<{ alertId: string }, typeof data>(
       [
         ApiPath.rtstream,
         this.rtstreamId,
@@ -212,7 +217,7 @@ export class RTStreamSceneIndex {
         this.rtstreamIndexId,
         ApiPath.alert,
       ],
-      { eventId, callbackUrl }
+      data
     );
     return res.data?.alertId || null;
   };
@@ -345,10 +350,12 @@ export class RTStream {
     config: IndexVisualsConfig
   ): Promise<RTStreamSceneIndex | null> => {
     const extractionType =
-      config.batchConfig.type === 'time' ? 'time_based' : config.batchConfig.type;
+      config.batchConfig.type === 'time'
+        ? 'time_based'
+        : config.batchConfig.type;
     const extractionConfig: Record<string, unknown> = {
       time: config.batchConfig.value,
-      frameCount: config.batchConfig.frameCount ?? 1,
+      frameCount: config.batchConfig.frameCount ?? 5,
     };
 
     const data: Record<string, unknown> = {
@@ -408,7 +415,9 @@ export class RTStream {
    * @param indexId - ID of the scene index
    * @returns RTStreamSceneIndex object
    */
-  public getSceneIndex = async (indexId: string): Promise<RTStreamSceneIndex> => {
+  public getSceneIndex = async (
+    indexId: string
+  ): Promise<RTStreamSceneIndex> => {
     const res = await this.#vhttp.get<RTStreamSceneIndexBase>([
       ApiPath.rtstream,
       this.id,
@@ -515,26 +524,39 @@ export class RTStream {
 
   /**
    * Start transcription for the rtstream
-   * @param socketId - WebSocket connection ID for real-time updates (optional)
+   * @param socketId - WebSocket connection ID for real-time transcript updates (optional)
+   * @param engine - Transcription engine (default: "assemblyai")
+   * @returns Transcription status with start time
    */
-  public startTranscript = async (socketId?: string): Promise<void> => {
-    await this.#vhttp.patch<void, Record<string, unknown>>(
-      [ApiPath.rtstream, this.id, ApiPath.transcription, ApiPath.status],
-      { action: 'start', wsConnectionId: socketId }
+  public startTranscript = async (
+    socketId?: string,
+    engine: string = 'assemblyai'
+  ): Promise<Record<string, unknown>> => {
+    const data: Record<string, unknown> = { action: 'start', engine };
+    if (socketId) data.wsConnectionId = socketId;
+
+    const res = await this.#vhttp.post<Record<string, unknown>, typeof data>(
+      [ApiPath.rtstream, this.id, ApiPath.transcription],
+      data
     );
+    return res.data || {};
   };
 
   /**
    * Stop transcription for the rtstream
-   * @param mode - Stop mode: 'graceful' or 'force' (default: 'graceful')
+   * @param mode - Stop mode: "graceful" (default) or "force"
+   * @param engine - Transcription engine (default: "assemblyai")
+   * @returns Transcription status with start and end time
    */
   public stopTranscript = async (
-    mode: 'graceful' | 'force' = 'graceful'
-  ): Promise<void> => {
-    await this.#vhttp.patch<void, object>(
-      [ApiPath.rtstream, this.id, ApiPath.transcription, ApiPath.status],
-      { action: 'stop', mode }
+    mode: 'graceful' | 'force' = 'graceful',
+    engine: string = 'assemblyai'
+  ): Promise<Record<string, unknown>> => {
+    const res = await this.#vhttp.post<Record<string, unknown>, object>(
+      [ApiPath.rtstream, this.id, ApiPath.transcription],
+      { action: 'stop', mode, engine }
     );
+    return res.data || {};
   };
 
   /**

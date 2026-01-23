@@ -329,7 +329,7 @@ export type RTStreamCategory = 'mics' | 'displays' | 'system_audio' | 'cameras';
 export interface ICaptureSession extends CaptureSessionBase {
   rtstreams: RTStreamBase[];
   refresh: () => Promise<void>;
-  getRtstream: (category: RTStreamCategory) => RTStreamBase[];
+  getRTStream: (category: RTStreamCategory) => RTStreamBase[];
 }
 
 /**
@@ -350,7 +350,10 @@ export interface SceneIndexBase {
 export interface ISceneIndex extends SceneIndexBase {
   start: () => Promise<void>;
   stop: () => Promise<void>;
-  createAlert: (config: { eventId: string; callbackUrl: string }) => Promise<string>;
+  createAlert: (config: {
+    eventId: string;
+    callbackUrl: string;
+  }) => Promise<string>;
   getScenes: (
     start?: number,
     end?: number,

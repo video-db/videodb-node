@@ -211,9 +211,7 @@ export class BinaryManager extends EventEmitter {
       // Handle process errors
       this.process.on('error', (error: Error) => {
         console.error(`VideoDB Recorder: Process error: ${error.message}`);
-        this.flushPendingCommands(
-          new Error(`Process error: ${error.message}`)
-        );
+        this.flushPendingCommands(new Error(`Process error: ${error.message}`));
         this.emit('error', {
           type: 'process',
           message:

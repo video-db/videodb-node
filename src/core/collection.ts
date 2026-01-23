@@ -267,7 +267,9 @@ export class Collection implements ICollection {
         data
       );
 
-      const results = (res.data?.results || []) as Array<Record<string, unknown>>;
+      const results = (res.data?.results || []) as Array<
+        Record<string, unknown>
+      >;
       const shots = results.map(
         (result: Record<string, unknown>) =>
           new RTStreamShot(this.#vhttp, {
@@ -313,17 +315,17 @@ export class Collection implements ICollection {
   };
 
   /**
-   * Connect to an rtstream
-   * @param url - URL of the rtstream
-   * @param name - Name of the rtstream
-   * @param sampleRate - Sample rate of the rtstream (optional, server default: 30)
+   * Connect to an RTStream
+   * @param url - URL of the RTStream
+   * @param name - Name of the RTStream
+   * @param sampleRate - Sample rate of the RTStream (optional, server default: 30)
    * @param video - Enable video streaming (optional, server default: true)
    * @param audio - Enable audio streaming (optional, server default: false)
    * @param enableTranscript - Enable real-time transcription (optional)
    * @param wsConnectionId - WebSocket connection ID for receiving events (optional)
    * @returns RTStream object
    */
-  public connectRtstream = async (
+  public connectRTStream = async (
     url: string,
     name: string,
     sampleRate?: number,
@@ -340,7 +342,8 @@ export class Collection implements ICollection {
     if (sampleRate !== undefined) data.sampleRate = sampleRate;
     if (video !== undefined) data.video = video;
     if (audio !== undefined) data.audio = audio;
-    if (enableTranscript !== undefined) data.enableTranscript = enableTranscript;
+    if (enableTranscript !== undefined)
+      data.enableTranscript = enableTranscript;
     if (wsConnectionId !== undefined) data.wsConnectionId = wsConnectionId;
 
     const res = await this.#vhttp.post<RTStreamBase, typeof data>(
@@ -351,21 +354,21 @@ export class Collection implements ICollection {
   };
 
   /**
-   * Get an rtstream by its ID
-   * @param id - ID of the rtstream
+   * Get an RTStream by its ID
+   * @param id - ID of the RTStream
    * @returns RTStream object
    */
-  public getRtstream = async (id: string): Promise<RTStream> => {
+  public getRTStream = async (id: string): Promise<RTStream> => {
     const res = await this.#vhttp.get<RTStreamBase>([rtstream, id]);
     return new RTStream(this.#vhttp, res.data);
   };
 
   /**
-   * List all rtstreams in the collection
+   * List all RTStreams in the collection
    * @param options - Query options: limit (default 10), offset (default 0), status, name, ordering
    * @returns List of RTStream objects
    */
-  public listRtstreams = async (options?: {
+  public listRTStreams = async (options?: {
     limit?: number;
     offset?: number;
     status?: string;
@@ -640,7 +643,12 @@ export class Collection implements ICollection {
     if (config.metadata) data.metadata = config.metadata;
 
     const res = await this.#vhttp.post<
-      { sessionId: string; endUserId?: string; status?: string; createdAt?: number },
+      {
+        sessionId: string;
+        endUserId?: string;
+        status?: string;
+        createdAt?: number;
+      },
       typeof data
     >([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session], data);
 

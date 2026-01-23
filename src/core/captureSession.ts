@@ -29,7 +29,7 @@ export type RTStreamCategory = 'mics' | 'displays' | 'system_audio' | 'cameras';
  *
  * // After capture starts, refresh to get RTStreams
  * await session.refresh();
- * const mics = session.getRtstream('mics');
+ * const mics = session.getRTStream('mics');
  * ```
  */
 export class CaptureSession {
@@ -115,16 +115,16 @@ export class CaptureSession {
    *
    * @example
    * ```typescript
-   * const mics = session.getRtstream('mics');
-   * const displays = session.getRtstream('displays');
-   * const systemAudio = session.getRtstream('system_audio');
+   * const mics = session.getRTStream('mics');
+   * const displays = session.getRTStream('displays');
+   * const systemAudio = session.getRTStream('system_audio');
    *
    * if (mics.length > 0) {
    *   await mics[0].startTranscript(ws.connectionId);
    * }
    * ```
    */
-  public getRtstream = (category: RTStreamCategory): RTStream[] => {
+  public getRTStream = (category: RTStreamCategory): RTStream[] => {
     const filtered: RTStream[] = [];
 
     for (const rts of this.rtstreams) {

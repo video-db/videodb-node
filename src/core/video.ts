@@ -142,10 +142,7 @@ export class Video implements IVideo {
    * @throws an InvalidRequestError if the request fails
    */
   public delete = async () => {
-    return await this.#vhttp.delete<Record<string, never>>([
-      video,
-      this.id,
-    ]);
+    return await this.#vhttp.delete<Record<string, never>>([video, this.id]);
   };
 
   /**
@@ -187,11 +184,10 @@ export class Video implements IVideo {
       return new Image(this.#vhttp, res.data);
     }
 
-    const res = await this.#vhttp.get<{ thumbnail: string; thumbnailUrl?: string }>([
-      video,
-      this.id,
-      thumbnail,
-    ]);
+    const res = await this.#vhttp.get<{
+      thumbnail: string;
+      thumbnailUrl?: string;
+    }>([video, this.id, thumbnail]);
     this.thumbnail = res.data.thumbnail || res.data.thumbnailUrl;
     return this.thumbnail!;
   };
@@ -213,14 +209,7 @@ export class Video implements IVideo {
     length?: number,
     force?: boolean
   ): Promise<Transcript> => {
-    if (
-      this.transcript &&
-      !start &&
-      !end &&
-      !segmenter &&
-      !length &&
-      !force
-    ) {
+    if (this.transcript && !start && !end && !segmenter && !length && !force) {
       return this.transcript;
     }
 

@@ -52,10 +52,7 @@ export class Audio implements IAudio {
    * @throws an InvalidRequestError if the request fails
    */
   public delete = async () => {
-    return await this.#vhttp.delete<Record<string, never>>([
-      audio,
-      this.id,
-    ]);
+    return await this.#vhttp.delete<Record<string, never>>([audio, this.id]);
   };
 
   /**

@@ -96,7 +96,8 @@ export class VideoConfigClass {
       if (config.resolution !== undefined) this.resolution = config.resolution;
       if (config.quality !== undefined) this.quality = config.quality;
       if (config.framerate !== undefined) this.framerate = config.framerate;
-      if (config.aspectRatio !== undefined) this.aspectRatio = config.aspectRatio;
+      if (config.aspectRatio !== undefined)
+        this.aspectRatio = config.aspectRatio;
       if (config.resizeMode !== undefined) this.resizeMode = config.resizeMode;
     }
   }

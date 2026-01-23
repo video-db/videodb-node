@@ -147,9 +147,7 @@ export class RecorderInstaller {
         if (response.statusCode !== 200) {
           file.close();
           fs.unlinkSync(destPath);
-          reject(
-            new Error(`Failed to download: HTTP ${response.statusCode}`)
-          );
+          reject(new Error(`Failed to download: HTTP ${response.statusCode}`));
           return;
         }
 
@@ -178,10 +176,15 @@ export class RecorderInstaller {
   /**
    * Extract tar.gz archive
    */
-  private async extractTarGz(archivePath: string, destDir: string): Promise<void> {
+  private async extractTarGz(
+    archivePath: string,
+    destDir: string
+  ): Promise<void> {
     // Use require for tar to avoid TypeScript module resolution issues
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const tar = require('tar') as { extract: (opts: { file: string; cwd: string }) => Promise<void> };
+    const tar = require('tar') as {
+      extract: (opts: { file: string; cwd: string }) => Promise<void>;
+    };
     await tar.extract({
       file: archivePath,
       cwd: destDir,
@@ -194,7 +197,9 @@ export class RecorderInstaller {
    * @param options.force - Force reinstall even if already installed
    * @param options.skipChecksum - Skip checksum verification
    */
-  public async install(options: { force?: boolean; skipChecksum?: boolean } = {}): Promise<void> {
+  public async install(
+    options: { force?: boolean; skipChecksum?: boolean } = {}
+  ): Promise<void> {
     const { force = false, skipChecksum = false } = options;
 
     // Check if already installed
@@ -208,9 +213,9 @@ export class RecorderInstaller {
       const { platformKey } = this.getPlatformInfo();
       throw new Error(
         `VideoDB Recorder: Platform ${platformKey} is not supported. ` +
-        `Supported platforms: ${Object.entries(SUPPORTED_PLATFORMS)
-          .map(([p, archs]) => archs.map(a => `${p}-${a}`).join(', '))
-          .join(', ')}`
+          `Supported platforms: ${Object.entries(SUPPORTED_PLATFORMS)
+            .map(([p, archs]) => archs.map(a => `${p}-${a}`).join(', '))
+            .join(', ')}`
       );
     }
 

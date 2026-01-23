@@ -35,10 +35,7 @@ export class Image implements IImage {
    * @throws an InvalidRequestError if the request fails
    */
   public delete = async () => {
-    return await this.#vhttp.delete<Record<string, never>>([
-      image,
-      this.id,
-    ]);
+    return await this.#vhttp.delete<Record<string, never>>([image, this.id]);
   };
 
   /**
@@ -89,13 +86,7 @@ export class Frame extends Image {
 
   public async describe(prompt?: string, modelName?: string): Promise<string> {
     const response = await this.#vhttp.post<{ description: string }, object>(
-      [
-        ApiPath.video,
-        this.videoId,
-        ApiPath.frame,
-        this.id,
-        ApiPath.describe,
-      ],
+      [ApiPath.video, this.videoId, ApiPath.frame, this.id, ApiPath.describe],
       {
         prompt,
         model_name: modelName,

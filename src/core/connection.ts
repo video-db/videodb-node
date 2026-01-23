@@ -14,7 +14,10 @@ import type {
 } from '@/interfaces/core';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { CollectionResponse, GetCollections } from '@/types/response';
-import type { ListCaptureSessionsConfig, CreateCaptureSessionConfig } from '@/types/capture';
+import type {
+  ListCaptureSessionsConfig,
+  CreateCaptureSessionConfig,
+} from '@/types/capture';
 import { HttpClient, type HttpClientAuthConfig } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
 
@@ -39,7 +42,10 @@ const {
 class VdbHttpClient extends HttpClient {
   constructor(baseURL: string, authConfig: HttpClientAuthConfig);
   constructor(baseURL: string, apiKey: string);
-  constructor(baseURL: string, authConfigOrApiKey: HttpClientAuthConfig | string) {
+  constructor(
+    baseURL: string,
+    authConfigOrApiKey: HttpClientAuthConfig | string
+  ) {
     super(baseURL, authConfigOrApiKey as HttpClientAuthConfig);
   }
 }
@@ -66,8 +72,14 @@ export class Connection {
    * @deprecated Use the object-based constructor instead
    */
   constructor(baseURL: string, apiKey: string);
-  constructor(baseURL: string, authConfigOrApiKey: HttpClientAuthConfig | string) {
-    this.vhttp = new VdbHttpClient(baseURL, authConfigOrApiKey as HttpClientAuthConfig);
+  constructor(
+    baseURL: string,
+    authConfigOrApiKey: HttpClientAuthConfig | string
+  ) {
+    this.vhttp = new VdbHttpClient(
+      baseURL,
+      authConfigOrApiKey as HttpClientAuthConfig
+    );
   }
 
   /**
@@ -157,8 +169,7 @@ export class Connection {
     description?: string,
     callbackUrl?: string
   ) => {
-    const isUrl =
-      source.startsWith('http://') || source.startsWith('https://');
+    const isUrl = source.startsWith('http://') || source.startsWith('https://');
     if (isUrl) {
       return uploadToServer(this.vhttp, 'default', {
         url: source,
