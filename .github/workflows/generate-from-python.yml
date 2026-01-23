@@ -130,7 +130,7 @@ jobs:
       - name: Fetch prompt and build context
         run: |
           # Fetch static prompt from agent-toolkit
-          curl -sL https://raw.githubusercontent.com/video-db/agent-toolkit/main/context/prompts/python-to-node.txt > static_prompt.txt
+          curl -sL https://raw.githubusercontent.com/video-db/agent-toolkit/main/context/prompts/python-to-node-sdk.txt > static_prompt.txt
 
           # Build full prompt with dynamic content
           cat > codex_prompt.md << 'PROMPT_EOF'
