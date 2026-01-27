@@ -47,8 +47,8 @@ export class SearchResult {
     else if (this.shots.length) {
       const reqData = this.shots.map(shot => {
         return {
-          videoId: shot.videoId,
-          collectionId: this.collectionId,
+          video_id: shot.videoId,
+          collection_id: this.collectionId,
           shots: [[shot.start, shot.end]],
         };
       });

@@ -270,13 +270,13 @@ export class Video implements IVideo {
     message?: string;
   }> => {
     const data: Record<string, unknown> = {
-      indexType: IndexTypeValues.spoken,
+      index_type: IndexTypeValues.spoken,
     };
-    if (languageCode !== undefined) data.languageCode = languageCode;
+    if (languageCode !== undefined) data.language_code = languageCode;
     if (segmentationType !== undefined)
-      data.segmentationType = segmentationType;
+      data.segmentation_type = segmentationType;
     if (force !== undefined) data.force = force;
-    if (callbackUrl !== undefined) data.callbackUrl = callbackUrl;
+    if (callbackUrl !== undefined) data.callback_url = callbackUrl;
 
     const res = await this.#vhttp.post<NoDataResponse, typeof data>(
       [video, this.id, index],
@@ -334,15 +334,20 @@ export class Video implements IVideo {
     config: Partial<ExtractSceneConfig> = {}
   ): Promise<SceneCollection> => {
     const defaultConfig = {
-      extractionType: SceneExtractionType.shotBased,
-      extractionConfig: {},
+      extraction_type: SceneExtractionType.shotBased,
+      extraction_config: {},
       force: false,
     };
 
+    const payload: Record<string, unknown> = { ...defaultConfig };
+    if (config.extractionType !== undefined) payload.extraction_type = config.extractionType;
+    if (config.extractionConfig !== undefined) payload.extraction_config = config.extractionConfig;
+    if (config.force !== undefined) payload.force = config.force;
+
     const res = await this.#vhttp.post<
       SceneCollectionResponse,
-      Partial<ExtractSceneConfig>
-    >([video, this.id, scenes], { ...defaultConfig, ...config });
+      typeof payload
+    >([video, this.id, scenes], payload);
 
     return this._formatSceneCollectionData(res.data.sceneCollection);
   };
@@ -382,11 +387,10 @@ export class Video implements IVideo {
    * was successful or not
    */
   public indexScenes = async (config: Partial<IndexSceneConfig> = {}) => {
-    const defaultConfig = {
-      extractionType: SceneExtractionType.shotBased,
-      extractionConfig: {},
+    const payload: Record<string, unknown> = {
+      extraction_type: config.extractionType ?? SceneExtractionType.shotBased,
+      extraction_config: config.extractionConfig ?? {},
     };
-    const payload: Record<string, unknown> = { ...defaultConfig, ...config };
     if (config.scenes) {
       payload.scenes = config.scenes.map((s: Scene) => s.getRequestData());
     }
@@ -441,10 +445,10 @@ export class Video implements IVideo {
   public addSubtitle = async (config?: Partial<SubtitleStyleProps>) => {
     const res = await this.#vhttp.post<
       GenerateStreamResponse,
-      { type: string; subtitleStyle: Partial<SubtitleStyleProps> }
+      { type: string; subtitle_style: Partial<SubtitleStyleProps> }
     >([video, this.id, workflow], {
       type: Workflows.addSubtitles,
-      subtitleStyle: { ...config },
+      subtitle_style: { ...config },
     });
     return res.data.streamUrl;
   };
@@ -523,8 +527,8 @@ export class Video implements IVideo {
       object
     >([collection, this.collectionId, video, this.id, translate], {
       language,
-      additionalNotes,
-      callbackUrl,
+      additional_notes: additionalNotes,
+      callback_url: callbackUrl,
     });
     return res.data?.translatedTranscript;
   };
@@ -573,8 +577,8 @@ export class Video implements IVideo {
     const res = await this.#vhttp.post<{ streamUrl: string }, object[]>(
       [compile],
       allShots.map(shot => ({
-        videoId: shot.videoId,
-        collectionId: this.collectionId,
+        video_id: shot.videoId,
+        collection_id: this.collectionId,
         shots: [[shot.start, shot.end]],
       }))
     );
@@ -620,7 +624,7 @@ export class Video implements IVideo {
   ): Promise<Video | undefined> => {
     const res = await this.#vhttp.post<VideoBase, object>(
       [video, this.id, reframe],
-      { start, end, target, mode, callbackUrl }
+      { start, end, target, mode, callback_url: callbackUrl }
     );
 
     if (callbackUrl) return undefined;
@@ -677,7 +681,7 @@ export class Video implements IVideo {
     };
     const res = await this.#vhttp.post<ClipResponse, object>(
       [video, this.id, clip],
-      { prompt, contentType, modelName }
+      { prompt, content_type: contentType, model_name: modelName }
     );
     return new SearchResult(this.#vhttp, res.data);
   };
@@ -695,7 +699,7 @@ export class Video implements IVideo {
     const downloadName = name || this.name || `video_${this.id}`;
     const res = await this.#vhttp.post<Record<string, unknown>, object>(
       [ApiPath.download],
-      { streamLink: this.streamUrl, name: downloadName }
+      { stream_link: this.streamUrl, name: downloadName }
     );
     return res.data;
   };

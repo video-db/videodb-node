@@ -124,7 +124,7 @@ export class Connection {
       {
         name,
         description,
-        isPublic,
+        is_public: isPublic,
       }
     );
     return new Collection(this.vhttp, res.data as CollectionBase);
@@ -258,7 +258,7 @@ export class Connection {
   ): Promise<string | undefined> => {
     const res = await this.vhttp.post<{ eventId?: string }, object>(
       [rtstream, event],
-      { eventPrompt, label }
+      { event_prompt: eventPrompt, label }
     );
     return res.data?.eventId;
   };
@@ -284,7 +284,7 @@ export class Connection {
   ): Promise<Record<string, unknown>> => {
     const res = await this.vhttp.post<Record<string, unknown>, object>(
       [download],
-      { streamLink, name }
+      { stream_link: streamLink, name }
     );
     return res.data;
   };
@@ -305,7 +305,7 @@ export class Connection {
       [collection, 'default', search, web],
       {
         query,
-        resultThreshold,
+        result_threshold: resultThreshold,
         platform: 'youtube',
         duration,
       }
@@ -331,10 +331,10 @@ export class Connection {
   ): Promise<string | undefined> => {
     const res = await this.vhttp.post<{ jobId: string }, object>([transcode], {
       source,
-      callbackUrl,
+      callback_url: callbackUrl,
       mode,
-      videoConfig,
-      audioConfig,
+      video_config: videoConfig,
+      audio_config: audioConfig,
     });
     return res.data?.jobId;
   };
@@ -366,13 +366,13 @@ export class Connection {
       MeetingBase & { meetingId: string },
       object
     >([collection, 'default', meeting, record], {
-      meetingUrl: config.meetingUrl,
-      botName: config.botName,
-      botImageUrl: config.botImageUrl,
-      meetingTitle: config.meetingTitle,
-      callbackUrl: config.callbackUrl,
-      callbackData: config.callbackData || {},
-      timeZone: config.timeZone || 'UTC',
+      meeting_url: config.meetingUrl,
+      bot_name: config.botName,
+      bot_image_url: config.botImageUrl,
+      meeting_title: config.meetingTitle,
+      callback_url: config.callbackUrl,
+      callback_data: config.callbackData || {},
+      time_zone: config.timeZone || 'UTC',
     });
     return new Meeting(this.vhttp, {
       ...res.data,
@@ -551,7 +551,7 @@ export class Connection {
   ): Promise<string> => {
     const res = await this.vhttp.post<{ token: string }, object>(
       [capture, session, ApiPath.token],
-      { expiresIn }
+      { expires_in: expiresIn }
     );
     return res.data.token;
   };

@@ -76,10 +76,10 @@ export class Frame extends Image {
   public getRequestData(): object {
     return {
       id: this.id,
-      videoId: this.videoId,
-      sceneId: this.sceneId,
+      video_id: this.videoId,
+      scene_id: this.sceneId,
       url: this.url || '',
-      frameTime: this.frameTime,
+      frame_time: this.frameTime,
       description: this.description,
     };
   }

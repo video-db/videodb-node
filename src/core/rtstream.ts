@@ -206,8 +206,8 @@ export class RTStreamSceneIndex {
     callbackUrl: string,
     socketId?: string
   ): Promise<string | null> => {
-    const data: Record<string, unknown> = { eventId, callbackUrl };
-    if (socketId) data.wsConnectionId = socketId;
+    const data: Record<string, unknown> = { event_id: eventId, callback_url: callbackUrl };
+    if (socketId) data.ws_connection_id = socketId;
 
     const res = await this.#vhttp.post<{ alertId: string }, typeof data>(
       [
@@ -355,19 +355,19 @@ export class RTStream {
         : config.batchConfig.type;
     const extractionConfig: Record<string, unknown> = {
       time: config.batchConfig.value,
-      frameCount: config.batchConfig.frameCount ?? 5,
+      frame_count: config.batchConfig.frameCount ?? 5,
     };
 
     const data: Record<string, unknown> = {
-      extractionType,
-      extractionConfig,
+      extraction_type: extractionType,
+      extraction_config: extractionConfig,
       prompt: config.prompt,
-      modelName: config.modelName,
-      modelConfig: config.modelConfig ?? {},
+      model_name: config.modelName,
+      model_config: config.modelConfig ?? {},
       name: config.name,
     };
 
-    if (config.socketId) data.wsConnectionId = config.socketId;
+    if (config.socketId) data.ws_connection_id = config.socketId;
 
     const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
@@ -446,20 +446,20 @@ export class RTStream {
   ): Promise<RTStreamSceneIndex | null> => {
     const extractionConfig = {
       segmenter: config.batchConfig.type,
-      segmentationValue: config.batchConfig.value,
+      segmentation_value: config.batchConfig.value,
     };
 
     const data: Record<string, unknown> = {
-      extractionType: 'transcript',
-      extractionConfig,
+      extraction_type: 'transcript',
+      extraction_config: extractionConfig,
       prompt: config.prompt,
-      modelName: config.modelName,
-      modelConfig: config.modelConfig ?? {},
+      model_name: config.modelName,
+      model_config: config.modelConfig ?? {},
       name: config.name,
-      autoStartTranscript: config.autoStartTranscript ?? true,
+      auto_start_transcript: config.autoStartTranscript ?? true,
     };
 
-    if (config.socketId) data.wsConnectionId = config.socketId;
+    if (config.socketId) data.ws_connection_id = config.socketId;
 
     const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
@@ -533,7 +533,7 @@ export class RTStream {
     engine: string = 'assemblyai'
   ): Promise<Record<string, unknown>> => {
     const data: Record<string, unknown> = { action: 'start', engine };
-    if (socketId) data.wsConnectionId = socketId;
+    if (socketId) data.ws_connection_id = socketId;
 
     const res = await this.#vhttp.post<Record<string, unknown>, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.transcription],
@@ -569,14 +569,14 @@ export class RTStream {
   ): Promise<RTStreamSearchResult> => {
     const data: Record<string, unknown> = { query: config.query };
 
-    if (config.indexType !== undefined) data.indexType = config.indexType;
-    if (config.indexId !== undefined) data.sceneIndexId = config.indexId;
+    if (config.indexType !== undefined) data.index_type = config.indexType;
+    if (config.indexId !== undefined) data.scene_index_id = config.indexId;
     if (config.resultThreshold !== undefined)
-      data.resultThreshold = config.resultThreshold;
+      data.result_threshold = config.resultThreshold;
     if (config.scoreThreshold !== undefined)
-      data.scoreThreshold = config.scoreThreshold;
+      data.score_threshold = config.scoreThreshold;
     if (config.dynamicScorePercentage !== undefined)
-      data.dynamicScorePercentage = config.dynamicScorePercentage;
+      data.dynamic_score_percentage = config.dynamicScorePercentage;
     if (config.filter !== undefined) data.filter = config.filter;
 
     const res = await this.#vhttp.post<

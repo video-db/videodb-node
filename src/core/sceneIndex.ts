@@ -123,7 +123,7 @@ export class SceneIndex {
         this.id,
         ApiPath.alert,
       ],
-      { eventId: config.eventId, callbackUrl: config.callbackUrl }
+      { event_id: config.eventId, callback_url: config.callbackUrl }
     );
     return res.data.alertId;
   };

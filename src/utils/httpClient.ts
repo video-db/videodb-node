@@ -9,7 +9,7 @@ import {
   InvalidRequestError,
   VideodbError,
 } from '@/utils/error';
-import { fromCamelToSnake, fromSnakeToCamel } from '@/utils';
+import { fromSnakeToCamel } from '@/utils';
 import { SDK_CLIENT_HEADER } from '@/version';
 import axios, {
   AxiosError,
@@ -39,9 +39,8 @@ export interface HttpClientAuthConfig {
  * options available to all child classes
  * internally.
  *
- * Handles automatic conversion between camelCase (SDK) and snake_case (API):
- * - Request data: camelCase → snake_case
- * - Response data: snake_case → camelCase
+ * Response data is converted from snake_case to camelCase.
+ * Request data must be provided in snake_case format at the call site.
  *
  * Supports dual authentication modes:
  * - API key: Full backend access
@@ -144,39 +143,19 @@ export class HttpClient {
   };
 
   /**
-   * Converts request data from camelCase to snake_case if it's an object
-   * Skips conversion for FormData and non-objects
-   */
-  #convertRequestData = <D>(data: D): D => {
-    if (data && typeof data === 'object' && !(data instanceof FormData)) {
-      return fromCamelToSnake(data as object) as D;
-    }
-    return data;
-  };
-
-  /**
-   * Makes HTTP request with automatic case conversion
-   * @typeParam R - The snake_case API response data type
-   * @typeParam D - The camelCase request data type (converted to snake_case before sending)
+   * Makes HTTP request
+   * @typeParam R - The API response data type (converted to camelCase)
+   * @typeParam D - The request data type (must be provided in snake_case)
    */
   #makeRequest = async <R, D = undefined>(
     options: AxiosRequestConfig<D>
   ): Promise<ResponseOf<R>> => {
-    // Convert request data from camelCase to snake_case
-    const convertedOptions = {
-      ...options,
-      data:
-        options.data !== undefined
-          ? this.#convertRequestData(options.data)
-          : undefined,
-    };
-
     try {
       const response = await this.#db.request<
         ApiResponseOf<R>,
         AxiosResponse<ApiResponseOf<R>, D>,
         D
-      >(convertedOptions);
+      >(options);
       const data = response.data;
 
       if (data.status === ResponseStatus.processing) {

@@ -255,11 +255,11 @@ export class Collection implements ICollection {
     // Handle RTStream search
     if (namespace === 'rtstream') {
       const data: Record<string, unknown> = { query };
-      if (sceneIndexId !== undefined) data.sceneIndexId = sceneIndexId;
-      if (resultThreshold !== undefined) data.resultThreshold = resultThreshold;
-      if (scoreThreshold !== undefined) data.scoreThreshold = scoreThreshold;
+      if (sceneIndexId !== undefined) data.scene_index_id = sceneIndexId;
+      if (resultThreshold !== undefined) data.result_threshold = resultThreshold;
+      if (scoreThreshold !== undefined) data.score_threshold = scoreThreshold;
       if (dynamicScorePercentage !== undefined)
-        data.dynamicScorePercentage = dynamicScorePercentage;
+        data.dynamic_score_percentage = dynamicScorePercentage;
       if (filter !== undefined) data.filter = filter;
 
       const res = await this.#vhttp.post<{ results: unknown[] }, typeof data>(
@@ -335,16 +335,16 @@ export class Collection implements ICollection {
     wsConnectionId?: string
   ): Promise<RTStream> => {
     const data: Record<string, unknown> = {
-      collectionId: this.id,
+      collection_id: this.id,
       url,
       name,
     };
-    if (sampleRate !== undefined) data.sampleRate = sampleRate;
+    if (sampleRate !== undefined) data.sample_rate = sampleRate;
     if (video !== undefined) data.video = video;
     if (audio !== undefined) data.audio = audio;
     if (enableTranscript !== undefined)
-      data.enableTranscript = enableTranscript;
-    if (wsConnectionId !== undefined) data.wsConnectionId = wsConnectionId;
+      data.enable_transcript = enableTranscript;
+    if (wsConnectionId !== undefined) data.ws_connection_id = wsConnectionId;
 
     const res = await this.#vhttp.post<RTStreamBase, typeof data>(
       [rtstream],
@@ -402,7 +402,7 @@ export class Collection implements ICollection {
   ): Promise<Image | undefined> => {
     const res = await this.#vhttp.post<ImageBase, object>(
       [collection, this.id, generate, image],
-      { prompt, aspectRatio, callbackUrl }
+      { prompt, aspect_ratio: aspectRatio, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Image(this.#vhttp, res.data);
@@ -423,7 +423,7 @@ export class Collection implements ICollection {
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
       [collection, this.id, generate, audio],
-      { prompt, duration, audioType: 'music', callbackUrl }
+      { prompt, duration, audio_type: 'music', callback_url: callbackUrl }
     );
     if (res.data) {
       return new Audio(this.#vhttp, res.data);
@@ -446,7 +446,7 @@ export class Collection implements ICollection {
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
       [collection, this.id, generate, audio],
-      { prompt, duration, audioType: 'sound_effect', config, callbackUrl }
+      { prompt, duration, audio_type: 'sound_effect', config, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Audio(this.#vhttp, res.data);
@@ -469,7 +469,7 @@ export class Collection implements ICollection {
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
       [collection, this.id, generate, audio],
-      { text: textContent, audioType: 'voice', voiceName, config, callbackUrl }
+      { text: textContent, audio_type: 'voice', voice_name: voiceName, config, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Audio(this.#vhttp, res.data);
@@ -490,7 +490,7 @@ export class Collection implements ICollection {
   ): Promise<Video | undefined> => {
     const res = await this.#vhttp.post<VideoBase, object>(
       [collection, this.id, generate, video],
-      { prompt, duration, callbackUrl }
+      { prompt, duration, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Video(this.#vhttp, res.data);
@@ -514,8 +514,8 @@ export class Collection implements ICollection {
       object
     >([collection, this.id, generate, text], {
       prompt,
-      modelName,
-      responseType,
+      model_name: modelName,
+      response_type: responseType,
     });
     return res.data;
   };
@@ -534,7 +534,7 @@ export class Collection implements ICollection {
   ): Promise<Video | undefined> => {
     const res = await this.#vhttp.post<VideoBase, object>(
       [collection, this.id, generate, video, dub],
-      { videoId, languageCode, callbackUrl }
+      { video_id: videoId, language_code: languageCode, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Video(this.#vhttp, res.data);
@@ -551,7 +551,7 @@ export class Collection implements ICollection {
   ): Promise<Array<{ video: Video }>> => {
     const res = await this.#vhttp.post<Array<{ video: VideoBase }>, object>(
       [collection, this.id, search, title],
-      { query, searchType: SearchTypeValues.scene }
+      { query, search_type: SearchTypeValues.scene }
     );
     return (res.data || []).map(result => ({
       video: new Video(this.#vhttp, result.video),
@@ -562,14 +562,14 @@ export class Collection implements ICollection {
    * Make the collection public
    */
   public makePublic = async (): Promise<void> => {
-    await this.#vhttp.patch([collection, this.id], { isPublic: true });
+    await this.#vhttp.patch([collection, this.id], { is_public: true });
   };
 
   /**
    * Make the collection private
    */
   public makePrivate = async (): Promise<void> => {
-    await this.#vhttp.patch([collection, this.id], { isPublic: false });
+    await this.#vhttp.patch([collection, this.id], { is_public: false });
   };
 
   /**
@@ -584,13 +584,13 @@ export class Collection implements ICollection {
       MeetingBase & { meetingId: string },
       object
     >([collection, this.id, meeting, record], {
-      meetingUrl: config.meetingUrl,
-      botName: config.botName,
-      botImageUrl: config.botImageUrl,
-      meetingTitle: config.meetingTitle,
-      callbackUrl: config.callbackUrl,
-      callbackData: config.callbackData || {},
-      timeZone: config.timeZone || 'UTC',
+      meeting_url: config.meetingUrl,
+      bot_name: config.botName,
+      bot_image_url: config.botImageUrl,
+      meeting_title: config.meetingTitle,
+      callback_url: config.callbackUrl,
+      callback_data: config.callbackData || {},
+      time_zone: config.timeZone || 'UTC',
     });
     return new Meeting(this.#vhttp, {
       ...res.data,
@@ -636,10 +636,10 @@ export class Collection implements ICollection {
     config: CreateCaptureSessionConfig
   ): Promise<CaptureSession> => {
     const data: Record<string, unknown> = {
-      endUserId: config.endUserId,
+      end_user_id: config.endUserId,
     };
-    if (config.callbackUrl) data.callbackUrl = config.callbackUrl;
-    if (config.wsConnectionId) data.wsConnectionId = config.wsConnectionId;
+    if (config.callbackUrl) data.callback_url = config.callbackUrl;
+    if (config.wsConnectionId) data.ws_connection_id = config.wsConnectionId;
     if (config.metadata) data.metadata = config.metadata;
 
     const res = await this.#vhttp.post<
