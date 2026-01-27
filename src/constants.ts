@@ -99,6 +99,12 @@ export const ReframeMode = {
   smart: 'smart',
 } as const;
 
+export const ReframePreset = {
+  vertical: 'vertical',
+  square: 'square',
+  landscape: 'landscape',
+} as const;
+
 export const TranscodeMode = {
   lightning: 'lightning',
   economy: 'economy',

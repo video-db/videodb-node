@@ -205,6 +205,7 @@ export {
   Segmenter,
   SegmentationType,
   ReframeMode,
+  ReframePreset,
   TranscodeMode,
   ResizeMode,
   MediaType,

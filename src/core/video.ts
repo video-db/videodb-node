@@ -1,6 +1,7 @@
 import {
   ApiPath,
   ReframeMode,
+  ReframePreset,
   Segmenter,
   SegmentationType,
   Workflows,
@@ -615,13 +616,23 @@ export class Video implements IVideo {
    * @param callbackUrl - URL to receive callback when processing completes
    * @returns Video object if no callbackUrl, undefined otherwise
    */
-  public reframe = async (
-    start?: number,
-    end?: number,
-    target: string | { width: number; height: number } = 'vertical',
-    mode: string = ReframeMode.smart,
-    callbackUrl?: string
-  ): Promise<Video | undefined> => {
+  public reframe = async (options?: {
+    start?: number;
+    end?: number;
+    target?:
+      | (typeof ReframePreset)[keyof typeof ReframePreset]
+      | { width: number; height: number };
+    mode?: (typeof ReframeMode)[keyof typeof ReframeMode];
+    callbackUrl?: string;
+  }): Promise<Video | undefined> => {
+    const {
+      start,
+      end,
+      target = ReframePreset.vertical,
+      mode = ReframeMode.smart,
+      callbackUrl,
+    } = options ?? {};
+
     const res = await this.#vhttp.post<VideoBase, object>(
       [video, this.id, reframe],
       { start, end, target, mode, callback_url: callbackUrl }
@@ -635,17 +646,19 @@ export class Video implements IVideo {
 
   /**
    * Convenience method for object-aware vertical reframing
-   * @param start - Start time in seconds (optional)
-   * @param end - End time in seconds (optional)
-   * @param callbackUrl - URL to receive callback when processing completes
+   * @param options - Configuration options
    * @returns Video object if no callbackUrl, undefined otherwise
    */
-  public smartVerticalReframe = async (
-    start?: number,
-    end?: number,
-    callbackUrl?: string
-  ): Promise<Video | undefined> => {
-    return this.reframe(start, end, 'vertical', ReframeMode.smart, callbackUrl);
+  public smartVerticalReframe = async (options?: {
+    start?: number;
+    end?: number;
+    callbackUrl?: string;
+  }): Promise<Video | undefined> => {
+    return this.reframe({
+      ...options,
+      target: ReframePreset.vertical,
+      mode: ReframeMode.smart,
+    });
   };
 
   /**
