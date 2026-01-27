@@ -131,6 +131,7 @@ export interface ShotBase {
   text?: string;
   searchScore?: number;
   streamUrl?: StreamableURL;
+  playerUrl?: StreamableURL;
 }
 
 /**

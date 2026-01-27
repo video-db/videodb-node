@@ -18,7 +18,8 @@ export class Shot implements IShot {
   public readonly end: number;
   public readonly text?: string;
   public readonly searchScore?: number;
-  public readonly streamUrl?: string;
+  public streamUrl?: string;
+  public playerUrl?: string;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: ShotBase) {
@@ -30,6 +31,7 @@ export class Shot implements IShot {
     this.text = data.text;
     this.searchScore = data.searchScore;
     this.streamUrl = data.streamUrl;
+    this.playerUrl = data.playerUrl;
     this.#vhttp = http;
   }
 
@@ -38,6 +40,10 @@ export class Shot implements IShot {
    * @returns A streaming URL for the shot
    */
   generateStream = async () => {
+    if (this.streamUrl) {
+      return this.streamUrl;
+    }
+
     const body = {
       length: this.videoLength,
       timeline: [[this.start, this.end]] as Timeline,
@@ -48,7 +54,10 @@ export class Shot implements IShot {
       body
     );
 
-    return res.data.streamUrl;
+    this.streamUrl = res.data.streamUrl;
+    this.playerUrl = res.data.playerUrl;
+
+    return this.streamUrl;
   };
 
   /**
