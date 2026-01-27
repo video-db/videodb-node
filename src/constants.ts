@@ -80,6 +80,7 @@ export const ResponseStatus = {
 export const MeetingStatus = {
   initializing: 'initializing',
   processing: 'processing',
+  joined: 'joined',
   done: 'done',
 } as const;
 
