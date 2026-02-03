@@ -44,6 +44,7 @@ import {
  */
 export class CaptureClient extends EventEmitter {
   private sessionToken: string;
+  private apiUrl: string;
   private binaryManager: BinaryManager;
   private isInitialized: boolean = false;
   private currentSessionId: string | null = null;
@@ -51,6 +52,7 @@ export class CaptureClient extends EventEmitter {
   constructor(options: CaptureClientOptions) {
     super();
     this.sessionToken = options.sessionToken;
+    this.apiUrl = options.apiUrl || 'https://api.videodb.io';
     this.binaryManager = new BinaryManager({
       dev: options.dev,
       restartOnError: options.restartOnError,
@@ -101,6 +103,7 @@ export class CaptureClient extends EventEmitter {
 
     await this.binaryManager.start({
       sessionToken: this.sessionToken,
+      apiUrl: this.apiUrl,
     });
 
     this.isInitialized = true;
