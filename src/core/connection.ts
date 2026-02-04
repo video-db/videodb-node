@@ -22,8 +22,19 @@ class VdbHttpClient extends HttpClient {
  */
 export class Connection {
   public vhttp: HttpClient;
-  constructor(baseURL: string, ApiKey: string) {
-    this.vhttp = new VdbHttpClient(baseURL, ApiKey);
+  public apiKey?: string;
+  public sessionToken?: string;
+  constructor(baseURL: string, apiKey?: string, sessionToken?: string) {
+    // Determine which token to use
+    const accessToken = apiKey || sessionToken;
+    if (!accessToken) {
+      throw new Error(
+        "No authentication provided. Set an API key or provide apiKey/sessionToken as an argument."
+      );
+    }
+    this.apiKey = apiKey;
+    this.sessionToken = sessionToken;
+    this.vhttp = new VdbHttpClient(baseURL, accessToken);
   }
 
   /**
