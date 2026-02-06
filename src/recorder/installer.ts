@@ -7,7 +7,7 @@ import type { BinaryConfig, PlatformInfo } from './types';
 /** Supported platforms */
 const SUPPORTED_PLATFORMS: Record<string, string[]> = {
   darwin: ['x64', 'arm64'],
-  // win32: ['x64'], // Windows support can be added later
+  win32: ['x64'],
   // linux: ['x64', 'arm64'], // Linux support can be added later
 };
 
@@ -33,10 +33,11 @@ export class RecorderInstaller {
     // Default binary config - can be overridden or loaded from package.json
     this.binaryConfig = binaryConfig || {
       baseUrl: 'https://recorder-sdk-binaries.s3.amazonaws.com',
-      version: '0.2.4',
+      version: '0.2.5',
       checksums: {
-        'darwin-x64': '',
-        'darwin-arm64': '',
+        'darwin-x64': '3fb822c1caa45ae4cac8f9e4eab8a8003a21bc2d267947538b42e9ac6fbe4880',
+        'darwin-arm64': '3fb822c1caa45ae4cac8f9e4eab8a8003a21bc2d267947538b42e9ac6fbe4880',
+        'win32-x64': '3c54ea519e31dfc9a92f531f2816e9feb1df84f66bcb8e9401c3603bbe4df8ab',
       },
     };
 
