@@ -162,6 +162,8 @@ export interface StartCaptureSessionClientConfig {
 export interface CaptureClientOptions {
   /** Session token for authentication */
   sessionToken: string;
+  /** API URL for the VideoDB API (defaults to https://api.videodb.io) */
+  apiUrl?: string;
   /** Whether to run in dev mode (uses mock binary) */
   dev?: boolean;
   /** Whether to auto-restart on error */
