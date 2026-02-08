@@ -195,6 +195,41 @@ export class RTStreamSceneIndex {
   };
 
   /**
+   * Update the scene index prompt
+   * @param prompt - New prompt for the scene index
+   * @returns API response with update status
+   */
+  public updateSceneIndex = async (
+    prompt: string
+  ): Promise<{
+    success: boolean;
+    message?: string;
+    data?: { prompt?: string };
+  } | null> => {
+    const res = await this.#vhttp.patch<
+      { success: boolean; message?: string; data?: { prompt?: string } },
+      { prompt: string }
+    >(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.index,
+        ApiPath.scene,
+        this.rtstreamIndexId,
+      ],
+      { prompt }
+    );
+
+    if (res.data?.data?.prompt) {
+      this.prompt = res.data.data.prompt;
+    } else if (res.data?.success) {
+      this.prompt = prompt;
+    }
+
+    return res.data || null;
+  };
+
+  /**
    * Create an event alert
    * @param eventId - ID of the event
    * @param callbackUrl - URL to receive the alert callback
@@ -206,7 +241,10 @@ export class RTStreamSceneIndex {
     callbackUrl: string,
     socketId?: string
   ): Promise<string | null> => {
-    const data: Record<string, unknown> = { event_id: eventId, callback_url: callbackUrl };
+    const data: Record<string, unknown> = {
+      event_id: eventId,
+      callback_url: callbackUrl,
+    };
     if (socketId) data.ws_connection_id = socketId;
 
     const res = await this.#vhttp.post<{ alertId: string }, typeof data>(
