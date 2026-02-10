@@ -91,13 +91,7 @@ export interface CreateCaptureSessionConfig {
  */
 export interface ListCaptureSessionsConfig {
   /** Filter by status */
-  status?: CaptureSessionStatusType;
-  /** Filter by end user ID */
-  endUserId?: string;
-  /** Maximum number of sessions to return */
-  limit?: number;
-  /** Cursor for pagination */
-  cursor?: string;
+  status?: string;
 }
 
 /**

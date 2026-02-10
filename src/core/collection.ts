@@ -15,6 +15,7 @@ import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type {
   CreateCaptureSessionConfig,
   CaptureSessionStatusType,
+  ListCaptureSessionsConfig,
 } from '@/types/capture';
 import type {
   GetVideos,
@@ -661,5 +662,107 @@ export class Collection implements ICollection {
       metadata: config.metadata,
       createdAt: res.data.createdAt,
     });
+  };
+
+  /**
+   * Get an existing capture session by ID
+   * @param sessionId - ID of the capture session
+   * @returns CaptureSession object
+   *
+   * @example
+   * ```typescript
+   * const session = await coll.getCaptureSession('cap-xxx');
+   * await session.refresh();
+   * console.log(session.status);
+   * ```
+   */
+  public getCaptureSession = async (
+    sessionId: string
+  ): Promise<CaptureSession> => {
+    const res = await this.#vhttp.get<
+      CaptureSessionBase & { rtstreams?: Array<Record<string, unknown>> }
+    >([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session, sessionId]);
+
+    const responseData = res.data as Record<string, unknown>;
+
+    // Normalize rtstreams before passing to CaptureSession
+    const rtstreams = (responseData.rtstreams as Array<Record<string, unknown>>) || [];
+    for (const rts of rtstreams) {
+      if (rts && typeof rts === 'object') {
+        if ('rtstream_id' in rts && !('id' in rts)) {
+          rts.id = rts.rtstream_id;
+          delete rts.rtstream_id;
+        }
+        if (!('collection_id' in rts)) {
+          rts.collection_id = this.id;
+        }
+      }
+    }
+
+    // Extract id and collection_id from response to avoid duplicate arguments
+    delete responseData.id;
+    delete responseData.collection_id;
+
+    return new CaptureSession(this.#vhttp, {
+      id: sessionId,
+      collectionId: this.id,
+      ...responseData,
+    } as CaptureSessionBase);
+  };
+
+  /**
+   * List all capture sessions in this collection
+   * @param config - Filter configuration
+   * @returns List of CaptureSession objects
+   *
+   * @example
+   * ```typescript
+   * const sessions = await coll.listCaptureSessions({ status: 'active' });
+   * ```
+   */
+  public listCaptureSessions = async (
+    config: ListCaptureSessionsConfig = {}
+  ): Promise<CaptureSession[]> => {
+    const params: Record<string, unknown> = {};
+    if (config.status) params.status = config.status;
+
+    const res = await this.#vhttp.get<{
+      sessions: Array<Record<string, unknown>>;
+    }>([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session], { params });
+
+    const sessions: CaptureSession[] = [];
+    for (const sessionData of res.data?.sessions || []) {
+      // Extract session_id with fallback like Python
+      const sessionId =
+        (sessionData.id as string) || (sessionData.session_id as string);
+      delete sessionData.id;
+      delete sessionData.session_id;
+
+      // Normalize rtstreams
+      const rtstreams = (sessionData.rtstreams as Array<Record<string, unknown>>) || [];
+      for (const rts of rtstreams) {
+        if (rts && typeof rts === 'object') {
+          if ('rtstream_id' in rts && !('id' in rts)) {
+            rts.id = rts.rtstream_id;
+            delete rts.rtstream_id;
+          }
+          if (!('collection_id' in rts)) {
+            rts.collection_id = this.id;
+          }
+        }
+      }
+
+      // Remove collection_id from data
+      delete sessionData.collection_id;
+
+      sessions.push(
+        new CaptureSession(this.#vhttp, {
+          id: sessionId,
+          collectionId: this.id,
+          ...sessionData,
+        } as CaptureSessionBase)
+      );
+    }
+    return sessions;
   };
 }
