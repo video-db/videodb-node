@@ -1,5 +1,5 @@
-const { RecorderInstaller } = require('./dist/recorder/installer');
+const Installer = require('./lib/installer');
 const packageJson = require('./package.json');
 
-const installer = new RecorderInstaller(packageJson.binaryConfig);
+const installer = new Installer(packageJson.binaryConfig);
 installer.install();

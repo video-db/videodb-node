@@ -17,6 +17,7 @@
   "files": [
     "dist",
     "bin",
+    "lib",
     "setup.js"
   ],
   "scripts": {
