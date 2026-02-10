@@ -40,11 +40,11 @@
   },
   "binaryConfig": {
     "baseUrl": "https://recorder-sdk-binaries.s3.amazonaws.com",
-    "version": "0.2.5",
+    "version": "0.2.6",
     "checksums": {
-      "darwin-x64": "3fb822c1caa45ae4cac8f9e4eab8a8003a21bc2d267947538b42e9ac6fbe4880",
-      "darwin-arm64": "3fb822c1caa45ae4cac8f9e4eab8a8003a21bc2d267947538b42e9ac6fbe4880",
-      "win32-x64": "3c54ea519e31dfc9a92f531f2816e9feb1df84f66bcb8e9401c3603bbe4df8ab"
+      "darwin-x64": "68d4cc58ab801640d33a4010590f01b2b6ff3fa393920b54940731bb5f6925ae",
+      "darwin-arm64": "68d4cc58ab801640d33a4010590f01b2b6ff3fa393920b54940731bb5f6925ae",
+      "win32-x64": "94bbc2500a289c3dd4235637d8eeb050ff177da2d95bacd1d20d40fbe943b912"
     }
   },
   "repository": {

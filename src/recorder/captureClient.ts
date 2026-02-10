@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import { BinaryManager } from './binaryManager';
 import {
   PermissionType,
+  PermissionStatus,
   type PermissionTypeValue,
   type PermissionStatusValue,
   type BinaryChannel,
@@ -133,12 +134,24 @@ export class CaptureClient extends EventEmitter {
       Record<string, unknown>
     >('requestPermission', { permission: kind });
 
+    // Handle both response shapes from the binary
+    if (result.requested === true) {
+      return PermissionStatus.granted;
+    }
+
     const status =
       (result.status as PermissionStatusValue) ??
-      (result.permission_status as PermissionStatusValue) ??
-      (typeof result === 'string' ? result : undefined);
+      (result.permission_status as PermissionStatusValue);
 
-    return status as PermissionStatusValue;
+    if (!status) {
+      console.warn(
+        'VideoDB Recorder: Unexpected requestPermission response:',
+        result
+      );
+      return PermissionStatus.undetermined;
+    }
+
+    return status;
   }
 
   /**

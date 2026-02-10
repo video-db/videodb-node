@@ -176,6 +176,11 @@ export class BinaryManager extends EventEmitter {
         stdio: ['pipe', 'pipe', 'pipe'],
       });
 
+      // Handle stdin errors (e.g. EPIPE when binary exits unexpectedly)
+      this.process.stdin!.on('error', (err: Error) => {
+        console.error(`VideoDB Recorder: stdin write error: ${err.message}`);
+      });
+
       // Handle stderr (logs and errors)
       const stderrRl = readline.createInterface({
         input: this.process.stderr!,
@@ -283,8 +288,8 @@ export class BinaryManager extends EventEmitter {
     command: string,
     params: Record<string, unknown> = {}
   ): Promise<T> {
-    if (!this.process) {
-      throw new Error('SDK not initialized. Call start() first.');
+    if (!this.process || !this.process.stdin || this.process.stdin.destroyed) {
+      throw new Error('SDK not initialized or binary process is not running.');
     }
 
     const commandId = uuidv4();
@@ -296,7 +301,17 @@ export class BinaryManager extends EventEmitter {
         resolve: resolve as (value: unknown) => void,
         reject,
       });
-      this.process!.stdin!.write(payload);
+      this.process!.stdin!.write(payload, (err) => {
+        if (err) {
+          const pending = this.pendingCommands.get(commandId);
+          if (pending) {
+            pending.reject(
+              new Error(`Failed to send command '${command}': ${err.message}`)
+            );
+            this.pendingCommands.delete(commandId);
+          }
+        }
+      });
     });
   }
 
