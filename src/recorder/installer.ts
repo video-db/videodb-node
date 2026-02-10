@@ -35,9 +35,9 @@ export class RecorderInstaller {
       baseUrl: 'https://recorder-sdk-binaries.s3.amazonaws.com',
       version: '0.2.6',
       checksums: {
-        'darwin-x64': '68d4cc58ab801640d33a4010590f01b2b6ff3fa393920b54940731bb5f6925ae',
-        'darwin-arm64': '68d4cc58ab801640d33a4010590f01b2b6ff3fa393920b54940731bb5f6925ae',
-        'win32-x64': '94bbc2500a289c3dd4235637d8eeb050ff177da2d95bacd1d20d40fbe943b912',
+        'darwin-x64': 'e202e9457ce23b36b966b53787437e5381c8ff603ba6fdd401c19e88ac9e2bfd',
+        'darwin-arm64': '64e7e6eae3f6a706283feb480f93863fc476c6793785ca01a88e33b3cd9a4a14',
+        'win32-x64': '7530deff204d62b48c233c630731e8f0f270b01c4a8161d8380952eda77e9940',
       },
     };
 
