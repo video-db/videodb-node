@@ -65,12 +65,12 @@ export const uploadToServer = async (
     url: urlToUpload,
     name: data.name,
     description: data.description,
-    callbackUrl: data.callbackUrl,
-    mediaType: data.mediaType,
+    callback_url: data.callbackUrl,
+    media_type: data.mediaType,
   };
 
   // Async upload with callback - return immediately
-  if (finalData.callbackUrl) {
+  if (finalData.callback_url) {
     await http.post<Record<string, never>, typeof finalData>(
       [collection, collectionId, upload],
       finalData

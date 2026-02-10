@@ -4,8 +4,21 @@
   "description": "A NodeJS wrapper for VideoDB's API written in TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./capture": {
+      "types": "./dist/recorder/index.d.ts",
+      "default": "./dist/recorder/index.js"
+    }
+  },
   "files": [
-    "dist"
+    "dist",
+    "bin",
+    "lib",
+    "setup.js"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
@@ -14,15 +27,25 @@
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint ./src/ --fix",
     "prepare": "npm run build",
+    "install": "node setup.js",
     "test:watch": "jest --watch",
     "test": "jest --coverage",
     "typecheck": "tsc --noEmit",
     "once": "ts-node -r tsconfig-paths/register  src/index.ts",
     "docs:gen": "npm run docs:del && typedoc --plugin typedoc-plugin-markdown",
     "docs:del": "rm -rf ./docs",
-    "docs:html": "rm -rf ./docs-html && typedoc --out docs-html --entryPoints ./src/ --entryPointStrategy expand --excludePrivate",
+    "docs:html": "rm -rf ./docs-html && typedoc --tsconfig tsconfig.build.json --out docs-html --entryPoints ./src/ --entryPointStrategy expand --excludePrivate",
     "docs:serve": "npm run docs:html && npx serve docs-html",
     "prepublishOnly": "npm run build"
+  },
+  "binaryConfig": {
+    "baseUrl": "https://recorder-sdk-binaries.s3.amazonaws.com",
+    "version": "0.2.6",
+    "checksums": {
+      "darwin-x64": "68d4cc58ab801640d33a4010590f01b2b6ff3fa393920b54940731bb5f6925ae",
+      "darwin-arm64": "68d4cc58ab801640d33a4010590f01b2b6ff3fa393920b54940731bb5f6925ae",
+      "win32-x64": "94bbc2500a289c3dd4235637d8eeb050ff177da2d95bacd1d20d40fbe943b912"
+    }
   },
   "repository": {
     "type": "git",
@@ -32,7 +55,9 @@
     "videodb",
     "video-db",
     "video_db",
-    "videodb-node"
+    "videodb-node",
+    "recorder",
+    "capture"
   ],
   "author": "VideoDB",
   "license": "Apache-2.0",
@@ -45,6 +70,7 @@
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.10.3",
     "@types/uuid": "^9.0.8",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
     "eslint": "^8.55.0",
@@ -67,6 +93,8 @@
     "axios": "^1.6.2",
     "form-data": "^4.0.0",
     "lodash": "^4.17.21",
-    "uuid": "^9.0.1"
+    "tar": "^7.4.3",
+    "uuid": "^9.0.1",
+    "ws": "^8.19.0"
   }
 }

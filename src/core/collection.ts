@@ -8,9 +8,15 @@ import type {
   MeetingBase,
   RTStreamBase,
   RecordMeetingConfig,
+  CaptureSessionBase,
 } from '@/interfaces/core';
 import { IndexType, SearchType } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
+import type {
+  CreateCaptureSessionConfig,
+  CaptureSessionStatusType,
+  ListCaptureSessionsConfig,
+} from '@/types/capture';
 import type {
   GetVideos,
   GetAudios,
@@ -27,11 +33,13 @@ import {
   SearchTypeValues,
 } from '@/core/config';
 import { SearchFactory } from './search';
+import { SearchResult } from './search/searchResult';
 import { Video } from './video';
 import { Audio } from './audio';
 import { Image } from './image';
 import { Meeting } from './meeting';
-import { RTStream } from './rtstream';
+import { CaptureSession } from './captureSession';
+import { RTStream, RTStreamSearchResult, RTStreamShot } from './rtstream';
 import { VideodbError } from '@/utils/error';
 
 const {
@@ -58,12 +66,14 @@ export class Collection implements ICollection {
   public readonly id: string;
   public readonly name?: string;
   public readonly description?: string;
+  public readonly isPublic?: boolean;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: CollectionBase) {
     this.id = data.id;
     this.name = data.name;
     this.description = data.description;
+    this.isPublic = data.isPublic;
     this.#vhttp = http;
   }
 
@@ -220,18 +230,66 @@ export class Collection implements ICollection {
   };
 
   /**
+   * Search for a query in the collection
    * @param query - Search query
    * @param searchType - [optional] Type of search to be performed
+   * @param indexType - [optional] Index type
    * @param resultThreshold - [optional] Result Threshold
    * @param scoreThreshold - [optional] Score Threshold
+   * @param dynamicScorePercentage - [optional] Percentage of dynamic score to consider
+   * @param filter - [optional] Additional metadata filters
+   * @param namespace - [optional] Search namespace ("rtstream" to search RTStreams)
+   * @param sceneIndexId - [optional] Filter by specific scene index
+   * @returns SearchResult or RTStreamSearchResult object
    */
   public search = async (
     query: string,
     searchType?: SearchType,
     indexType?: IndexType,
     resultThreshold?: number,
-    scoreThreshold?: number
-  ) => {
+    scoreThreshold?: number,
+    dynamicScorePercentage?: number,
+    filter?: Array<Record<string, unknown>>,
+    namespace?: string,
+    sceneIndexId?: string
+  ): Promise<SearchResult | RTStreamSearchResult> => {
+    // Handle RTStream search
+    if (namespace === 'rtstream') {
+      const data: Record<string, unknown> = { query };
+      if (sceneIndexId !== undefined) data.scene_index_id = sceneIndexId;
+      if (resultThreshold !== undefined) data.result_threshold = resultThreshold;
+      if (scoreThreshold !== undefined) data.score_threshold = scoreThreshold;
+      if (dynamicScorePercentage !== undefined)
+        data.dynamic_score_percentage = dynamicScorePercentage;
+      if (filter !== undefined) data.filter = filter;
+
+      const res = await this.#vhttp.post<{ results: unknown[] }, typeof data>(
+        [rtstream, collection, this.id, search],
+        data
+      );
+
+      const results = (res.data?.results || []) as Array<
+        Record<string, unknown>
+      >;
+      const shots = results.map(
+        (result: Record<string, unknown>) =>
+          new RTStreamShot(this.#vhttp, {
+            rtstreamId:
+              (result.rtstreamId as string) || (result.id as string) || '',
+            rtstreamName: result.rtstreamName as string | undefined,
+            start: (result.start as number) || 0,
+            end: (result.end as number) || 0,
+            text: result.text as string | undefined,
+            searchScore: result.score as number | undefined,
+            sceneIndexId: result.sceneIndexId as string | undefined,
+            sceneIndexName: result.sceneIndexName as string | undefined,
+            metadata: result.metadata as Record<string, unknown> | undefined,
+          })
+      );
+      return new RTStreamSearchResult(this.id, shots);
+    }
+
+    // Handle regular search
     const s = new SearchFactory(this.#vhttp);
     const searchFunc = s.getSearch(searchType ?? DefaultSearchType);
 
@@ -258,42 +316,76 @@ export class Collection implements ICollection {
   };
 
   /**
-   * Connect to an rtstream
-   * @param url - URL of the rtstream
-   * @param name - Name of the rtstream
-   * @param sampleRate - Sample rate of the rtstream (optional)
+   * Connect to an RTStream
+   * @param url - URL of the RTStream
+   * @param name - Name of the RTStream
+   * @param sampleRate - Sample rate of the RTStream (optional, server default: 30)
+   * @param video - Enable video streaming (optional, server default: true)
+   * @param audio - Enable audio streaming (optional, server default: false)
+   * @param enableTranscript - Enable real-time transcription (optional)
+   * @param wsConnectionId - WebSocket connection ID for receiving events (optional)
    * @returns RTStream object
    */
-  public connectRtstream = async (
+  public connectRTStream = async (
     url: string,
     name: string,
-    sampleRate?: number
+    sampleRate?: number,
+    video?: boolean,
+    audio?: boolean,
+    enableTranscript?: boolean,
+    wsConnectionId?: string
   ): Promise<RTStream> => {
-    const res = await this.#vhttp.post<RTStreamBase, object>([rtstream], {
-      collectionId: this.id,
+    const data: Record<string, unknown> = {
+      collection_id: this.id,
       url,
       name,
-      sampleRate,
-    });
+    };
+    if (sampleRate !== undefined) data.sample_rate = sampleRate;
+    if (video !== undefined) data.video = video;
+    if (audio !== undefined) data.audio = audio;
+    if (enableTranscript !== undefined)
+      data.enable_transcript = enableTranscript;
+    if (wsConnectionId !== undefined) data.ws_connection_id = wsConnectionId;
+
+    const res = await this.#vhttp.post<RTStreamBase, typeof data>(
+      [rtstream],
+      data
+    );
     return new RTStream(this.#vhttp, res.data);
   };
 
   /**
-   * Get an rtstream by its ID
-   * @param id - ID of the rtstream
+   * Get an RTStream by its ID
+   * @param id - ID of the RTStream
    * @returns RTStream object
    */
-  public getRtstream = async (id: string): Promise<RTStream> => {
+  public getRTStream = async (id: string): Promise<RTStream> => {
     const res = await this.#vhttp.get<RTStreamBase>([rtstream, id]);
     return new RTStream(this.#vhttp, res.data);
   };
 
   /**
-   * List all rtstreams in the collection
+   * List all RTStreams in the collection
+   * @param options - Query options: limit (default 10), offset (default 0), status, name, ordering
    * @returns List of RTStream objects
    */
-  public listRtstreams = async (): Promise<RTStream[]> => {
-    const res = await this.#vhttp.get<{ results: RTStreamBase[] }>([rtstream]);
+  public listRTStreams = async (options?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+    name?: string;
+    ordering?: string;
+  }): Promise<RTStream[]> => {
+    const params: Record<string, string | number> = {};
+    if (options?.limit !== undefined) params.limit = options.limit;
+    if (options?.offset !== undefined) params.offset = options.offset;
+    if (options?.status !== undefined) params.status = options.status;
+    if (options?.name !== undefined) params.name = options.name;
+    if (options?.ordering !== undefined) params.ordering = options.ordering;
+
+    const res = await this.#vhttp.get<{ results: RTStreamBase[] }>([rtstream], {
+      params,
+    });
     return (res.data?.results || []).map(rt => new RTStream(this.#vhttp, rt));
   };
 
@@ -311,7 +403,7 @@ export class Collection implements ICollection {
   ): Promise<Image | undefined> => {
     const res = await this.#vhttp.post<ImageBase, object>(
       [collection, this.id, generate, image],
-      { prompt, aspectRatio, callbackUrl }
+      { prompt, aspect_ratio: aspectRatio, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Image(this.#vhttp, res.data);
@@ -332,7 +424,7 @@ export class Collection implements ICollection {
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
       [collection, this.id, generate, audio],
-      { prompt, duration, audioType: 'music', callbackUrl }
+      { prompt, duration, audio_type: 'music', callback_url: callbackUrl }
     );
     if (res.data) {
       return new Audio(this.#vhttp, res.data);
@@ -355,7 +447,7 @@ export class Collection implements ICollection {
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
       [collection, this.id, generate, audio],
-      { prompt, duration, audioType: 'sound_effect', config, callbackUrl }
+      { prompt, duration, audio_type: 'sound_effect', config, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Audio(this.#vhttp, res.data);
@@ -378,7 +470,7 @@ export class Collection implements ICollection {
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
       [collection, this.id, generate, audio],
-      { text: textContent, audioType: 'voice', voiceName, config, callbackUrl }
+      { text: textContent, audio_type: 'voice', voice_name: voiceName, config, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Audio(this.#vhttp, res.data);
@@ -399,7 +491,7 @@ export class Collection implements ICollection {
   ): Promise<Video | undefined> => {
     const res = await this.#vhttp.post<VideoBase, object>(
       [collection, this.id, generate, video],
-      { prompt, duration, callbackUrl }
+      { prompt, duration, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Video(this.#vhttp, res.data);
@@ -423,8 +515,8 @@ export class Collection implements ICollection {
       object
     >([collection, this.id, generate, text], {
       prompt,
-      modelName,
-      responseType,
+      model_name: modelName,
+      response_type: responseType,
     });
     return res.data;
   };
@@ -443,7 +535,7 @@ export class Collection implements ICollection {
   ): Promise<Video | undefined> => {
     const res = await this.#vhttp.post<VideoBase, object>(
       [collection, this.id, generate, video, dub],
-      { videoId, languageCode, callbackUrl }
+      { video_id: videoId, language_code: languageCode, callback_url: callbackUrl }
     );
     if (res.data) {
       return new Video(this.#vhttp, res.data);
@@ -460,7 +552,7 @@ export class Collection implements ICollection {
   ): Promise<Array<{ video: Video }>> => {
     const res = await this.#vhttp.post<Array<{ video: VideoBase }>, object>(
       [collection, this.id, search, title],
-      { query, searchType: SearchTypeValues.scene }
+      { query, search_type: SearchTypeValues.scene }
     );
     return (res.data || []).map(result => ({
       video: new Video(this.#vhttp, result.video),
@@ -471,14 +563,14 @@ export class Collection implements ICollection {
    * Make the collection public
    */
   public makePublic = async (): Promise<void> => {
-    await this.#vhttp.patch([collection, this.id], { isPublic: true });
+    await this.#vhttp.patch([collection, this.id], { is_public: true });
   };
 
   /**
    * Make the collection private
    */
   public makePrivate = async (): Promise<void> => {
-    await this.#vhttp.patch([collection, this.id], { isPublic: false });
+    await this.#vhttp.patch([collection, this.id], { is_public: false });
   };
 
   /**
@@ -493,13 +585,13 @@ export class Collection implements ICollection {
       MeetingBase & { meetingId: string },
       object
     >([collection, this.id, meeting, record], {
-      meetingUrl: config.meetingUrl,
-      botName: config.botName,
-      botImageUrl: config.botImageUrl,
-      meetingTitle: config.meetingTitle,
-      callbackUrl: config.callbackUrl,
-      callbackData: config.callbackData || {},
-      timeZone: config.timeZone || 'UTC',
+      meeting_url: config.meetingUrl,
+      bot_name: config.botName,
+      bot_image_url: config.botImageUrl,
+      meeting_title: config.meetingTitle,
+      callback_url: config.callbackUrl,
+      callback_data: config.callbackData || {},
+      time_zone: config.timeZone || 'UTC',
     });
     return new Meeting(this.#vhttp, {
       ...res.data,
@@ -520,5 +612,157 @@ export class Collection implements ICollection {
     });
     await meetingObj.refresh();
     return meetingObj;
+  };
+
+  /**
+   * Create a capture session for video recording
+   * @param config - Capture session configuration
+   * @returns CaptureSession object
+   *
+   * @example
+   * ```typescript
+   * const coll = await conn.getCollection('col-xxx');
+   *
+   * const session = await coll.createCaptureSession({
+   *   endUserId: 'user_abc',
+   *   callbackUrl: 'https://example.com/webhook',
+   *   metadata: { clientName: 'desktop-app' },
+   * });
+   *
+   * const token = await conn.generateClientToken(86400);
+   * // Send token to desktop client
+   * ```
+   */
+  public createCaptureSession = async (
+    config: CreateCaptureSessionConfig
+  ): Promise<CaptureSession> => {
+    const data: Record<string, unknown> = {
+      end_user_id: config.endUserId,
+    };
+    if (config.callbackUrl) data.callback_url = config.callbackUrl;
+    if (config.wsConnectionId) data.ws_connection_id = config.wsConnectionId;
+    if (config.metadata) data.metadata = config.metadata;
+
+    const res = await this.#vhttp.post<
+      {
+        sessionId: string;
+        endUserId?: string;
+        status?: string;
+        createdAt?: number;
+      },
+      typeof data
+    >([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session], data);
+
+    return new CaptureSession(this.#vhttp, {
+      id: res.data.sessionId,
+      collectionId: this.id,
+      endUserId: res.data.endUserId,
+      status: res.data.status as CaptureSessionStatusType | undefined,
+      callbackUrl: config.callbackUrl,
+      metadata: config.metadata,
+      createdAt: res.data.createdAt,
+    });
+  };
+
+  /**
+   * Get an existing capture session by ID
+   * @param sessionId - ID of the capture session
+   * @returns CaptureSession object
+   *
+   * @example
+   * ```typescript
+   * const session = await coll.getCaptureSession('cap-xxx');
+   * await session.refresh();
+   * console.log(session.status);
+   * ```
+   */
+  public getCaptureSession = async (
+    sessionId: string
+  ): Promise<CaptureSession> => {
+    const res = await this.#vhttp.get<
+      CaptureSessionBase & { rtstreams?: Array<Record<string, unknown>> }
+    >([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session, sessionId]);
+
+    const responseData = res.data as Record<string, unknown>;
+
+    // Normalize rtstreams before passing to CaptureSession
+    const rtstreams = (responseData.rtstreams as Array<Record<string, unknown>>) || [];
+    for (const rts of rtstreams) {
+      if (rts && typeof rts === 'object') {
+        if ('rtstream_id' in rts && !('id' in rts)) {
+          rts.id = rts.rtstream_id;
+          delete rts.rtstream_id;
+        }
+        if (!('collection_id' in rts)) {
+          rts.collection_id = this.id;
+        }
+      }
+    }
+
+    // Extract id and collection_id from response to avoid duplicate arguments
+    delete responseData.id;
+    delete responseData.collection_id;
+
+    return new CaptureSession(this.#vhttp, {
+      id: sessionId,
+      collectionId: this.id,
+      ...responseData,
+    } as CaptureSessionBase);
+  };
+
+  /**
+   * List all capture sessions in this collection
+   * @param config - Filter configuration
+   * @returns List of CaptureSession objects
+   *
+   * @example
+   * ```typescript
+   * const sessions = await coll.listCaptureSessions({ status: 'active' });
+   * ```
+   */
+  public listCaptureSessions = async (
+    config: ListCaptureSessionsConfig = {}
+  ): Promise<CaptureSession[]> => {
+    const params: Record<string, unknown> = {};
+    if (config.status) params.status = config.status;
+
+    const res = await this.#vhttp.get<{
+      sessions: Array<Record<string, unknown>>;
+    }>([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session], { params });
+
+    const sessions: CaptureSession[] = [];
+    for (const sessionData of res.data?.sessions || []) {
+      // Extract session_id with fallback like Python
+      const sessionId =
+        (sessionData.id as string) || (sessionData.session_id as string);
+      delete sessionData.id;
+      delete sessionData.session_id;
+
+      // Normalize rtstreams
+      const rtstreams = (sessionData.rtstreams as Array<Record<string, unknown>>) || [];
+      for (const rts of rtstreams) {
+        if (rts && typeof rts === 'object') {
+          if ('rtstream_id' in rts && !('id' in rts)) {
+            rts.id = rts.rtstream_id;
+            delete rts.rtstream_id;
+          }
+          if (!('collection_id' in rts)) {
+            rts.collection_id = this.id;
+          }
+        }
+      }
+
+      // Remove collection_id from data
+      delete sessionData.collection_id;
+
+      sessions.push(
+        new CaptureSession(this.#vhttp, {
+          id: sessionId,
+          collectionId: this.id,
+          ...sessionData,
+        } as CaptureSessionBase)
+      );
+    }
+    return sessions;
   };
 }

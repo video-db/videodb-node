@@ -7,6 +7,7 @@ import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type { StreamableURL, Timeline, Transcript } from '@/types/video';
 import { AudioAsset, VideoAsset } from '..';
 import { IndexSceneConfig, SubtitleStyleProps } from '@/types/config';
+import type { BatchConfig, CaptureSessionStatusType } from '@/types/capture';
 
 /**
  * Base type for all collection objects
@@ -15,6 +16,7 @@ export interface CollectionBase {
   id: string;
   name?: string;
   description?: string;
+  isPublic?: boolean;
 }
 /**
  * Collection class interface for reference
@@ -29,7 +31,8 @@ export interface ICollection extends CollectionBase {
   uploadURL: (
     data: URLUploadConfig
   ) => Promise<Video | Audio | Image | undefined>;
-  search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
+  // Note: search method signature is more complex in implementation to support RTStream namespace
+  search: (query: string, searchType?: SearchType) => Promise<unknown>;
 }
 
 /**
@@ -40,6 +43,7 @@ export interface VideoBase {
   id: string;
   length: string;
   name: string;
+  description?: string;
   size: string;
   streamUrl: StreamableURL;
   userId: string;
@@ -55,8 +59,19 @@ export interface IVideo extends Omit<VideoBase, 'thumbnail'> {
   transcript?: Transcript;
   generateStream: (timeline: Timeline) => Promise<string>;
   play: () => string;
-  getTranscript: (forceCreate?: boolean) => Promise<Transcript>;
-  indexSpokenWords: () => Promise<{ success: boolean; message?: string }>;
+  getTranscript: (
+    start?: number,
+    end?: number,
+    segmenter?: string,
+    length?: number,
+    force?: boolean
+  ) => Promise<Transcript>;
+  indexSpokenWords: (
+    languageCode?: string,
+    segmentationType?: string,
+    force?: boolean,
+    callbackUrl?: string
+  ) => Promise<{ success: boolean; message?: string }>;
   indexScenes: (config: IndexSceneConfig) => Promise<string | undefined>;
   search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
   generateThumbnail: (time?: number) => Promise<string | Image>;
@@ -116,6 +131,7 @@ export interface ShotBase {
   text?: string;
   searchScore?: number;
   streamUrl?: StreamableURL;
+  playerUrl?: StreamableURL;
 }
 
 /**
@@ -167,15 +183,20 @@ export interface MeetingBase {
  */
 export interface RTStreamBase {
   id: string;
+  /** Stable key for RTStream lookup (e.g., 'mic:default', 'display:1') */
   name?: string;
   collectionId?: string;
   createdAt?: string;
   sampleRate?: number;
   status?: string;
+  /** Channel ID (may differ from name in some contexts) */
+  channelId?: string;
+  /** Media types this rtstream handles */
+  mediaTypes?: string[];
 }
 
 /**
- * Base type for RTStreamSceneIndex objects
+ * Base type for RTStreamSceneIndex objects (legacy)
  */
 export interface RTStreamSceneIndexBase {
   rtstreamIndexId: string;
@@ -188,15 +209,69 @@ export interface RTStreamSceneIndexBase {
 }
 
 /**
- * Configuration for RTStream scene indexing
+ * Configuration for RTStream visual indexing
  */
-export interface IndexScenesConfig {
-  extractionType?: string;
-  extractionConfig?: Record<string, unknown>;
+export interface IndexVisualsConfig {
+  /** Batch configuration */
+  batchConfig: BatchConfig;
+  /** Prompt for scene description */
   prompt?: string;
+  /** Model name for scene analysis */
   modelName?: string;
+  /** Model configuration */
   modelConfig?: Record<string, unknown>;
+  /** Name for the scene index */
   name?: string;
+  /** WebSocket connection ID for real-time delivery */
+  socketId?: string;
+}
+
+/**
+ * Base type for RTStreamShot objects
+ */
+export interface RTStreamShotBase {
+  rtstreamId: string;
+  rtstreamName?: string;
+  start: number;
+  end: number;
+  text?: string;
+  searchScore?: number;
+  sceneIndexId?: string;
+  sceneIndexName?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Configuration for RTStream index spoken words
+ */
+export interface RTStreamIndexSpokenWordsConfig {
+  /** Batch configuration */
+  batchConfig: BatchConfig;
+  /** Prompt for spoken word analysis */
+  prompt?: string;
+  /** Model name for analysis */
+  modelName?: string;
+  /** Model configuration */
+  modelConfig?: Record<string, unknown>;
+  /** Name for the spoken index */
+  name?: string;
+  /** WebSocket connection ID for real-time delivery */
+  socketId?: string;
+  /** Whether to auto-start transcript if not running (default: true) */
+  autoStartTranscript?: boolean;
+}
+
+/**
+ * Configuration for RTStream search
+ */
+export interface RTStreamSearchConfig {
+  query: string;
+  indexType?: string;
+  indexId?: string;
+  resultThreshold?: number;
+  scoreThreshold?: number;
+  dynamicScorePercentage?: number;
+  filter?: Array<Record<string, unknown>>;
 }
 
 /**
@@ -228,4 +303,82 @@ export interface RecordMeetingConfig {
   callbackUrl?: string;
   callbackData?: Record<string, unknown>;
   timeZone?: string;
+}
+
+/**
+ * Base type for CaptureSession objects
+ */
+export interface CaptureSessionBase {
+  id: string;
+  collectionId: string;
+  status?: CaptureSessionStatusType;
+  endUserId?: string;
+  callbackUrl?: string;
+  metadata?: Record<string, unknown>;
+  exportedVideoId?: string;
+  createdAt?: number;
+}
+
+/**
+ * RTStream category for filtering
+ */
+export type RTStreamCategory = 'mics' | 'displays' | 'system_audio' | 'cameras';
+
+/**
+ * CaptureSession interface for reference
+ */
+export interface ICaptureSession extends CaptureSessionBase {
+  rtstreams: RTStreamBase[];
+  refresh: () => Promise<void>;
+  getRTStream: (category: RTStreamCategory) => RTStreamBase[];
+}
+
+/**
+ * Base type for SceneIndex objects
+ */
+export interface SceneIndexBase {
+  id: string;
+  rtstreamId: string;
+  status?: string;
+  name?: string;
+  batchConfig?: BatchConfig;
+  prompt?: string;
+}
+
+/**
+ * SceneIndex interface for reference
+ */
+export interface ISceneIndex extends SceneIndexBase {
+  start: () => Promise<void>;
+  stop: () => Promise<void>;
+  createAlert: (config: {
+    eventId: string;
+    callbackUrl: string;
+  }) => Promise<string>;
+  getScenes: (
+    start?: number,
+    end?: number,
+    page?: number,
+    pageSize?: number
+  ) => Promise<{ scenes: unknown[]; nextPage: boolean } | null>;
+}
+
+/**
+ * Base type for SpokenIndex objects
+ */
+export interface SpokenIndexBase {
+  id: string;
+  rtstreamId: string;
+  status?: string;
+  name?: string;
+  prompt?: string;
+  batchConfig?: BatchConfig;
+}
+
+/**
+ * SpokenIndex interface for reference
+ */
+export interface ISpokenIndex extends SpokenIndexBase {
+  start: () => Promise<void>;
+  stop: () => Promise<void>;
 }

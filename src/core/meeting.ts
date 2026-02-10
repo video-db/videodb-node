@@ -29,14 +29,13 @@ export class Meeting {
   }
 
   private _updateAttributes(data: Partial<MeetingBase>): void {
-    if (data.botName !== undefined) this.botName = data.botName;
-    if (data.meetingTitle !== undefined) this.meetingTitle = data.meetingTitle;
-    if (data.meetingUrl !== undefined) this.meetingUrl = data.meetingUrl;
-    if (data.status !== undefined) this.status = data.status;
-    if (data.timeZone !== undefined) this.timeZone = data.timeZone;
-    if (data.videoId !== undefined) this.videoId = data.videoId;
-    if (data.speakerTimeline !== undefined)
-      this.speakerTimeline = data.speakerTimeline;
+    this.botName = data.botName;
+    this.meetingTitle = data.meetingTitle;
+    this.meetingUrl = data.meetingUrl;
+    this.status = data.status;
+    this.timeZone = data.timeZone;
+    this.videoId = data.videoId;
+    this.speakerTimeline = data.speakerTimeline;
   }
 
   /**

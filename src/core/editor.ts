@@ -829,7 +829,7 @@ export class EditorTimeline {
   async downloadStream(streamUrl: string): Promise<Record<string, unknown>> {
     const res = await this.#vhttp.post<Record<string, unknown>, object>(
       [ApiPath.editor, ApiPath.download],
-      { streamUrl }
+      { stream_url: streamUrl }
     );
     return res.data;
   }

@@ -52,10 +52,7 @@ export class Audio implements IAudio {
    * @throws an InvalidRequestError if the request fails
    */
   public delete = async () => {
-    return await this.#vhttp.delete<Record<string, never>>([
-      audio,
-      this.id,
-    ]);
+    return await this.#vhttp.delete<Record<string, never>>([audio, this.id]);
   };
 
   /**
@@ -146,7 +143,7 @@ export class Audio implements IAudio {
   ): Promise<{ success: boolean; message: string } | TranscriptResponse> => {
     const res = await this.#vhttp.post<TranscriptResponse, object>(
       [audio, this.id, transcription],
-      { force: !!force, languageCode }
+      { force: !!force, language_code: languageCode }
     );
     const transcript = res.data?.wordTimestamps;
     if (transcript && transcript.length > 0) {

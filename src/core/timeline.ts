@@ -27,7 +27,7 @@ export class Timeline implements ITimeline {
 
   private getRequestData() {
     return {
-      requestType: 'compile',
+      request_type: 'compile',
       timeline: this.timeline,
     };
   }
@@ -58,7 +58,7 @@ export class Timeline implements ITimeline {
         'asset must be of type AudioAsset, ImageAsset or TextAsset'
       );
     }
-    this.timeline.push({ ...asset.toJSON(), overlayStart: start });
+    this.timeline.push({ ...asset.toJSON(), overlay_start: start });
   }
 
   /**

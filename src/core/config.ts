@@ -42,6 +42,80 @@ export const SubtitleStyleDefaultValues: SubtitleStyleProps = {
   marginV: 10,
 };
 
+/**
+ * SubtitleStyle class with defaults matching Python SDK
+ */
+export class SubtitleStyle implements SubtitleStyleProps {
+  fontName: string = 'Arial';
+  fontSize: number = 18;
+  primaryColour: string = '&H00FFFFFF';
+  secondaryColour: string = '&H000000FF';
+  outlineColour: string = '&H00000000';
+  backColour: string = '&H00000000';
+  bold: boolean = false;
+  italic: boolean = false;
+  underline: boolean = false;
+  strikeOut: boolean = false;
+  scaleX: number = 1.0;
+  scaleY: number = 1.0;
+  spacing: number = 0;
+  angle: number = 0;
+  borderStyle: number = SubtitleBorderStyle.outline;
+  outline: number = 1.0;
+  shadow: number = 0.0;
+  alignment: number = SubtitleAlignment.bottomCenter;
+  marginL: number = 10;
+  marginR: number = 10;
+  marginV: number = 10;
+
+  constructor(config?: Partial<SubtitleStyleProps>) {
+    if (config) {
+      Object.assign(this, config);
+    }
+  }
+}
+
+/**
+ * VideoConfig class for transcoding configuration
+ */
+export class VideoConfigClass {
+  resolution?: number;
+  quality: number = 23;
+  framerate?: number;
+  aspectRatio?: string;
+  resizeMode: string = 'crop';
+
+  constructor(config?: {
+    resolution?: number;
+    quality?: number;
+    framerate?: number;
+    aspectRatio?: string;
+    resizeMode?: string;
+  }) {
+    if (config) {
+      if (config.resolution !== undefined) this.resolution = config.resolution;
+      if (config.quality !== undefined) this.quality = config.quality;
+      if (config.framerate !== undefined) this.framerate = config.framerate;
+      if (config.aspectRatio !== undefined)
+        this.aspectRatio = config.aspectRatio;
+      if (config.resizeMode !== undefined) this.resizeMode = config.resizeMode;
+    }
+  }
+}
+
+/**
+ * AudioConfig class for transcoding configuration
+ */
+export class AudioConfigClass {
+  mute: boolean = false;
+
+  constructor(config?: { mute?: boolean }) {
+    if (config) {
+      if (config.mute !== undefined) this.mute = config.mute;
+    }
+  }
+}
+
 export const TextStyleDefaultValues: TextStyleProps = {
   fontsize: 24,
   fontcolor: 'black',
@@ -74,6 +148,7 @@ export enum SearchTypeValues {
   keyword = 'keyword',
   semantic = 'semantic',
   scene = 'scene',
+  llm = 'llm',
 }
 
 export enum IndexTypeValues {
@@ -87,4 +162,5 @@ export const DefaultIndexType = IndexTypeValues.spoken;
 export const SceneExtractionType = {
   shotBased: 'shot',
   timeBased: 'time',
+  transcript: 'transcript',
 };

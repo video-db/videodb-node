@@ -55,7 +55,7 @@ export class Scene {
   public getRequestData(): object {
     return {
       id: this.id,
-      videoId: this.videoId,
+      video_id: this.videoId,
       start: this.start,
       end: this.end,
       frames: this.frames.map(frame => frame.getRequestData()),

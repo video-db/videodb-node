@@ -9,6 +9,8 @@ export type SearchBase = {
   indexType: IndexType;
   resultThreshold?: number;
   scoreThreshold?: number;
+  dynamicScorePercentage?: number;
+  filter?: Array<Record<string, unknown>>;
 };
 
 export type SemanticSearchBase = SearchBase;
