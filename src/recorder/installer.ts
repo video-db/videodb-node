@@ -33,11 +33,11 @@ export class RecorderInstaller {
     // Default binary config - can be overridden or loaded from package.json
     this.binaryConfig = binaryConfig || {
       baseUrl: 'https://recorder-sdk-binaries.s3.amazonaws.com',
-      version: '0.2.6',
+      version: '0.2.7',
       checksums: {
-        'darwin-x64': 'e202e9457ce23b36b966b53787437e5381c8ff603ba6fdd401c19e88ac9e2bfd',
-        'darwin-arm64': '64e7e6eae3f6a706283feb480f93863fc476c6793785ca01a88e33b3cd9a4a14',
-        'win32-x64': '7530deff204d62b48c233c630731e8f0f270b01c4a8161d8380952eda77e9940',
+        'darwin-x64': '8ebea82d67d5da55d387fb1e0a58076016932b00201b9452fa1c8f44a2eaf533',
+        'darwin-arm64': '79c6671a020bd2c7ecbd258bb41d3453b57b93ec5d6be3acd17e6c581f3a47c5',
+        'win32-x64': '34d5111877b58e0ad633faf993fa872ab8ef27df45fec491836c09b29fd361ef',
       },
     };
 
