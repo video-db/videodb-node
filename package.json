@@ -42,9 +42,9 @@
     "baseUrl": "https://recorder-sdk-binaries.s3.amazonaws.com",
     "version": "0.2.7",
     "checksums": {
-      "darwin-x64": "8ebea82d67d5da55d387fb1e0a58076016932b00201b9452fa1c8f44a2eaf533",
-      "darwin-arm64": "79c6671a020bd2c7ecbd258bb41d3453b57b93ec5d6be3acd17e6c581f3a47c5",
-      "win32-x64": "34d5111877b58e0ad633faf993fa872ab8ef27df45fec491836c09b29fd361ef"
+      "darwin-arm64": "285716fa46d8692ce035d2e6801e707b6f2d40391ef460de39210c411a9d99ef",
+      "darwin-x64": "285716fa46d8692ce035d2e6801e707b6f2d40391ef460de39210c411a9d99ef",
+      "win32-x64": "3c54ea519e31dfc9a92f531f2816e9feb1df84f66bcb8e9401c3603bbe4df8ab"
     }
   },
   "repository": {
