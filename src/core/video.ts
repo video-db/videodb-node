@@ -383,15 +383,29 @@ export class Video implements IVideo {
   };
 
   /**
-   * Indexs the video with scenes
-   * @returns an awaited boolean signifying whether the process
-   * was successful or not
+   * Index the scenes of the video
+   * @param config.extractionType - The type of extraction (shot_based, time_based, transcript)
+   * @param config.extractionConfig - Configuration parameters for extraction
+   * @param config.prompt - The prompt for the extraction
+   * @param config.metadata - Additional metadata for the scene index
+   * @param config.modelName - The model name for the extraction
+   * @param config.modelConfig - The model configuration for the extraction
+   * @param config.name - The name of the scene index
+   * @param config.scenes - The scenes to be indexed
+   * @param config.callbackUrl - The callback url
+   * @returns The scene index id
    */
   public indexScenes = async (config: Partial<IndexSceneConfig> = {}) => {
     const payload: Record<string, unknown> = {
       extraction_type: config.extractionType ?? SceneExtractionType.shotBased,
       extraction_config: config.extractionConfig ?? {},
     };
+    if (config.prompt !== undefined) payload.prompt = config.prompt;
+    if (config.metadata !== undefined) payload.metadata = config.metadata;
+    if (config.modelName !== undefined) payload.model_name = config.modelName;
+    if (config.modelConfig !== undefined) payload.model_config = config.modelConfig;
+    if (config.name !== undefined) payload.name = config.name;
+    if (config.callbackUrl !== undefined) payload.callback_url = config.callbackUrl;
     if (config.scenes) {
       payload.scenes = config.scenes.map((s: Scene) => s.getRequestData());
     }

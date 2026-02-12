@@ -464,19 +464,33 @@ export class RTStream {
   /**
    * Index visuals from the rtstream (scene indexing)
    * @param config - Configuration for visual indexing
+   * @param config.batchConfig - Frame extraction config (optional)
+   * @param config.batchConfig.type - Only "time" is supported
+   * @param config.batchConfig.value - Window size in seconds
+   * @param config.batchConfig.frameCount - Number of frames to extract per window
+   * @param config.prompt - Prompt for scene description
+   * @param config.modelName - Name of the model
+   * @param config.modelConfig - Configuration for the model
+   * @param config.name - Name of the visual index
+   * @param config.socketId - WebSocket connection ID for real-time updates
    * @returns RTStreamSceneIndex object
    */
   public indexVisuals = async (
-    config: IndexVisualsConfig
+    config: Partial<IndexVisualsConfig> = {}
   ): Promise<RTStreamSceneIndex | null> => {
-    const extractionType =
-      config.batchConfig.type === 'time'
-        ? 'time_based'
-        : config.batchConfig.type;
-    const extractionConfig: Record<string, unknown> = {
-      time: config.batchConfig.value,
-      frame_count: config.batchConfig.frameCount ?? 5,
-    };
+    let extractionType: string | undefined;
+    let extractionConfig: Record<string, unknown> | undefined;
+
+    if (config.batchConfig) {
+      extractionType =
+        config.batchConfig.type === 'time'
+          ? 'time_based'
+          : config.batchConfig.type;
+      extractionConfig = {
+        time: config.batchConfig.value,
+        frame_count: config.batchConfig.frameCount ?? 5,
+      };
+    }
 
     const data: Record<string, unknown> = {
       extraction_type: extractionType,
@@ -559,15 +573,28 @@ export class RTStream {
   /**
    * Index audio from the rtstream transcript
    * @param config - Configuration for audio indexing
+   * @param config.batchConfig - Segmentation config (optional)
+   * @param config.batchConfig.type - Segmentation type ("word", "sentence", or "time")
+   * @param config.batchConfig.value - Segment length (words, sentences, or seconds)
+   * @param config.prompt - Prompt for summarizing transcript segments
+   * @param config.modelName - Name of the model
+   * @param config.modelConfig - Configuration for the model
+   * @param config.name - Name of the audio index
+   * @param config.socketId - WebSocket connection ID for real-time updates
+   * @param config.autoStartTranscript - Whether to auto-start transcript if not running (default: true)
    * @returns RTStreamSceneIndex object
    */
   public indexAudio = async (
-    config: IndexSpokenWordsConfig
+    config: Partial<IndexSpokenWordsConfig> = {}
   ): Promise<RTStreamSceneIndex | null> => {
-    const extractionConfig = {
-      segmenter: config.batchConfig.type,
-      segmentation_value: config.batchConfig.value,
-    };
+    let extractionConfig: Record<string, unknown> | undefined;
+
+    if (config.batchConfig) {
+      extractionConfig = {
+        segmenter: config.batchConfig.type,
+        segmentation_value: config.batchConfig.value,
+      };
+    }
 
     const data: Record<string, unknown> = {
       extraction_type: 'transcript',

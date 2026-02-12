@@ -94,6 +94,8 @@ export type IndexSceneConfig = {
   modelName?: string;
   modelConfig?: object;
   prompt?: string | null;
+  metadata?: Record<string, unknown>;
+  name?: string | null;
   callbackUrl?: string | null;
   scenes?: Scene[];
 };
