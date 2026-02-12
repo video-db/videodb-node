@@ -380,6 +380,88 @@ export class RTStream {
   };
 
   /**
+   * Index scenes from the rtstream (flexible base method)
+   *
+   * This is the most flexible indexing method that allows full control over
+   * extraction type and configuration. Use `indexVisuals()` or `indexAudio()`
+   * for simpler use cases.
+   *
+   * @param config - Configuration for scene indexing
+   * @param config.extractionType - Type of extraction: 'time_based', 'shot_based', or 'transcript'
+   * @param config.extractionConfig - Configuration for extraction (varies by type)
+   * @param config.prompt - Prompt for scene extraction (default: 'Describe the scene')
+   * @param config.modelName - Name of the model (optional)
+   * @param config.modelConfig - Configuration for the model (optional)
+   * @param config.name - Name of the scene index (optional)
+   * @param config.wsConnectionId - WebSocket connection ID for real-time updates (optional)
+   * @returns RTStreamSceneIndex object
+   *
+   * @example
+   * ```typescript
+   * // Time-based extraction
+   * const index = await rtstream.indexScenes({
+   *   extractionType: 'time_based',
+   *   extractionConfig: { time: 2, frame_count: 5 },
+   *   prompt: 'Describe what is happening',
+   * });
+   *
+   * // Transcript-based extraction
+   * const index = await rtstream.indexScenes({
+   *   extractionType: 'transcript',
+   *   extractionConfig: { segmenter: 'word', segmentation_value: 10 },
+   *   prompt: 'Summarize this segment',
+   * });
+   * ```
+   */
+  public indexScenes = async (config: {
+    extractionType?: 'time_based' | 'shot_based' | 'transcript';
+    extractionConfig?: Record<string, unknown>;
+    prompt?: string;
+    modelName?: string;
+    modelConfig?: Record<string, unknown>;
+    name?: string;
+    wsConnectionId?: string;
+  }): Promise<RTStreamSceneIndex | null> => {
+    const {
+      extractionType = 'time_based',
+      extractionConfig = { time: 2, frame_count: 5 },
+      prompt = 'Describe the scene',
+      modelName,
+      modelConfig = {},
+      name,
+      wsConnectionId,
+    } = config;
+
+    const data: Record<string, unknown> = {
+      extraction_type: extractionType,
+      extraction_config: extractionConfig,
+      prompt,
+      model_name: modelName,
+      model_config: modelConfig,
+      name,
+    };
+
+    if (wsConnectionId) data.ws_connection_id = wsConnectionId;
+
+    const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
+      [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
+      data
+    );
+
+    if (!res.data) return null;
+
+    return new RTStreamSceneIndex(this.#vhttp, {
+      rtstreamIndexId: res.data.rtstreamIndexId,
+      rtstreamId: this.id,
+      extractionType: res.data.extractionType,
+      extractionConfig: res.data.extractionConfig,
+      prompt: res.data.prompt,
+      name: res.data.name,
+      status: res.data.status,
+    });
+  };
+
+  /**
    * Index visuals from the rtstream (scene indexing)
    * @param config - Configuration for visual indexing
    * @returns RTStreamSceneIndex object
