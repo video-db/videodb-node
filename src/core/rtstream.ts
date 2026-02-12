@@ -393,9 +393,9 @@ export class RTStream {
 
     const res = await this.#vhttp.post<
       {
-        video_id: string;
-        stream_url?: string;
-        player_url?: string;
+        videoId: string;
+        streamUrl?: string;
+        playerUrl?: string;
         name?: string;
         duration?: number;
       },
@@ -403,9 +403,9 @@ export class RTStream {
     >([ApiPath.rtstream, this.id, ApiPath.export], data);
 
     return {
-      videoId: res.data.video_id,
-      streamUrl: res.data.stream_url,
-      playerUrl: res.data.player_url,
+      videoId: res.data.videoId,
+      streamUrl: res.data.streamUrl,
+      playerUrl: res.data.playerUrl,
       name: res.data.name,
       duration: res.data.duration,
     };
