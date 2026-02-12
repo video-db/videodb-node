@@ -9,6 +9,7 @@ export interface SceneBase {
   end: number;
   description?: string;
   frames: Frame[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface SceneCollectionBase {
@@ -25,6 +26,7 @@ export class Scene {
   public end: number;
   public frames: Frame[];
   public description: string | undefined;
+  public metadata: Record<string, unknown>;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: SceneBase) {
@@ -34,6 +36,7 @@ export class Scene {
     this.end = data.end;
     this.frames = data.frames || [];
     this.description = data?.description;
+    this.metadata = data?.metadata || {};
     this.#vhttp = http;
   }
 
@@ -52,12 +55,21 @@ export class Scene {
   public getRequestData(): object {
     return {
       id: this.id,
-      videoId: this.videoId,
+      video_id: this.videoId,
       start: this.start,
       end: this.end,
       frames: this.frames.map(frame => frame.getRequestData()),
       description: this.description,
+      metadata: this.metadata,
     };
+  }
+
+  /**
+   * Convert scene to JSON format for API requests
+   * Alias for getRequestData for Python SDK compatibility
+   */
+  public toJson(): object {
+    return this.getRequestData();
   }
 }
 

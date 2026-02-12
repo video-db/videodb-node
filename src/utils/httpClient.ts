@@ -1,10 +1,15 @@
-import { HttpClientDefaultValues } from '@/constants';
-import type { ErrorResponse, ResponseOf } from '@/types/response';
+import { HttpClientDefaultValues, ResponseStatus } from '@/constants';
+import type {
+  ApiResponseOf,
+  ErrorResponse,
+  ResponseOf,
+} from '@/types/response';
 import {
   AuthenticationError,
   InvalidRequestError,
   VideodbError,
 } from '@/utils/error';
+import { fromSnakeToCamel } from '@/utils';
 import { SDK_CLIENT_HEADER } from '@/version';
 import axios, {
   AxiosError,
@@ -14,57 +19,182 @@ import axios, {
   AxiosResponse,
   HttpStatusCode,
 } from 'axios';
+import FormData from 'form-data';
+
+const POLLING_INTERVAL = 5000;
+const MAX_POLLING_TIME = 500000;
+
+/**
+ * Authentication configuration for HttpClient
+ */
+export interface HttpClientAuthConfig {
+  /** API key for backend mode - full API access */
+  apiKey?: string;
+  /** Session token for client mode - limited access */
+  sessionToken?: string;
+}
 
 /**
  * Api initialization to make axios config
  * options available to all child classes
  * internally.
+ *
+ * Response data is converted from snake_case to camelCase.
+ * Request data must be provided in snake_case format at the call site.
+ *
+ * Supports dual authentication modes:
+ * - API key: Full backend access
+ * - Session token: Limited client access (backend handles distinguishing)
  */
 export class HttpClient {
   #db: AxiosInstance;
   #baseURL: string;
-  #apiKey: string;
+  #authConfig: HttpClientAuthConfig;
 
-  protected constructor(baseURL: string, apiKey: string) {
+  /**
+   * Create an HttpClient with auth configuration
+   * @param baseURL - Base URL for the API
+   * @param authConfig - Authentication configuration (apiKey or sessionToken)
+   */
+  protected constructor(baseURL: string, authConfig: HttpClientAuthConfig);
+  /**
+   * Create an HttpClient with API key (legacy signature)
+   * @param baseURL - Base URL for the API
+   * @param apiKey - API key for authentication
+   * @deprecated Use the object-based constructor instead
+   */
+  protected constructor(baseURL: string, apiKey: string);
+  protected constructor(
+    baseURL: string,
+    authConfigOrApiKey: HttpClientAuthConfig | string
+  ) {
+    // Handle both signatures
+    const authConfig: HttpClientAuthConfig =
+      typeof authConfigOrApiKey === 'string'
+        ? { apiKey: authConfigOrApiKey }
+        : authConfigOrApiKey;
+
+    // Get the token to use (apiKey or sessionToken)
+    // Both use the same header - backend handles distinguishing
+    const token = authConfig.apiKey || authConfig.sessionToken;
+
     this.#db = axios.create({
       baseURL,
       headers: {
-        'x-access-token': apiKey,
+        'x-access-token': token || '',
         'x-videodb-client': SDK_CLIENT_HEADER,
       },
       timeout: HttpClientDefaultValues.timeout,
     });
     this.#baseURL = baseURL;
-    this.#apiKey = apiKey;
+    this.#authConfig = authConfig;
   }
 
+  #sleep = (ms: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  };
+
+  /**
+   * Converts response data from snake_case to camelCase
+   */
+  #convertResponseData = <R>(data: R): R => {
+    if (data && typeof data === 'object') {
+      return fromSnakeToCamel(data as object) as R;
+    }
+    return data;
+  };
+
+  /**
+   * Polls the output URL until the job completes or times out.
+   * @param url - The output URL to poll
+   * @returns The final response data (already converted to camelCase)
+   */
+  #getOutput = async <R>(url: string): Promise<R> => {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < MAX_POLLING_TIME) {
+      const response = await this.#db.get<ApiResponseOf<R>>(url);
+      const data = response.data;
+
+      if (
+        data.status === ResponseStatus.in_progress ||
+        data.status === ResponseStatus.processing
+      ) {
+        await this.#sleep(POLLING_INTERVAL);
+        continue;
+      }
+
+      if (data.success === false) {
+        throw new VideodbError(data.message);
+      }
+
+      if (data.response) {
+        if (data.response.success === false) {
+          throw new VideodbError(data.response.message);
+        }
+        return this.#convertResponseData(data.response.data);
+      }
+      return this.#convertResponseData(data.data);
+    }
+
+    throw new VideodbError(
+      'Job timed out after ' + MAX_POLLING_TIME / 1000 + ' seconds'
+    );
+  };
+
+  /**
+   * Makes HTTP request
+   * @typeParam R - The API response data type (converted to camelCase)
+   * @typeParam D - The request data type (must be provided in snake_case)
+   */
   #makeRequest = async <R, D = undefined>(
     options: AxiosRequestConfig<D>
   ): Promise<ResponseOf<R>> => {
-    return this.#db
-      .request<ResponseOf<R>, AxiosResponse<ResponseOf<R>, D>, D>(options)
-      .then(successResponse => {
-        return this.parseResponse(successResponse.data);
-      })
-      .catch(
-        (
-          error:
-            | AxiosError<ErrorResponse | undefined, AxiosRequestConfig<D>>
-            | VideodbError
-        ) => {
-          if (error instanceof VideodbError) {
-            throw error;
-          }
-          throw this.#getPlausibleError(error);
+    try {
+      const response = await this.#db.request<
+        ApiResponseOf<R>,
+        AxiosResponse<ApiResponseOf<R>, D>,
+        D
+      >(options);
+      const data = response.data;
+
+      if (data.status === ResponseStatus.processing) {
+        if (data.request_type === 'async') {
+          return {
+            ...data,
+            data: this.#convertResponseData(data.data),
+          } as ResponseOf<R>;
         }
+
+        const outputUrl = (data.data as { output_url?: string })?.output_url;
+        if (outputUrl) {
+          const result = await this.#getOutput<R>(outputUrl);
+          return { data: result, success: true } as ResponseOf<R>;
+        }
+      }
+
+      return this.#parseResponse(data);
+    } catch (error) {
+      if (error instanceof VideodbError) {
+        throw error;
+      }
+      throw this.#getPlausibleError(
+        error as AxiosError<ErrorResponse | undefined, AxiosRequestConfig<D>>
       );
+    }
   };
 
-  parseResponse = <D>(data: ResponseOf<D>) => {
+  /**
+   * Parses API response and converts data to camelCase
+   */
+  #parseResponse = <R>(data: ApiResponseOf<R>): ResponseOf<R> => {
     if (data.success === false) {
       throw new VideodbError(data.message);
     }
-    return data;
+    return {
+      ...data,
+      data: this.#convertResponseData(data.data),
+    } as ResponseOf<R>;
   };
 
   /**
@@ -112,7 +242,7 @@ export class HttpClient {
   ) => {
     return await this.#makeRequest<R>({
       method: 'DELETE',
-      url: urlSeries.join('/') + '/',
+      url: urlSeries.join('/'),
       ...options,
     });
   };
@@ -124,7 +254,7 @@ export class HttpClient {
   ) => {
     return await this.#makeRequest<R, D>({
       method: 'POST',
-      url: urlSeries.join('/') + '/',
+      url: urlSeries.join('/'),
       data,
       headers: new AxiosHeaders({
         'Content-Type': 'application/json',
@@ -141,7 +271,7 @@ export class HttpClient {
   ) => {
     return await this.#makeRequest<R, D>({
       method: 'PUT',
-      url: urlSeries.join('/') + '/',
+      url: urlSeries.join('/'),
       data,
       headers: new AxiosHeaders({
         'Content-Type': 'application/json',
@@ -158,7 +288,7 @@ export class HttpClient {
   ) => {
     return await this.#makeRequest<R, D>({
       method: 'PATCH',
-      url: urlSeries.join('/') + '/',
+      url: urlSeries.join('/'),
       data,
       headers: new AxiosHeaders({
         'Content-Type': 'application/json',

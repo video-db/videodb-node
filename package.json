@@ -1,26 +1,51 @@
 {
   "name": "videodb",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "A NodeJS wrapper for VideoDB's API written in TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./capture": {
+      "types": "./dist/recorder/index.d.ts",
+      "default": "./dist/recorder/index.js"
+    }
+  },
   "files": [
-    "dist"
+    "dist",
+    "bin",
+    "lib",
+    "setup.js"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "clean": "rm -rf ./dist/",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint ./src/ --fix",
-    "prepare": "husky install",
+    "prepare": "npm run build",
+    "install": "node setup.js",
     "test:watch": "jest --watch",
     "test": "jest --coverage",
     "typecheck": "tsc --noEmit",
     "once": "ts-node -r tsconfig-paths/register  src/index.ts",
     "docs:gen": "npm run docs:del && typedoc --plugin typedoc-plugin-markdown",
     "docs:del": "rm -rf ./docs",
-    "docs:html": "rm -rf ./docs-html && typedoc --out docs-html --entryPoints ./src/ --entryPointStrategy expand --excludePrivate",
+    "docs:html": "rm -rf ./docs-html && typedoc --tsconfig tsconfig.build.json --out docs-html --entryPoints ./src/ --entryPointStrategy expand --excludePrivate",
     "docs:serve": "npm run docs:html && npx serve docs-html",
     "prepublishOnly": "npm run build"
+  },
+  "binaryConfig": {
+    "baseUrl": "https://recorder-sdk-binaries.s3.amazonaws.com",
+    "version": "0.2.7",
+    "checksums": {
+      "darwin-arm64": "3592c47331a5dd68b3d94474c307cf7da5bb182aa9600ba65d2c4257244e7670",
+      "darwin-x64": "2f66e228cbab0195090cc3628ceaf75d298e7f8c2269bac6446b6ba23fb778c2",
+      "win32-x64": "23ae68bfe8e017b1da960e6b33a258f47b7307c9005506a59f3af0802799d057"
+    }
   },
   "repository": {
     "type": "git",
@@ -30,7 +55,9 @@
     "videodb",
     "video-db",
     "video_db",
-    "videodb-node"
+    "videodb-node",
+    "recorder",
+    "capture"
   ],
   "author": "VideoDB",
   "license": "Apache-2.0",
@@ -43,6 +70,7 @@
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.10.3",
     "@types/uuid": "^9.0.8",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
     "eslint": "^8.55.0",
@@ -65,6 +93,8 @@
     "axios": "^1.6.2",
     "form-data": "^4.0.0",
     "lodash": "^4.17.21",
-    "uuid": "^9.0.1"
+    "tar": "^7.4.3",
+    "uuid": "^9.0.1",
+    "ws": "^8.19.0"
   }
 }
