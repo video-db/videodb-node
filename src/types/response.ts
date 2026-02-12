@@ -145,6 +145,9 @@ export type SearchResponse = {
       start: number;
       stream_url: string;
       text: string;
+      scene_index_id?: string;
+      scene_index_name?: string;
+      metadata?: Record<string, unknown>;
     }[];
     length: string;
     max_score: number;

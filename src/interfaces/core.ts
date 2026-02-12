@@ -132,6 +132,9 @@ export interface ShotBase {
   searchScore?: number;
   streamUrl?: StreamableURL;
   playerUrl?: StreamableURL;
+  sceneIndexId?: string;
+  sceneIndexName?: string;
+  metadata?: Record<string, unknown>;
 }
 
 /**

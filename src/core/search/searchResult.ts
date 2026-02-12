@@ -36,6 +36,9 @@ export class SearchResult {
             videoId: result.videoId,
             videoTitle: result.title,
             videoLength: parseFloat(result.length),
+            sceneIndexId: doc.sceneIndexId,
+            sceneIndexName: doc.sceneIndexName,
+            metadata: doc.metadata,
           })
         );
       }

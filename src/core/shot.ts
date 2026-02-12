@@ -18,6 +18,9 @@ export class Shot implements IShot {
   public readonly end: number;
   public readonly text?: string;
   public readonly searchScore?: number;
+  public readonly sceneIndexId?: string;
+  public readonly sceneIndexName?: string;
+  public readonly metadata?: Record<string, unknown>;
   public streamUrl?: string;
   public playerUrl?: string;
   #vhttp: HttpClient;
@@ -30,6 +33,9 @@ export class Shot implements IShot {
     this.end = data.end;
     this.text = data.text;
     this.searchScore = data.searchScore;
+    this.sceneIndexId = data.sceneIndexId;
+    this.sceneIndexName = data.sceneIndexName;
+    this.metadata = data.metadata;
     this.streamUrl = data.streamUrl;
     this.playerUrl = data.playerUrl;
     this.#vhttp = http;

@@ -300,6 +300,8 @@ export class Collection implements ICollection {
       indexType: indexType ?? DefaultIndexType,
       resultThreshold: resultThreshold,
       scoreThreshold: scoreThreshold,
+      dynamicScorePercentage: dynamicScorePercentage,
+      filter: filter,
     });
     return results;
   };
@@ -562,7 +564,7 @@ export class Collection implements ICollection {
   ): Promise<Array<{ video: Video }>> => {
     const res = await this.#vhttp.post<Array<{ video: VideoBase }>, object>(
       [collection, this.id, search, title],
-      { query, search_type: SearchTypeValues.scene }
+      { query, search_type: SearchTypeValues.llm }
     );
     return (res.data || []).map(result => ({
       video: new Video(this.#vhttp, result.video),
