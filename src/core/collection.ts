@@ -321,6 +321,7 @@ export class Collection implements ICollection {
    * @param name - Name of the RTStream
    * @param mediaTypes - List of media types to capture (default: ['video']). Valid values: 'video', 'audio'
    * @param sampleRate - Sample rate of the RTStream (optional, server default: 30)
+   * @param store - Enable recording storage (optional, default: false). When true, the stream recording is stored and can be exported via RTStream.export()
    * @param enableTranscript - Enable real-time transcription (optional)
    * @param wsConnectionId - WebSocket connection ID for receiving events (optional)
    * @returns RTStream object
@@ -330,6 +331,7 @@ export class Collection implements ICollection {
     name: string,
     mediaTypes?: Array<'video' | 'audio'>,
     sampleRate?: number,
+    store?: boolean,
     enableTranscript?: boolean,
     wsConnectionId?: string
   ): Promise<RTStream> => {
@@ -350,6 +352,7 @@ export class Collection implements ICollection {
       media_types: mediaTypes ?? ['video'],
     };
     if (sampleRate !== undefined) data.sample_rate = sampleRate;
+    if (store !== undefined) data.store = store;
     if (enableTranscript !== undefined)
       data.enable_transcript = enableTranscript;
     if (wsConnectionId !== undefined) data.ws_connection_id = wsConnectionId;

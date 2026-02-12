@@ -13,6 +13,22 @@ import { HttpClient } from '@/utils/httpClient';
 import { playStream } from '@/utils';
 
 /**
+ * Result of exporting an RTStream recording
+ */
+export interface RTStreamExportResult {
+  /** ID of the exported video or audio asset */
+  videoId: string;
+  /** URL to stream the exported asset (may be undefined for audio) */
+  streamUrl?: string;
+  /** URL to play the exported asset in a player (may be undefined for audio) */
+  playerUrl?: string;
+  /** Name of the exported recording */
+  name?: string;
+  /** Duration of the exported recording in seconds (may be undefined on idempotent calls) */
+  duration?: number;
+}
+
+/**
  * RTStreamShot class for rtstream search results
  */
 export class RTStreamShot {
@@ -360,6 +376,39 @@ export class RTStream {
       action: 'stop',
     });
     this.status = 'stopped';
+  };
+
+  /**
+   * Export the latest completed recording as a video or audio asset.
+   *
+   * The stream must be stopped before exporting. The call is idempotent:
+   * calling it again returns the same asset without re-ingesting.
+   *
+   * @param name - Name for the exported asset (optional, defaults to "{stream_name} - Recording")
+   * @returns Export result with the asset ID and metadata
+   */
+  public export = async (name?: string): Promise<RTStreamExportResult> => {
+    const data: Record<string, unknown> = {};
+    if (name !== undefined) data.name = name;
+
+    const res = await this.#vhttp.post<
+      {
+        video_id: string;
+        stream_url?: string;
+        player_url?: string;
+        name?: string;
+        duration?: number;
+      },
+      typeof data
+    >([ApiPath.rtstream, this.id, ApiPath.export], data);
+
+    return {
+      videoId: res.data.video_id,
+      streamUrl: res.data.stream_url,
+      playerUrl: res.data.player_url,
+      name: res.data.name,
+      duration: res.data.duration,
+    };
   };
 
   /**

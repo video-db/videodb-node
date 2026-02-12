@@ -313,6 +313,7 @@ export interface CaptureSessionBase {
   collectionId: string;
   status?: CaptureSessionStatusType;
   endUserId?: string;
+  clientId?: string;
   callbackUrl?: string;
   metadata?: Record<string, unknown>;
   exportedVideoId?: string;

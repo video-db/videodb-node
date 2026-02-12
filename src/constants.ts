@@ -69,6 +69,7 @@ export const ApiPath = {
   spoken: 'spoken',
   start: 'start',
   stop: 'stop',
+  export: 'export',
 } as const;
 
 export const ResponseStatus = {

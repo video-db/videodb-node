@@ -97,6 +97,7 @@ export {
   RTStreamSceneIndex,
   RTStreamSearchResult,
   RTStreamShot,
+  type RTStreamExportResult,
 } from './core/rtstream';
 export {
   WebSocketConnection,
