@@ -9,6 +9,8 @@ export type SearchBase = {
   indexType: IndexType;
   resultThreshold?: number;
   scoreThreshold?: number;
+  dynamicScorePercentage?: number;
+  filter?: Array<Record<string, unknown>>;
 };
 
 export type SemanticSearchBase = SearchBase;
@@ -30,3 +32,13 @@ export type KeywordVideoSearch = {
 export type KeywordCollectionSearch = {
   collectionId: string;
 } & KeywordSearchBase;
+
+export type SceneSearchBase = SearchBase;
+
+export type SceneVideoSearch = {
+  videoId: string;
+} & SceneSearchBase;
+
+export type SceneCollectionSearch = {
+  collectionId: string;
+} & SceneSearchBase;

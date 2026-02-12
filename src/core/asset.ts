@@ -57,7 +57,7 @@ export class VideoAsset extends MediaAsset {
 
   toJSON() {
     return {
-      assetId: this.assetId,
+      asset_id: this.assetId,
       start: this.start,
       end: this.end,
     };
@@ -106,11 +106,11 @@ export class AudioAsset extends MediaAsset {
 
   toJSON() {
     return {
-      assetId: this.assetId,
+      asset_id: this.assetId,
       start: this.start,
-      disableOtherTracks: this.disableOtherTracks,
-      fadeInDuration: this.fadeInDuration,
-      fadeOutDuration: this.fadeOutDuration,
+      disable_other_tracks: this.disableOtherTracks,
+      fade_in_duration: this.fadeInDuration,
+      fade_out_duration: this.fadeOutDuration,
       end: this.end,
     };
   }
@@ -141,7 +141,7 @@ export class ImageAsset extends MediaAsset {
 
   toJSON() {
     return {
-      assetId: this.assetId,
+      asset_id: this.assetId,
       width: this.width,
       height: this.height,
       x: this.x,
@@ -167,7 +167,7 @@ export class TextAsset extends MediaAsset {
 
   toJSON() {
     return {
-      assetId: this.assetId,
+      asset_id: this.assetId,
       text: this.text,
       style: { ...this.style },
       duration: this.duration,

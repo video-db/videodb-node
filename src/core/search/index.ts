@@ -5,54 +5,64 @@ import {
 } from '@/constants';
 import type { Search } from '@/interfaces/core';
 import type { SearchType } from '@/types/search';
-import { SearchTypeValues } from '@/core/config';
+import { IndexTypeValues, SearchTypeValues } from '@/core/config';
 import type { SearchResponse } from '@/types/response';
 import type {
   KeywordCollectionSearch,
   KeywordVideoSearch,
   SemanticCollectionSearch,
   SemanticVideoSearch,
-  // SceneCollectionSearch,
-  // SceneVideoSearch,
+  SceneCollectionSearch,
+  SceneVideoSearch,
 } from '@/types/search';
 import { HttpClient } from '@/utils/httpClient';
 import { SearchResult } from './searchResult';
 
 const { video, search, collection } = ApiPath;
 
-// class SceneSearch implements Search<SceneVideoSearch, SceneCollectionSearch> {
-//   #vhttp: HttpClient;
-//   constructor(http: HttpClient) {
-//     this.#vhttp = http;
-//   }
+class SceneSearch implements Search<SceneVideoSearch, SceneCollectionSearch> {
+  #vhttp: HttpClient;
+  constructor(http: HttpClient) {
+    this.#vhttp = http;
+  }
 
-//   private getRequestData = (data: SceneVideoSearch | SceneCollectionSearch) => {
-//     return {
-//       index_type: data.indexType ?? DefaultIndexType,
-//       search_type: data.searchType ?? DefaultSearchType,
-//       query: data.query,
-//       score_threshold:
-//         data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
-//       result_threshold:
-//         data.resultThreshold ?? SemanticSearchDefaultValues.resultThreshold,
-//     };
-//   };
+  private getRequestData = (data: SceneVideoSearch | SceneCollectionSearch) => {
+    const reqData: Record<string, unknown> = {
+      search_type: data.searchType ?? SearchTypeValues.scene,
+      index_type: IndexTypeValues.scene,
+      query: data.query,
+      score_threshold:
+        data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
+      result_threshold:
+        data.resultThreshold ?? SemanticSearchDefaultValues.resultThreshold,
+    };
+    if (data.dynamicScorePercentage !== undefined) {
+      reqData.dynamic_score_percentage = data.dynamicScorePercentage;
+    }
+    if (data.filter !== undefined) {
+      reqData.filter = data.filter;
+    }
+    return reqData;
+  };
 
-//   searchInsideVideo = async (data: SemanticVideoSearch) => {
-//     const reqData = this.getRequestData(data);
-//     const res = await this.#vhttp.post<SearchResponse, typeof reqData>(
-//       [video, data.videoId, search],
-//       reqData
-//     );
-//     return new SearchResult(this.#vhttp, res.data);
-//   };
+  searchInsideVideo = async (data: SceneVideoSearch) => {
+    const reqData = this.getRequestData(data);
+    const res = await this.#vhttp.post<SearchResponse, typeof reqData>(
+      [video, data.videoId, search],
+      reqData
+    );
+    return new SearchResult(this.#vhttp, res.data);
+  };
 
-//   searchInsideCollection = async (data: SceneCollectionSearch) => {
-//     throw new Error(
-//       'Method not implemented. Scene search is not supported for Collection'
-//     );
-//   };
-// }
+  searchInsideCollection = (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _: SceneCollectionSearch
+  ): Promise<SearchResult> => {
+    return Promise.reject(
+      new Error('Scene search is not supported for Collection')
+    );
+  };
+}
 
 class SemanticSearch
   implements Search<SemanticVideoSearch, SemanticCollectionSearch>
@@ -65,14 +75,22 @@ class SemanticSearch
   private getRequestData = (
     data: SemanticVideoSearch | SemanticCollectionSearch
   ) => {
-    return {
-      index_type: SearchTypeValues.semantic,
+    const reqData: Record<string, unknown> = {
+      search_type: data.searchType ?? SearchTypeValues.semantic,
+      index_type: data.indexType ?? SearchTypeValues.semantic,
       query: data.query,
       score_threshold:
         data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
       result_threshold:
         data.resultThreshold ?? SemanticSearchDefaultValues.resultThreshold,
     };
+    if (data.dynamicScorePercentage !== undefined) {
+      reqData.dynamic_score_percentage = data.dynamicScorePercentage;
+    }
+    if (data.filter !== undefined) {
+      reqData.filter = data.filter;
+    }
+    return reqData;
   };
 
   searchInsideVideo = async (data: SemanticVideoSearch) => {
@@ -105,14 +123,22 @@ class KeywordSearch
   private getRequestData = (
     data: KeywordVideoSearch | KeywordCollectionSearch
   ) => {
-    return {
-      index_type: SearchTypeValues.keyword,
+    const reqData: Record<string, unknown> = {
+      search_type: data.searchType ?? SearchTypeValues.keyword,
+      index_type: data.indexType ?? SearchTypeValues.keyword,
       query: data.query,
       score_threshold:
         data.scoreThreshold ?? KeywordSearchDefaultValues.scoreThreshold,
       result_threshold:
         data.resultThreshold ?? KeywordSearchDefaultValues.resultThreshold,
     };
+    if (data.dynamicScorePercentage !== undefined) {
+      reqData.dynamic_score_percentage = data.dynamicScorePercentage;
+    }
+    if (data.filter !== undefined) {
+      reqData.filter = data.filter;
+    }
+    return reqData;
   };
 
   searchInsideVideo = async (data: KeywordVideoSearch) => {
@@ -124,16 +150,69 @@ class KeywordSearch
     return new SearchResult(this.#vhttp, res.data);
   };
 
-  searchInsideCollection = async (data: KeywordCollectionSearch) => {
-    throw new Error(
-      'Method not implemented. Keyword search is not supported for Collection'
+  searchInsideCollection = (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _: KeywordCollectionSearch
+  ): Promise<SearchResult> => {
+    return Promise.reject(
+      new Error('Keyword search is not supported for Collection')
     );
+  };
+}
+
+class LLMSearch
+  implements Search<SemanticVideoSearch, SemanticCollectionSearch>
+{
+  #vhttp: HttpClient;
+  constructor(http: HttpClient) {
+    this.#vhttp = http;
+  }
+
+  private getRequestData = (
+    data: SemanticVideoSearch | SemanticCollectionSearch
+  ) => {
+    const reqData: Record<string, unknown> = {
+      search_type: data.searchType ?? SearchTypeValues.llm,
+      index_type: data.indexType ?? SearchTypeValues.llm,
+      query: data.query,
+      score_threshold:
+        data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
+      result_threshold:
+        data.resultThreshold ?? SemanticSearchDefaultValues.resultThreshold,
+    };
+    if (data.dynamicScorePercentage !== undefined) {
+      reqData.dynamic_score_percentage = data.dynamicScorePercentage;
+    }
+    if (data.filter !== undefined) {
+      reqData.filter = data.filter;
+    }
+    return reqData;
+  };
+
+  searchInsideVideo = async (data: SemanticVideoSearch) => {
+    const reqData = this.getRequestData(data);
+    const res = await this.#vhttp.post<SearchResponse, typeof reqData>(
+      [video, data.videoId, search],
+      reqData
+    );
+    return new SearchResult(this.#vhttp, res.data);
+  };
+
+  searchInsideCollection = async (data: SemanticCollectionSearch) => {
+    const reqData = this.getRequestData(data);
+    const res = await this.#vhttp.post<SearchResponse, typeof reqData>(
+      [collection, data.collectionId, search],
+      reqData
+    );
+    return new SearchResult(this.#vhttp, res.data);
   };
 }
 
 const searchType = {
   semantic: SemanticSearch,
   keyword: KeywordSearch,
+  scene: SceneSearch,
+  llm: LLMSearch,
 };
 
 export class SearchFactory {
