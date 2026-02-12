@@ -5,11 +5,6 @@ import type { CaptureSessionStatusType } from '@/types/capture';
 import { HttpClient } from '@/utils/httpClient';
 
 /**
- * RTStream category for filtering
- */
-export type RTStreamCategory = 'mics' | 'displays' | 'system_audio' | 'cameras';
-
-/**
  * CaptureSession class for managing video capture sessions
  *
  * @example
@@ -110,13 +105,13 @@ export class CaptureSession {
 
   /**
    * Get RTStreams by category
-   * @param category - Category to filter by ('mics', 'displays', 'system_audio', 'cameras')
+   * @param category - Category to filter by (e.g., 'mic', 'screen', 'system_audio', 'camera')
    * @returns Array of RTStream objects matching the category
    *
    * @example
    * ```typescript
-   * const mics = session.getRTStream('mics');
-   * const displays = session.getRTStream('displays');
+   * const mics = session.getRTStream('mic');
+   * const displays = session.getRTStream('screen');
    * const systemAudio = session.getRTStream('system_audio');
    *
    * if (mics.length > 0) {
@@ -124,27 +119,13 @@ export class CaptureSession {
    * }
    * ```
    */
-  public getRTStream = (category: RTStreamCategory): RTStream[] => {
+  public getRTStream = (category: string): RTStream[] => {
     const filtered: RTStream[] = [];
+    const categoryLower = category.toLowerCase();
 
     for (const rts of this.rtstreams) {
-      const name = (rts.name || '').toLowerCase();
-      let isMatch = false;
-
-      if (category === 'mics' && name.includes('mic')) {
-        isMatch = true;
-      } else if (
-        category === 'displays' &&
-        (name.includes('screen') || name.includes('display'))
-      ) {
-        isMatch = true;
-      } else if (category === 'system_audio' && name.includes('system')) {
-        isMatch = true;
-      } else if (category === 'cameras' && name.includes('camera')) {
-        isMatch = true;
-      }
-
-      if (isMatch) {
+      const channelId = (rts.channelId || '').toLowerCase();
+      if (channelId === categoryLower) {
         filtered.push(rts);
       }
     }

@@ -439,6 +439,140 @@ export class Video implements IVideo {
   };
 
   /**
+   * Index visuals (scenes) from the video
+   * @param prompt - Prompt for scene description
+   * @param batchConfig - Frame extraction config with keys:
+   *   - type: Extraction type ("time" or "shot"). Default is "time".
+   *   - value: Window size in seconds (for time) or threshold (for shot). Default is 10.
+   *   - frameCount: Number of frames to extract per window. Default is 1.
+   *   - selectFrames: Which frames to select (e.g., ["first", "middle", "last"]). Default is ["first"].
+   * @param modelName - Name of the model
+   * @param modelConfig - Configuration for the model
+   * @param name - Name of the visual index
+   * @param callbackUrl - URL to receive the callback (optional)
+   * @returns The scene index id
+   */
+  public indexVisuals = async (config?: {
+    prompt?: string;
+    batchConfig?: {
+      type?: 'time' | 'shot';
+      value?: number;
+      frameCount?: number;
+      selectFrames?: string[];
+    };
+    modelName?: string;
+    modelConfig?: Record<string, unknown>;
+    name?: string;
+    callbackUrl?: string;
+  }): Promise<string | undefined> => {
+    const {
+      prompt,
+      batchConfig = { type: 'time', value: 10, frameCount: 1 },
+      modelName,
+      modelConfig = {},
+      name,
+      callbackUrl,
+    } = config ?? {};
+
+    const extractionType = batchConfig.type ?? 'time';
+    let extractionConfig: Record<string, unknown>;
+
+    if (extractionType === 'shot') {
+      extractionConfig = {
+        threshold: batchConfig.value ?? 20,
+        frame_count: batchConfig.frameCount ?? 1,
+      };
+    } else {
+      extractionConfig = {
+        time: batchConfig.value ?? 10,
+        frame_count: batchConfig.frameCount ?? 1,
+        select_frames: batchConfig.selectFrames ?? ['first'],
+      };
+    }
+
+    const res = await this.#vhttp.post<IndexScenesResponse, object>(
+      [video, this.id, index, scene],
+      {
+        extraction_type:
+          extractionType === 'shot'
+            ? SceneExtractionType.shotBased
+            : SceneExtractionType.timeBased,
+        extraction_config: extractionConfig,
+        prompt,
+        model_name: modelName,
+        model_config: modelConfig,
+        name,
+        callback_url: callbackUrl,
+      }
+    );
+
+    return res.data?.sceneIndexId;
+  };
+
+  /**
+   * Index audio by processing transcript segments through an LLM
+   *
+   * Segments the video transcript, processes each segment with the given
+   * prompt using the specified model, and indexes the results as scene
+   * records for semantic search.
+   *
+   * @param prompt - Prompt for processing transcript segments (optional)
+   * @param modelName - LLM tier to use (e.g. "basic", "pro", "ultra") (optional)
+   * @param modelConfig - Model configuration (optional)
+   * @param languageCode - Language code for transcription (optional)
+   * @param batchConfig - Segmentation config with keys:
+   *   - type: Segmentation type ("word", "sentence", or "time")
+   *   - value: Segment length (words, sentences, or seconds)
+   *   Defaults to { type: "word", value: 10 }
+   * @param name - Name for the scene index (optional)
+   * @param callbackUrl - URL to receive the callback (optional)
+   * @returns The scene index id
+   */
+  public indexAudio = async (config?: {
+    prompt?: string;
+    modelName?: string;
+    modelConfig?: Record<string, unknown>;
+    languageCode?: string;
+    batchConfig?: {
+      type?: 'word' | 'sentence' | 'time';
+      value?: number;
+    };
+    name?: string;
+    callbackUrl?: string;
+  }): Promise<string | undefined> => {
+    const {
+      prompt,
+      modelName,
+      modelConfig,
+      languageCode,
+      batchConfig = { type: 'word', value: 10 },
+      name,
+      callbackUrl,
+    } = config ?? {};
+
+    const extractionConfig = {
+      segmenter: batchConfig.type ?? Segmenter.word,
+      segmentation_value: batchConfig.value ?? 10,
+    };
+
+    const res = await this.#vhttp.post<IndexScenesResponse, object>(
+      [video, this.id, index, scene],
+      {
+        extraction_type: SceneExtractionType.transcript,
+        extraction_config: extractionConfig,
+        prompt,
+        model_name: modelName,
+        model_config: modelConfig,
+        language_code: languageCode,
+        name,
+        callback_url: callbackUrl,
+      }
+    );
+
+    return res.data?.sceneIndexId;
+  };
+
+  /**
    * Overlays subtitles on top of a video
    * @returns an awaited stream url for subtitled overlayed video
    *

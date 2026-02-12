@@ -14,9 +14,14 @@
  * await client.requestPermission('microphone');
  * await client.requestPermission('screen-capture');
  *
- * // List available channels (returns mic:default, system_audio:default, display:1, etc.)
+ * // List available channels (returns Channels object with mics, displays, systemAudio)
  * const channels = await client.listChannels();
- * console.log(channels);
+ * console.log(channels.mics.default);     // Default microphone
+ * console.log(channels.displays.default); // Default display
+ *
+ * // Pause/resume individual channels
+ * await channels.mics.default?.pause();
+ * await channels.mics.default?.resume();
  *
  * // Start capture session (sessionId from backend CaptureSession)
  * await client.startCaptureSession({
@@ -42,6 +47,17 @@
 
 // Main class
 export { CaptureClient } from './captureClient';
+
+export {
+  Channel,
+  AudioChannel,
+  VideoChannel,
+  ChannelList,
+  Channels,
+  createChannel,
+  groupChannels,
+  type ChannelClient,
+} from './channel';
 
 // Utility classes
 export { RecorderInstaller } from './installer';

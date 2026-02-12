@@ -103,11 +103,7 @@ export {
   type WebSocketMessage,
   type WebSocketStreamFilter,
 } from './core/websocket';
-export {
-  CaptureSession,
-  type CaptureSessionBase,
-  type RTStreamCategory,
-} from './core/captureSession';
+export { CaptureSession, type CaptureSessionBase } from './core/captureSession';
 export { SceneIndex, type SceneData, type AlertData } from './core/sceneIndex';
 export { SpokenIndex } from './core/spokenIndex';
 
@@ -215,3 +211,24 @@ export {
 
 export { playStream } from './utils/index';
 export { connect, Connection };
+
+export {
+  CaptureClient,
+  Channel,
+  AudioChannel,
+  VideoChannel,
+  ChannelList,
+  Channels,
+  RecorderInstaller,
+  PermissionType,
+  PermissionStatus,
+  TrackType,
+  type BinaryChannel,
+  type RecordingChannelConfig,
+  type PermissionTypeValue,
+  type PermissionStatusValue,
+  type CaptureClientEvents,
+  type StartCaptureSessionClientConfig,
+  type CaptureClientOptions,
+  type TrackTypeValue,
+} from './recorder';

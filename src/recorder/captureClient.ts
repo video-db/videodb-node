@@ -5,11 +5,19 @@ import {
   PermissionStatus,
   type PermissionTypeValue,
   type PermissionStatusValue,
-  type BinaryChannel,
   type StartCaptureSessionClientConfig,
   type CaptureClientOptions,
   type TrackTypeValue,
 } from './types';
+import {
+  Channel,
+  AudioChannel,
+  VideoChannel,
+  Channels,
+  ChannelList,
+  groupChannels,
+  type ChannelClient,
+} from './channel';
 
 /**
  * CaptureClient provides client-side recording capabilities using the native binary
@@ -43,7 +51,7 @@ import {
  * await client.shutdown();
  * ```
  */
-export class CaptureClient extends EventEmitter {
+export class CaptureClient extends EventEmitter implements ChannelClient {
   private sessionToken: string;
   private apiUrl: string;
   private binaryManager: BinaryManager;
@@ -155,30 +163,49 @@ export class CaptureClient extends EventEmitter {
   }
 
   /**
-   * List available capture channels (microphones, displays, etc.)
-   * @returns Array of available channels
+   * List available capture channels grouped by type
+   *
+   * Returns a Channels object with mics, displays, and systemAudio properties.
+   * Each property is a ChannelList with a `.default` property to get the first channel.
+   *
+   * @returns Channels object with grouped channels that support pause/resume
+   *
+   * @example
+   * ```typescript
+   * const channels = await client.listChannels();
+   *
+   * // Access default channels
+   * const defaultMic = channels.mics.default;
+   * const defaultDisplay = channels.displays.default;
+   *
+   * // Pause/resume individual channels
+   * await channels.mics.default?.pause();
+   * await channels.mics.default?.resume();
+   *
+   * // Iterate over all mics
+   * for (const mic of channels.mics) {
+   *   console.log(mic.name);
+   * }
+   * ```
    */
-  public async listChannels(): Promise<
-    Array<BinaryChannel & Record<string, unknown>>
-  > {
+  public async listChannels(): Promise<Channels> {
     await this.ensureInitialized();
 
     const result = await this.binaryManager.sendCommand<{
       channels: Array<Record<string, unknown>>;
     }>('getChannels', {});
 
-    return result.channels.map(channel => {
+    const rawChannels = result.channels.map(channel => {
       const channelId = channel.channel_id as string;
-
-      const extras = { ...channel };
       return {
         channelId,
         type: channel.type as 'audio' | 'video',
         name: (channel.name ?? channel.channel_name ?? 'Unknown') as string,
         isDefault: channel.is_default as boolean | undefined,
-        extras,
       };
     });
+
+    return groupChannels(rawChannels, this);
   }
 
   /**
