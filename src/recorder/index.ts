@@ -24,7 +24,7 @@
  * await channels.mics.default?.resume();
  *
  * // Start capture session (sessionId from backend CaptureSession)
- * await client.startCaptureSession({
+ * await client.startSession({
  *   sessionId: 'ss-xxx', // Required: from CaptureSession.id
  *   channels: [
  *     { channelId: 'mic:default', type: 'audio', record: true, transcript: true },
@@ -38,7 +38,7 @@
  * });
  *
  * // Stop capture
- * await client.stopCaptureSession();
+ * await client.stopSession();
  *
  * // Cleanup
  * await client.shutdown();

@@ -36,7 +36,7 @@ import {
  * const channels = await client.listChannels();
  *
  * // Start capture session (sessionId from backend CaptureSession)
- * await client.startCaptureSession({
+ * await client.startSession({
  *   sessionId: 'ss-xxx', // Required: from CaptureSession.id
  *   channels: [
  *     { channelId: 'mic:default', type: 'audio', record: true, transcript: true },
@@ -45,7 +45,7 @@ import {
  * });
  *
  * // Stop capture
- * await client.stopCaptureSession();
+ * await client.stopSession();
  *
  * // Cleanup
  * await client.shutdown();
@@ -212,7 +212,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
    * Start capture session
    * @param config - Capture session configuration (sessionId is required)
    */
-  public async startCaptureSession(
+  public async startSession(
     config: StartCaptureSessionClientConfig
   ): Promise<void> {
     await this.ensureInitialized();
@@ -260,7 +260,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   /**
    * Stop the current capture session
    */
-  public async stopCaptureSession(): Promise<void> {
+  public async stopSession(): Promise<void> {
     if (!this.isInitialized) {
       return;
     }
