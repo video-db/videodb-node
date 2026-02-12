@@ -32,6 +32,7 @@ export class CaptureSession {
   public collectionId: string;
   public status?: CaptureSessionStatusType;
   public endUserId?: string;
+  public clientId?: string;
   public callbackUrl?: string;
   public metadata?: Record<string, unknown>;
   public exportedVideoId?: string;
@@ -45,6 +46,7 @@ export class CaptureSession {
     this.collectionId = data.collectionId;
     this.status = data.status;
     this.endUserId = data.endUserId;
+    this.clientId = data.clientId;
     this.callbackUrl = data.callbackUrl;
     this.metadata = data.metadata;
     this.exportedVideoId = data.exportedVideoId;
@@ -78,6 +80,7 @@ export class CaptureSession {
     const data = res.data;
     this.status = data.status;
     this.endUserId = data.endUserId;
+    this.clientId = data.clientId;
     this.callbackUrl = data.callbackUrl;
     this.metadata = data.metadata;
     this.exportedVideoId = data.exportedVideoId;
