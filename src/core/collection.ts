@@ -319,9 +319,8 @@ export class Collection implements ICollection {
    * Connect to an RTStream
    * @param url - URL of the RTStream
    * @param name - Name of the RTStream
+   * @param mediaTypes - List of media types to capture (default: ['video']). Valid values: 'video', 'audio'
    * @param sampleRate - Sample rate of the RTStream (optional, server default: 30)
-   * @param video - Enable video streaming (optional, server default: true)
-   * @param audio - Enable audio streaming (optional, server default: false)
    * @param enableTranscript - Enable real-time transcription (optional)
    * @param wsConnectionId - WebSocket connection ID for receiving events (optional)
    * @returns RTStream object
@@ -329,20 +328,28 @@ export class Collection implements ICollection {
   public connectRTStream = async (
     url: string,
     name: string,
+    mediaTypes?: Array<'video' | 'audio'>,
     sampleRate?: number,
-    video?: boolean,
-    audio?: boolean,
     enableTranscript?: boolean,
     wsConnectionId?: string
   ): Promise<RTStream> => {
+    if (mediaTypes !== undefined) {
+      const validTypes = new Set(['video', 'audio']);
+      const invalidTypes = mediaTypes.filter(t => !validTypes.has(t));
+      if (invalidTypes.length > 0 || mediaTypes.length === 0) {
+        throw new VideodbError(
+          `Invalid mediaTypes: ${invalidTypes.join(', ')}. Valid values: 'video', 'audio'`
+        );
+      }
+    }
+
     const data: Record<string, unknown> = {
       collection_id: this.id,
       url,
       name,
+      media_types: mediaTypes ?? ['video'],
     };
     if (sampleRate !== undefined) data.sample_rate = sampleRate;
-    if (video !== undefined) data.video = video;
-    if (audio !== undefined) data.audio = audio;
     if (enableTranscript !== undefined)
       data.enable_transcript = enableTranscript;
     if (wsConnectionId !== undefined) data.ws_connection_id = wsConnectionId;
