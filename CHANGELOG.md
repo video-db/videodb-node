@@ -6,6 +6,13 @@
 
 - RTStream `generateStream(start, end, playerConfig?)` now supports `playerConfig.title`, `playerConfig.description`, and `playerConfig.slug` for player share metadata.
 
+### Changed
+
+- **Binary distribution URL migrated** - Capture binaries now served from `https://artifacts.videodb.io/capture` (CloudFront) instead of direct S3 bucket
+- Updated binary checksums for version 0.2.8
+
+---
+
 ## [0.2.0] (2026-02-02)
 
 ### ⚠️ Breaking Changes

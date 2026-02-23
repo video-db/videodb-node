@@ -32,12 +32,12 @@ export class RecorderInstaller {
   constructor(binaryConfig?: BinaryConfig) {
     // Default binary config - can be overridden or loaded from package.json
     this.binaryConfig = binaryConfig || {
-      baseUrl: 'https://recorder-sdk-binaries.s3.amazonaws.com',
-      version: '0.2.7',
+      baseUrl: 'https://artifacts.videodb.io/capture',
+      version: '0.2.8',
       checksums: {
-        'darwin-x64': '8ebea82d67d5da55d387fb1e0a58076016932b00201b9452fa1c8f44a2eaf533',
-        'darwin-arm64': '79c6671a020bd2c7ecbd258bb41d3453b57b93ec5d6be3acd17e6c581f3a47c5',
-        'win32-x64': '34d5111877b58e0ad633faf993fa872ab8ef27df45fec491836c09b29fd361ef',
+        'darwin-x64': 'd3c000418740b0009d1c67160ab4e6fd8a243703335a1ebd34e3bf2a30cfe112',
+        'darwin-arm64': '946e19597eeb1b89dae2ec27bdaa6021b7554b4028a15b7b872bd7482d2f232b',
+        'win32-x64': 'ae88b7c4ebf8c3f45fec7ee22889e1b484acc595d15d14db3ff390e6cedb9837',
       },
     };
 
