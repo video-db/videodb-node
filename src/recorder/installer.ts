@@ -129,7 +129,13 @@ export class RecorderInstaller {
     return new Promise((resolve, reject) => {
       const file = fs.createWriteStream(destPath);
 
-      const request = https.get(url, response => {
+      const options = {
+        headers: {
+          'User-Agent': 'videodb-node-installer',
+        },
+      };
+
+      const request = https.get(url, options, response => {
         // Handle redirects
         if (
           response.statusCode &&
