@@ -42,9 +42,9 @@
     "baseUrl": "https://artifacts.videodb.io/capture",
     "version": "0.3.0",
     "checksums": {
-      "darwin-arm64": "de3d403b17ab9c7cda789f45dbe7c6b9ecb54c6c53ef6dfc4e13b248e76c4727",
-      "darwin-x64": "cd44faa27fc5c3a771b6811963ede3c0da911ecb9ac62de67edc6246f5f9b269",
-      "win32-x64": "581de3cd19a5cf942981fd22d38e01b8ed46bc4dcd7c38d713e80044f7d7b8fc"
+      "darwin-arm64": "5ed92b3ed9cc38a3f9077862886f36c95ae835d713bc7213fc3be662ecdde1c8",
+      "darwin-x64": "d24e6d712359160d62ff52140297be71fe98c9534c9d6ac93c5b8f4daeba9408",
+      "win32-x64": "60aec6e30dabba3d5c5e0cb8b2eb959b62ef61d3f840743f7fb2726206141534"
     }
   },
   "repository": {
