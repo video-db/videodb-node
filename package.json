@@ -10,8 +10,8 @@
       "default": "./dist/index.js"
     },
     "./capture": {
-      "types": "./dist/recorder/index.d.ts",
-      "default": "./dist/recorder/index.js"
+      "types": "./dist/capture/index.d.ts",
+      "default": "./dist/capture/index.js"
     }
   },
   "files": [
@@ -40,11 +40,11 @@
   },
   "binaryConfig": {
     "baseUrl": "https://artifacts.videodb.io/capture",
-    "version": "0.2.9",
+    "version": "0.3.0",
     "checksums": {
-      "darwin-arm64": "8da386b60bb6a047d75de00ff9c0cf87dde6edbfd4e1c78c820ff7cdac13a490",
-      "darwin-x64": "722381beaddd55a9499fe54e5e28c64be245c11bb74003421eaef6315457d826",
-      "win32-x64": "2a629cad9fb239762d65da131f6fed63e6cbc841321b1738b0fb9d2388555ba1"
+      "darwin-arm64": "de3d403b17ab9c7cda789f45dbe7c6b9ecb54c6c53ef6dfc4e13b248e76c4727",
+      "darwin-x64": "cd44faa27fc5c3a771b6811963ede3c0da911ecb9ac62de67edc6246f5f9b269",
+      "win32-x64": "581de3cd19a5cf942981fd22d38e01b8ed46bc4dcd7c38d713e80044f7d7b8fc"
     }
   },
   "repository": {

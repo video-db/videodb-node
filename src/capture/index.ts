@@ -1,7 +1,7 @@
 /**
- * VideoDB Recorder Module
+ * VideoDB Capture Module
  *
- * This module provides client-side recording capabilities using a native binary.
+ * This module provides client-side capture capabilities using a native binary.
  * It supports capturing audio (microphone, system audio) and video (screen capture).
  *
  * @example

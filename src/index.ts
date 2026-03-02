@@ -232,4 +232,4 @@ export {
   type StartCaptureSessionClientConfig,
   type CaptureClientOptions,
   type TrackTypeValue,
-} from './recorder';
+} from './capture';

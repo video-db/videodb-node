@@ -20,7 +20,7 @@ interface PendingCommand {
 }
 
 /**
- * BinaryManager handles communication with the native recorder binary
+ * BinaryManager handles communication with the native capture binary
  * Manages the child process lifecycle, health checks, and auto-restart
  */
 export class BinaryManager extends EventEmitter {
@@ -119,16 +119,16 @@ export class BinaryManager extends EventEmitter {
 
         const duration = this.lastHealthCheck - start;
         if (duration > 5000) {
-          console.warn(`VideoDB Recorder: Health check slow (${duration}ms)`);
+          console.warn(`VideoDB Capture: Health check slow (${duration}ms)`);
         }
       } catch {
-        console.error('VideoDB Recorder: Health check failed');
+        console.error('VideoDB Capture: Health check failed');
 
         if (
           this.lastHealthCheck &&
           Date.now() - this.lastHealthCheck > HEALTH_CHECK_TIMEOUT
         ) {
-          console.error('VideoDB Recorder: Binary appears hung, restarting...');
+          console.error('VideoDB Capture: Binary appears hung, restarting...');
           this.emit('error', {
             type: 'health_check_timeout',
             message: 'Binary not responding to health checks',
@@ -157,7 +157,7 @@ export class BinaryManager extends EventEmitter {
    */
   public async start(config: Record<string, unknown> = {}): Promise<void> {
     if (this.process && this.process.exitCode === null) {
-      console.warn('VideoDB Recorder: Process already running');
+      console.warn('VideoDB Capture: Process already running');
       return;
     }
 
@@ -165,7 +165,7 @@ export class BinaryManager extends EventEmitter {
 
     // Ensure binary is installed
     if (!this.isDev && !this.installer.isInstalled()) {
-      console.log('VideoDB Recorder: Installing binary...');
+      console.log('VideoDB Capture: Installing binary...');
       await this.installer.install();
     }
 
@@ -178,7 +178,7 @@ export class BinaryManager extends EventEmitter {
 
       // Handle stdin errors (e.g. EPIPE when binary exits unexpectedly)
       this.process.stdin!.on('error', (err: Error) => {
-        console.error(`VideoDB Recorder: stdin write error: ${err.message}`);
+        console.error(`VideoDB Capture: stdin write error: ${err.message}`);
       });
 
       // Handle stderr (logs and errors)
@@ -189,7 +189,7 @@ export class BinaryManager extends EventEmitter {
 
       stderrRl.on('line', (line: string) => {
         this.appendError(line);
-        console.error(`[Recorder Binary]: ${line}`);
+        console.error(`[Capture Binary]: ${line}`);
       });
 
       // Handle stdout (protocol messages)
@@ -209,25 +209,25 @@ export class BinaryManager extends EventEmitter {
           }
         } else {
           // Non-protocol output (debug logs from binary)
-          console.log(`[Recorder Binary Debug]: ${line}`);
+          console.log(`[Capture Binary Debug]: ${line}`);
         }
       });
 
       // Handle process errors
       this.process.on('error', (error: Error) => {
-        console.error(`VideoDB Recorder: Process error: ${error.message}`);
+        console.error(`VideoDB Capture: Process error: ${error.message}`);
         this.flushPendingCommands(new Error(`Process error: ${error.message}`));
         this.emit('error', {
           type: 'process',
           message:
-            'The recorder binary process failed to start or exited improperly.',
+            'The capture binary process failed to start or exited improperly.',
         });
       });
 
       // Handle process exit
       this.process.on('exit', (code: number | null, signal: string | null) => {
         console.log(
-          `VideoDB Recorder: Process exited with code ${code}, signal ${signal}`
+          `VideoDB Capture: Process exited with code ${code}, signal ${signal}`
         );
 
         this.flushPendingCommands(new Error(`Process exited: ${code}`));
@@ -244,7 +244,7 @@ export class BinaryManager extends EventEmitter {
           if (this.restartOnError && this.remainingRestarts > 0) {
             this.remainingRestarts--;
             console.warn(
-              `VideoDB Recorder: Auto-restarting (${this.remainingRestarts} restarts remaining)`
+              `VideoDB Capture: Auto-restarting (${this.remainingRestarts} restarts remaining)`
             );
             console.warn(
               `Last errors:\n${this.errorBuffer.slice(-10).join('\n')}`
@@ -255,7 +255,7 @@ export class BinaryManager extends EventEmitter {
             }, 1000);
           } else if (this.remainingRestarts === 0) {
             console.error(
-              'VideoDB Recorder: Max restart attempts reached. Manual intervention required'
+              'VideoDB Capture: Max restart attempts reached. Manual intervention required'
             );
             this.emit('error', {
               type: 'max_restarts',
@@ -266,7 +266,7 @@ export class BinaryManager extends EventEmitter {
       });
 
       if (this.unexpectedShutdown) {
-        console.log('VideoDB Recorder: Recovered from unexpected shutdown');
+        console.log('VideoDB Capture: Recovered from unexpected shutdown');
         this.unexpectedShutdown = false;
       }
 
@@ -276,7 +276,7 @@ export class BinaryManager extends EventEmitter {
       // Send init command
       await this.sendCommand('init', config);
     } catch (error) {
-      console.error('VideoDB Recorder: Failed to initialize:', error);
+      console.error('VideoDB Capture: Failed to initialize:', error);
       throw error;
     }
   }
@@ -332,13 +332,13 @@ export class BinaryManager extends EventEmitter {
       const currentProc = this.process;
       setTimeout(() => {
         if (currentProc && !currentProc.killed) {
-          console.warn('VideoDB Recorder: Force killing process after timeout');
+          console.warn('VideoDB Capture: Force killing process after timeout');
           currentProc.kill();
         }
       }, 5000);
     } catch {
       // If shutdown command fails, just kill
-      console.warn('VideoDB Recorder: Shutdown command failed, force killing');
+      console.warn('VideoDB Capture: Shutdown command failed, force killing');
       if (this.process) {
         this.process.kill();
       }
