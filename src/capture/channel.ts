@@ -12,6 +12,7 @@ export class Channel {
   public readonly name: string;
   public readonly type: 'audio' | 'video';
   public store: boolean = false;
+  public isPrimary: boolean = false;
 
   /** Reference to the CaptureClient for pause/resume operations */
   #client: ChannelClient | null = null;
@@ -87,6 +88,7 @@ export class Channel {
     name: string;
     record: boolean;
     store: boolean;
+    is_primary: boolean;
   } {
     return {
       channel_id: this.id,
@@ -94,6 +96,7 @@ export class Channel {
       name: this.name,
       record: true,
       store: this.store,
+      is_primary: this.isPrimary,
     };
   }
 

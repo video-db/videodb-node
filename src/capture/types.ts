@@ -59,10 +59,10 @@ export interface RecordingChannelConfig {
   type: 'audio' | 'video';
   /** Whether to record this channel */
   record?: boolean;
-  /** Whether to enable transcription */
-  transcript?: boolean;
   /** Whether to store the recording */
   store?: boolean;
+  /** Whether this is the primary video channel */
+  isPrimary?: boolean;
 }
 
 /**

@@ -39,8 +39,8 @@ import {
  * await client.startSession({
  *   sessionId: 'ss-xxx', // Required: from CaptureSession.id
  *   channels: [
- *     { channelId: 'mic:default', type: 'audio', record: true, transcript: true },
- *     { channelId: 'display:1', type: 'video', record: true },
+ *     { channelId: 'mic:default', type: 'audio', record: true, store: true },
+ *     { channelId: 'display:1', type: 'video', record: true, store: true },
  *   ],
  * });
  *
@@ -237,15 +237,16 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
         (channel as { channel_id?: string }).channel_id ?? channel.channelId,
       type: channel.type,
       record: channel.record ?? true,
-      transcript: channel.transcript ?? false,
       store: channel.store ?? true,
+      is_primary: channel.isPrimary ?? false,
     }));
 
     if (channels.some(ch => !ch.channel_id)) {
       throw new Error('channels must include channelId for each channel');
     }
 
-    const primaryVideo = channels.find(ch => ch.type === 'video');
+    const primaryVideo = channels.find(ch => ch.is_primary && ch.type === 'video')
+      || channels.find(ch => ch.type === 'video');
 
     await this.binaryManager.sendCommand('startRecording', {
       uploadToken: this.sessionToken,
