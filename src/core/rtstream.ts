@@ -450,7 +450,7 @@ export class RTStream {
       { params }
     );
     this.playerUrl = res.data?.playerUrl;
-    return res.data?.streamUrl || null;
+    return res.data?.playerUrl || res.data?.streamUrl || null;
   };
 
   /**

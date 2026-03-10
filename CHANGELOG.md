@@ -1,5 +1,9 @@
 # Changelog
 
+## [0,2.2] (2023-03-11)
+
+- RTStream `generateStream` returns `playerUrl`
+
 ## [0.2.1] (2026-03-10)
 
 ### Added
