@@ -1,6 +1,10 @@
 import { ApiPath } from '@/constants';
 import { RTStream } from '@/core/rtstream';
-import type { CaptureSessionBase, RTStreamBase } from '@/interfaces/core';
+import type {
+  CaptureSessionBase,
+  CaptureSessionChannelBase,
+  RTStreamBase,
+} from '@/interfaces/core';
 import type { CaptureSessionStatusType } from '@/types/capture';
 import { HttpClient } from '@/utils/httpClient';
 
@@ -38,6 +42,9 @@ export class CaptureSession {
   public exportedVideoId?: string;
   public rtstreams: RTStream[];
   public createdAt?: number;
+  public channels: CaptureSessionChannelBase[];
+  public primaryVideoChannelId?: string;
+  public exportStatus?: string;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: CaptureSessionBase) {
@@ -51,6 +58,9 @@ export class CaptureSession {
     this.metadata = data.metadata;
     this.exportedVideoId = data.exportedVideoId;
     this.createdAt = data.createdAt;
+    this.channels = data.channels || [];
+    this.primaryVideoChannelId = data.primaryVideoChannelId;
+    this.exportStatus = data.exportStatus;
     this.rtstreams = [];
   }
 
@@ -85,6 +95,9 @@ export class CaptureSession {
     this.metadata = data.metadata;
     this.exportedVideoId = data.exportedVideoId;
     this.createdAt = data.createdAt;
+    this.channels = data.channels || [];
+    this.primaryVideoChannelId = data.primaryVideoChannelId;
+    this.exportStatus = data.exportStatus;
 
     // Build RTStream instances from the response
     // API returns: { rtstream_id, channel_id, status } → { rtstreamId, channelId, status }
@@ -134,6 +147,47 @@ export class CaptureSession {
     }
 
     return filtered;
+  };
+
+  /**
+   * Get video channels in the session
+   * @returns Array of video channel objects
+   */
+  public get displays(): CaptureSessionChannelBase[] {
+    return this.channels.filter(ch => ch.type === 'video');
+  }
+
+  /**
+   * Trigger export for this capture session.
+   *
+   * Call repeatedly to poll for completion. Returns exportStatus
+   * of "exporting" while in progress, "exported" with videoId,
+   * streamUrl, and playerUrl when done.
+   *
+   * @param videoChannelId - Optional channel ID of the video to export. Defaults to the primary video channel.
+   * @param wsConnectionId - WebSocket connection ID for push notification when export completes (optional).
+   * @returns Export response
+   */
+  public export = async (
+    videoChannelId?: string,
+    wsConnectionId?: string
+  ): Promise<Record<string, unknown>> => {
+    const data: Record<string, unknown> = {};
+    if (videoChannelId) data.video_channel_id = videoChannelId;
+    if (wsConnectionId) data.connection_id = wsConnectionId;
+
+    const res = await this.#vhttp.post<Record<string, unknown>, typeof data>(
+      [
+        ApiPath.collection,
+        this.collectionId,
+        ApiPath.capture,
+        ApiPath.session,
+        this.id,
+        ApiPath.export,
+      ],
+      data
+    );
+    return res.data || {};
   };
 
   /**
