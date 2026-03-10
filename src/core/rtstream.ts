@@ -28,6 +28,15 @@ export interface RTStreamExportResult {
   duration?: number;
 }
 
+export interface RTStreamPlayerConfig {
+  /** Optional title shown in the player share page */
+  title?: string;
+  /** Optional description shown in the player share page */
+  description?: string;
+  /** Optional slug prefix for the generated player share URL */
+  slug?: string;
+}
+
 /**
  * RTStreamShot class for rtstream search results
  */
@@ -340,6 +349,7 @@ export class RTStream {
   public createdAt?: string;
   public sampleRate?: number;
   public status?: string;
+  public playerUrl?: string;
   /** Channel ID this rtstream is associated with */
   public channelId?: string;
   /** Media types this rtstream handles */
@@ -415,16 +425,31 @@ export class RTStream {
    * Generate a stream from the rtstream
    * @param start - Start time of the stream in Unix timestamp format
    * @param end - End time of the stream in Unix timestamp format
+   * @param playerConfig - Optional player share page metadata
    * @returns Stream URL
    */
   public generateStream = async (
     start: number,
-    end: number
+    end: number,
+    playerConfig?: RTStreamPlayerConfig
   ): Promise<string | null> => {
-    const res = await this.#vhttp.get<{ streamUrl: string }>(
+    const params: Record<string, unknown> = { start, end };
+
+    if (playerConfig?.title !== undefined) {
+      params.player_title = playerConfig.title;
+    }
+    if (playerConfig?.description !== undefined) {
+      params.player_description = playerConfig.description;
+    }
+    if (playerConfig?.slug !== undefined) {
+      params.player_slug_prefix = playerConfig.slug;
+    }
+
+    const res = await this.#vhttp.get<{ streamUrl: string; playerUrl?: string }>(
       [ApiPath.rtstream, this.id, ApiPath.stream],
-      { params: { start, end } }
+      { params }
     );
+    this.playerUrl = res.data?.playerUrl;
     return res.data?.streamUrl || null;
   };
 
