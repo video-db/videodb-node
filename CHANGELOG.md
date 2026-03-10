@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] (2026-03-10)
+
+### Added
+
+- RTStream `generateStream(start, end, playerConfig?)` now supports `playerConfig.title`, `playerConfig.description`, and `playerConfig.slug` for player share metadata.
+
 ## [0.2.0] (2026-02-02)
 
 ### ⚠️ Breaking Changes
