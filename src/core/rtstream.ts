@@ -349,11 +349,14 @@ export class RTStream {
   public createdAt?: string;
   public sampleRate?: number;
   public status?: string;
-  public playerUrl?: string;
   /** Channel ID this rtstream is associated with */
   public channelId?: string;
   /** Media types this rtstream handles */
   public mediaTypes?: string[];
+  /** Generated playback URL for the rtstream segment */
+  public streamUrl?: string;
+  /** Player URL for the generated rtstream segment */
+  public playerUrl?: string;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: RTStreamBase) {
@@ -426,7 +429,7 @@ export class RTStream {
    * @param start - Start time of the stream in Unix timestamp format
    * @param end - End time of the stream in Unix timestamp format
    * @param playerConfig - Optional player share page metadata
-   * @returns Stream URL
+   * @returns Player URL
    */
   public generateStream = async (
     start: number,
@@ -445,12 +448,13 @@ export class RTStream {
       params.player_slug_prefix = playerConfig.slug;
     }
 
-    const res = await this.#vhttp.get<{ streamUrl: string; playerUrl?: string }>(
-      [ApiPath.rtstream, this.id, ApiPath.stream],
-      { params }
-    );
+    const res = await this.#vhttp.get<{
+      streamUrl: string;
+      playerUrl: string;
+    }>([ApiPath.rtstream, this.id, ApiPath.stream], { params });
+    this.streamUrl = res.data?.streamUrl;
     this.playerUrl = res.data?.playerUrl;
-    return res.data?.streamUrl || null;
+    return this.playerUrl || null;
   };
 
   /**

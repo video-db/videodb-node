@@ -36,7 +36,7 @@ export interface PlatformInfo {
 }
 
 /**
- * Binary channel from native recorder
+ * Binary channel from native capture
  */
 export interface BinaryChannel {
   /** Channel identifier (e.g., 'mic:default', 'display:1') */

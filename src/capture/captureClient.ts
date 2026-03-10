@@ -153,7 +153,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
 
     if (!status) {
       console.warn(
-        'VideoDB Recorder: Unexpected requestPermission response:',
+        'VideoDB Capture: Unexpected requestPermission response:',
         result
       );
       return PermissionStatus.undetermined;

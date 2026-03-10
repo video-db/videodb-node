@@ -2,7 +2,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
 import * as crypto from 'crypto';
+import { execFileSync } from 'child_process';
 import type { BinaryConfig, PlatformInfo } from './types';
+
+/** Name of the macOS .app bundle that wraps the capture binary for TCC compatibility */
+const MACOS_APP_BUNDLE = 'VideoDBCapture.app';
 
 /** Supported platforms */
 const SUPPORTED_PLATFORMS: Record<string, string[]> = {
@@ -32,12 +36,12 @@ export class RecorderInstaller {
   constructor(binaryConfig?: BinaryConfig) {
     // Default binary config - can be overridden or loaded from package.json
     this.binaryConfig = binaryConfig || {
-      baseUrl: 'https://recorder-sdk-binaries.s3.amazonaws.com',
-      version: '0.2.7',
+      baseUrl: 'https://artifacts.videodb.io/capture',
+      version: '0.2.8',
       checksums: {
-        'darwin-x64': '8ebea82d67d5da55d387fb1e0a58076016932b00201b9452fa1c8f44a2eaf533',
-        'darwin-arm64': '79c6671a020bd2c7ecbd258bb41d3453b57b93ec5d6be3acd17e6c581f3a47c5',
-        'win32-x64': '34d5111877b58e0ad633faf993fa872ab8ef27df45fec491836c09b29fd361ef',
+        'darwin-x64': 'ac67dc1a9edd2094d36e6961ed1dabab3e8b3e3e2a61655a49195b7e518901ca',
+        'darwin-arm64': '4aab67e524c2541bebbae24b8dd845da5d7f74fba006ce860a4914844e185c5d',
+        'win32-x64': 'f19110d9b632c0149088abc09f4c86e0f43f64ce4b52a73bca6eb20789e156d0',
       },
     };
 
@@ -70,21 +74,39 @@ export class RecorderInstaller {
   public getDownloadUrl(): string {
     const { platformKey } = this.getPlatformInfo();
     const { baseUrl, version } = this.binaryConfig;
-    return `${baseUrl}/v${version}/recorder-${platformKey}.tar.gz`;
+    return `${baseUrl}/v${version}/capture-${platformKey}.tar.gz`;
   }
 
   /**
-   * Get the path where the binary should be installed
+   * Get the path where the binary should be installed.
+   *
+   * On macOS the binary lives inside a .app bundle so that TCC
+   * (macOS 26+) can grant screen-recording permissions.
    */
   public getBinaryPath(): string {
-    const binName = process.platform === 'win32' ? 'recorder.exe' : 'recorder';
+    let binPath: string;
+
+    if (process.platform === 'darwin') {
+      // macOS: binary is inside the .app bundle
+      binPath = path.join(
+        this.binDir,
+        MACOS_APP_BUNDLE,
+        'Contents',
+        'MacOS',
+        'capture',
+      );
+    } else if (process.platform === 'win32') {
+      binPath = path.join(this.binDir, 'capture.exe');
+    } else {
+      binPath = path.join(this.binDir, 'capture');
+    }
 
     // Try multiple paths in order of priority
     const possiblePaths = [
       // 1. Electron unpacked (highest priority)
-      path.join(this.binDir, binName).replace('app.asar', 'app.asar.unpacked'),
+      binPath.replace('app.asar', 'app.asar.unpacked'),
       // 2. Standard location
-      path.join(this.binDir, binName),
+      binPath,
     ];
 
     // Find the first path that exists
@@ -129,7 +151,13 @@ export class RecorderInstaller {
     return new Promise((resolve, reject) => {
       const file = fs.createWriteStream(destPath);
 
-      const request = https.get(url, response => {
+      const options = {
+        headers: {
+          'User-Agent': 'videodb-node-installer',
+        },
+      };
+
+      const request = https.get(url, options, response => {
         // Handle redirects
         if (
           response.statusCode &&
@@ -205,7 +233,7 @@ export class RecorderInstaller {
 
     // Check if already installed
     if (!force && this.isInstalled()) {
-      console.log('VideoDB Recorder: Binary already installed');
+      console.log('VideoDB Capture: Binary already installed');
       return;
     }
 
@@ -213,7 +241,7 @@ export class RecorderInstaller {
     if (!this.isPlatformSupported()) {
       const { platformKey } = this.getPlatformInfo();
       throw new Error(
-        `VideoDB Recorder: Platform ${platformKey} is not supported. ` +
+        `VideoDB Capture: Platform ${platformKey} is not supported. ` +
           `Supported platforms: ${Object.entries(SUPPORTED_PLATFORMS)
             .map(([p, archs]) => archs.map(a => `${p}-${a}`).join(', '))
             .join(', ')}`
@@ -226,9 +254,9 @@ export class RecorderInstaller {
     }
 
     const downloadUrl = this.getDownloadUrl();
-    const archivePath = path.join(this.binDir, 'recorder.tar.gz');
+    const archivePath = path.join(this.binDir, 'capture.tar.gz');
 
-    console.log(`VideoDB Recorder: Downloading from ${downloadUrl}...`);
+    console.log(`VideoDB Capture: Downloading from ${downloadUrl}...`);
 
     try {
       // Download the archive
@@ -244,12 +272,12 @@ export class RecorderInstaller {
               `Checksum mismatch: expected ${expectedChecksum}, got ${actualChecksum}`
             );
           }
-          console.log('VideoDB Recorder: Checksum verified');
+          console.log('VideoDB Capture: Checksum verified');
         }
       }
 
       // Extract the archive
-      console.log('VideoDB Recorder: Extracting...');
+      console.log('VideoDB Capture: Extracting...');
       await this.extractTarGz(archivePath, this.binDir);
 
       // Make binary executable (Unix)
@@ -258,10 +286,34 @@ export class RecorderInstaller {
         fs.chmodSync(binaryPath, 0o755);
       }
 
+      // Re-sign the .app bundle on macOS so TCC recognises it.
+      // The bundle ships pre-signed, but extraction can invalidate
+      // the signature on some systems.  Sign inside-out: dylib, then
+      // binary, then the bundle itself.
+      if (process.platform === 'darwin') {
+        const appBundlePath = path.join(this.binDir, MACOS_APP_BUNDLE);
+        if (fs.existsSync(appBundlePath)) {
+          try {
+            const macosDir = path.join(appBundlePath, 'Contents', 'MacOS');
+            const dylibPath = path.join(macosDir, 'librecorder.dylib');
+            const capturePath = path.join(macosDir, 'capture');
+
+            if (fs.existsSync(dylibPath)) {
+              execFileSync('codesign', ['--force', '--sign', '-', dylibPath]);
+            }
+            execFileSync('codesign', ['--force', '--sign', '-', capturePath]);
+            execFileSync('codesign', ['--force', '--sign', '-', appBundlePath]);
+            console.log('VideoDB Capture: Code signed .app bundle');
+          } catch (e) {
+            console.warn('VideoDB Capture: codesign failed, screen recording may not work on macOS 26+');
+          }
+        }
+      }
+
       // Clean up archive
       fs.unlinkSync(archivePath);
 
-      console.log('VideoDB Recorder: Installation complete');
+      console.log('VideoDB Capture: Installation complete');
     } catch (error) {
       // Clean up on error
       if (fs.existsSync(archivePath)) {
@@ -275,15 +327,25 @@ export class RecorderInstaller {
    * Uninstall the binary
    */
   public uninstall(): void {
+    if (process.platform === 'darwin') {
+      // Remove the entire .app bundle directory
+      const appBundlePath = path.join(this.binDir, MACOS_APP_BUNDLE);
+      if (fs.existsSync(appBundlePath)) {
+        fs.rmSync(appBundlePath, { recursive: true });
+        console.log('VideoDB Capture: App bundle uninstalled');
+        return;
+      }
+    }
+
     const binaryPath = this.getBinaryPath();
     if (fs.existsSync(binaryPath)) {
       fs.unlinkSync(binaryPath);
-      console.log('VideoDB Recorder: Binary uninstalled');
+      console.log('VideoDB Capture: Binary uninstalled');
     }
   }
 
   /**
-   * Get the binary version (by running recorder --version)
+   * Get the binary version (by running capture --version)
    */
   public async getInstalledVersion(): Promise<string | null> {
     if (!this.isInstalled()) {

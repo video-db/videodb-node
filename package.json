@@ -1,6 +1,6 @@
 {
   "name": "videodb",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A NodeJS wrapper for VideoDB's API written in TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,8 +10,8 @@
       "default": "./dist/index.js"
     },
     "./capture": {
-      "types": "./dist/recorder/index.d.ts",
-      "default": "./dist/recorder/index.js"
+      "types": "./dist/capture/index.d.ts",
+      "default": "./dist/capture/index.js"
     }
   },
   "files": [
@@ -39,12 +39,12 @@
     "prepublishOnly": "npm run build"
   },
   "binaryConfig": {
-    "baseUrl": "https://recorder-sdk-binaries.s3.amazonaws.com",
-    "version": "0.2.7",
+    "baseUrl": "https://artifacts.videodb.io/capture",
+    "version": "0.2.8",
     "checksums": {
-      "darwin-arm64": "3592c47331a5dd68b3d94474c307cf7da5bb182aa9600ba65d2c4257244e7670",
-      "darwin-x64": "2f66e228cbab0195090cc3628ceaf75d298e7f8c2269bac6446b6ba23fb778c2",
-      "win32-x64": "23ae68bfe8e017b1da960e6b33a258f47b7307c9005506a59f3af0802799d057"
+      "darwin-arm64": "4aab67e524c2541bebbae24b8dd845da5d7f74fba006ce860a4914844e185c5d",
+      "darwin-x64": "ac67dc1a9edd2094d36e6961ed1dabab3e8b3e3e2a61655a49195b7e518901ca",
+      "win32-x64": "f19110d9b632c0149088abc09f4c86e0f43f64ce4b52a73bca6eb20789e156d0"
     }
   },
   "repository": {
