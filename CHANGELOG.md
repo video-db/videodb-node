@@ -1,15 +1,27 @@
 # Changelog
 
-## [0.2.1] (2026-03-10)
+## [0.2.2] (2026-03-10)
 
 ### Added
 
-- RTStream `generateStream(start, end, playerConfig?)` now supports `playerConfig.title`, `playerConfig.description`, and `playerConfig.slug` for player share metadata.
+- RTStream `generateStream()` now returns `playerUrl` and stores both `streamUrl` and `playerUrl`
+- RTStream `playerConfig` parameter with `title`, `description`, and `slug` for player share metadata
+- CaptureSession `channels`, `primaryVideoChannelId`, and `exportStatus` properties
+- CaptureSession `displays` getter for video channels
+- CaptureSession `export()` method with optional `videoChannelId` and `wsConnectionId`
 
 ### Changed
 
-- **Binary distribution URL migrated** - Capture binaries now served from `https://artifacts.videodb.io/capture` (CloudFront) instead of direct S3 bucket
-- Updated binary checksums for version 0.2.8
+- Updated capture binary to v0.2.8 with new checksums
+- Binary distribution URL migrated to CloudFront (`https://artifacts.videodb.io/capture`)
+
+---
+
+## [0.2.1] (2026-02-06)
+
+### Changed
+
+- Binary distribution URL migrated and checksum updates
 
 ---
 
