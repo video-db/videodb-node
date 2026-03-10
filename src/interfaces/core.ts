@@ -311,6 +311,14 @@ export interface RecordMeetingConfig {
 /**
  * Base type for CaptureSession objects
  */
+export interface CaptureSessionChannelBase {
+  channelId: string;
+  name: string;
+  type: 'video' | 'audio';
+  isPrimary?: boolean;
+  store?: boolean;
+}
+
 export interface CaptureSessionBase {
   id: string;
   collectionId: string;
@@ -321,6 +329,9 @@ export interface CaptureSessionBase {
   metadata?: Record<string, unknown>;
   exportedVideoId?: string;
   createdAt?: number;
+  channels?: CaptureSessionChannelBase[];
+  primaryVideoChannelId?: string;
+  exportStatus?: string;
 }
 
 /**
