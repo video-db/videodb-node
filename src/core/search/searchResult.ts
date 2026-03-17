@@ -39,6 +39,8 @@ export class SearchResult {
             sceneIndexId: doc.sceneIndexId,
             sceneIndexName: doc.sceneIndexName,
             metadata: doc.metadata,
+            streamUrl: doc.streamLink,
+            playerUrl: doc.playerUrl,
           })
         );
       }

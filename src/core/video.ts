@@ -236,11 +236,12 @@ export class Video implements IVideo {
    * @returns Success status or transcript data
    */
   public generateTranscript = async (
-    force: boolean = false
+    force: boolean = false,
+    languageCode?: string
   ): Promise<{ success: boolean; message: string } | Transcript> => {
     const res = await this.#vhttp.post<TranscriptResponse, object>(
       [video, this.id, transcription],
-      { force }
+      { force, language_code: languageCode }
     );
 
     const transcript = res.data?.wordTimestamps;
@@ -818,8 +819,8 @@ export class Video implements IVideo {
    */
   public clip = async (
     prompt: string,
-    contentType: string,
-    modelName: string
+    contentType: 'spoken' | 'visual' | 'multimodal',
+    modelName: 'basic' | 'pro' | 'ultra'
   ): Promise<SearchResult> => {
     type ClipResponse = {
       results: Array<{
