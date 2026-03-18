@@ -64,12 +64,10 @@ export interface ChannelConfig {
   channelId: string;
   /** Type of the channel */
   type: ChannelTypeValue;
-  /** Whether to record this channel */
-  record?: boolean;
-  /** Whether to enable transcription for this channel (audio only) */
-  transcript?: boolean;
   /** Whether to store the recorded content */
   store?: boolean;
+  /** Whether this is the primary video channel */
+  isPrimary?: boolean;
 }
 
 /**

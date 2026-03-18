@@ -37,11 +37,11 @@ export class RecorderInstaller {
     // Default binary config - can be overridden or loaded from package.json
     this.binaryConfig = binaryConfig || {
       baseUrl: 'https://artifacts.videodb.io/capture',
-      version: '0.2.8',
+      version: '0.2.10',
       checksums: {
-        'darwin-x64': 'ac67dc1a9edd2094d36e6961ed1dabab3e8b3e3e2a61655a49195b7e518901ca',
-        'darwin-arm64': '4aab67e524c2541bebbae24b8dd845da5d7f74fba006ce860a4914844e185c5d',
-        'win32-x64': 'f19110d9b632c0149088abc09f4c86e0f43f64ce4b52a73bca6eb20789e156d0',
+        'darwin-x64': 'bdfc3aa33a961ff532a99639ea95c181d51baee74a1eda555598ce45c30908ac',
+        'darwin-arm64': 'fc4be7de94153aa9f492b014db7b4f7378e45c3c6f1b5f3f838c2c007bde832f',
+        'win32-x64': '3f9b9a355edc54dd06cef051b0ec7ed55df6beef6eb9e299fa6ba5f02ba3a50a',
       },
     };
 
