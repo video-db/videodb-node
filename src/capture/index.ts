@@ -27,8 +27,8 @@
  * await client.startSession({
  *   sessionId: 'ss-xxx', // Required: from CaptureSession.id
  *   channels: [
- *     { channelId: 'mic:default', type: 'audio', record: true, transcript: true },
- *     { channelId: 'display:1', type: 'video', record: true },
+ *     { channelId: 'mic:default', type: 'audio', store: true },
+ *     { channelId: 'display:1', type: 'video', store: true },
  *   ],
  * });
  *

@@ -143,7 +143,8 @@ export type SearchResponse = {
       end: number;
       score: number;
       start: number;
-      stream_url: string;
+      stream_link?: string;
+      player_url?: string;
       text: string;
       scene_index_id?: string;
       scene_index_name?: string;

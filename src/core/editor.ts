@@ -643,6 +643,12 @@ export class CaptionAsset {
 
   constructor(config: CaptionAssetConfig = {}) {
     this.src = config.src ?? 'auto';
+    if (this.src === 'auto') {
+      console.warn(
+        "CaptionAsset(src='auto'): the video must be indexed " +
+          '(e.g. video.indexSpokenWords()) for captions to be generated.'
+      );
+    }
     this.font = config.font ?? new FontStyling();
     this.primaryColor = config.primaryColor ?? '&H00FFFFFF';
     this.secondaryColor = config.secondaryColor ?? '&H000000FF';
