@@ -86,7 +86,6 @@ export class Channel {
     channel_id: string;
     type: string;
     name: string;
-    record: boolean;
     store: boolean;
     is_primary: boolean;
   } {
@@ -94,7 +93,6 @@ export class Channel {
       channel_id: this.id,
       type: this.type,
       name: this.name,
-      record: true,
       store: this.store,
       is_primary: this.isPrimary,
     };

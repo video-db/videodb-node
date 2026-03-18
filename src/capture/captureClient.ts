@@ -39,8 +39,8 @@ import {
  * await client.startSession({
  *   sessionId: 'ss-xxx', // Required: from CaptureSession.id
  *   channels: [
- *     { channelId: 'mic:default', type: 'audio', record: true, store: true },
- *     { channelId: 'display:1', type: 'video', record: true, store: true },
+ *     { channelId: 'mic:default', type: 'audio', store: true },
+ *     { channelId: 'display:1', type: 'video', store: true },
  *   ],
  * });
  *
@@ -236,7 +236,6 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       channel_id:
         (channel as { channel_id?: string }).channel_id ?? channel.channelId,
       type: channel.type,
-      record: channel.record ?? true,
       store: channel.store ?? true,
       is_primary: channel.isPrimary ?? false,
     }));
