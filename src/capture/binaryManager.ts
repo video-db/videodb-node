@@ -189,7 +189,10 @@ export class BinaryManager extends EventEmitter {
 
       stderrRl.on('line', (line: string) => {
         this.appendError(line);
-        console.error(`[Capture Binary]: ${line}`);
+        // Only surface warnings and errors; suppress info/debug noise
+        if (!line.includes('[info]') && !line.includes('[debug]')) {
+          console.error(`[Capture Binary]: ${line}`);
+        }
       });
 
       // Handle stdout (protocol messages)
@@ -207,9 +210,11 @@ export class BinaryManager extends EventEmitter {
           } catch (e) {
             console.error('Failed to parse protocol message:', line, e);
           }
-        } else {
-          // Non-protocol output (debug logs from binary)
-          console.log(`[Capture Binary Debug]: ${line}`);
+        } else if (line.trim()) {
+          // Non-protocol output — only show if not info/debug noise
+          if (!line.includes('[info]') && !line.includes('[debug]')) {
+            console.log(`[Capture Binary]: ${line}`);
+          }
         }
       });
 
