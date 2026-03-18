@@ -151,19 +151,23 @@ export class Channels {
   public displays: ChannelList<VideoChannel>;
   /** System audio channels */
   public systemAudio: ChannelList<AudioChannel>;
+  /** Camera channels (not yet supported for capture) */
+  public cameras: ChannelList<VideoChannel>;
 
   constructor(
     mics: AudioChannel[] = [],
     displays: VideoChannel[] = [],
-    systemAudio: AudioChannel[] = []
+    systemAudio: AudioChannel[] = [],
+    cameras: VideoChannel[] = []
   ) {
     this.mics = new ChannelList<AudioChannel>(...mics);
     this.displays = new ChannelList<VideoChannel>(...displays);
     this.systemAudio = new ChannelList<AudioChannel>(...systemAudio);
+    this.cameras = new ChannelList<VideoChannel>(...cameras);
   }
 
   /**
-   * Return a flat list of all channels
+   * Return a flat list of all capturable channels (excludes cameras)
    */
   public all(): Channel[] {
     return [
@@ -174,7 +178,7 @@ export class Channels {
   }
 
   toString(): string {
-    return `Channels(mics=${this.mics.length}, displays=${this.displays.length}, systemAudio=${this.systemAudio.length})`;
+    return `Channels(mics=${this.mics.length}, displays=${this.displays.length}, systemAudio=${this.systemAudio.length}, cameras=${this.cameras.length})`;
   }
 }
 
@@ -210,6 +214,7 @@ export function groupChannels(
   const mics: AudioChannel[] = [];
   const displays: VideoChannel[] = [];
   const systemAudio: AudioChannel[] = [];
+  const cameras: VideoChannel[] = [];
 
   for (const ch of channels) {
     const channelId = ch.channelId;
@@ -223,6 +228,8 @@ export function groupChannels(
       displays.push(new VideoChannel(ch, client));
     } else if (channelId.startsWith('system_audio:')) {
       systemAudio.push(new AudioChannel(ch, client));
+    } else if (channelId.startsWith('camera:')) {
+      cameras.push(new VideoChannel(ch, client));
     } else if (ch.type === 'audio') {
       // Fallback for unknown audio channels
       mics.push(new AudioChannel(ch, client));
@@ -232,5 +239,5 @@ export function groupChannels(
     }
   }
 
-  return new Channels(mics, displays, systemAudio);
+  return new Channels(mics, displays, systemAudio, cameras);
 }
