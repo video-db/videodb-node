@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.3] (2026-03-18)
+
+### Changed
+
+- Synced channel config with Python SDK: removed `transcript` field, added `isPrimary` to `RecordingChannelConfig`, `ChannelConfig`, and `Channel`
+- Removed `record` from `Channel.toDict()` (always sent as `true` server-side)
+- Updated capture binary to v0.2.10
+
+### Fixed
+
+- Clip literal types for `contentType` parameter
+- Shot URLs from search results
+- Caption style warning on missing fields
+- `generateTranscript` language code parameter
+
+---
+
 ## [0.2.2] (2026-03-10)
 
 ### Added
