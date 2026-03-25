@@ -238,6 +238,7 @@ export class Collection implements ICollection {
    * @param scoreThreshold - [optional] Score Threshold
    * @param dynamicScorePercentage - [optional] Percentage of dynamic score to consider
    * @param filter - [optional] Additional metadata filters
+   * @param sortDocsOn - [optional] Sort docs within each video by "score" or "start"
    * @param namespace - [optional] Search namespace ("rtstream" to search RTStreams)
    * @param sceneIndexId - [optional] Filter by specific scene index
    * @returns SearchResult or RTStreamSearchResult object
@@ -250,6 +251,7 @@ export class Collection implements ICollection {
     scoreThreshold?: number,
     dynamicScorePercentage?: number,
     filter?: Array<Record<string, unknown>>,
+    sortDocsOn?: string,
     namespace?: string,
     sceneIndexId?: string
   ): Promise<SearchResult | RTStreamSearchResult> => {
@@ -302,6 +304,7 @@ export class Collection implements ICollection {
       scoreThreshold: scoreThreshold,
       dynamicScorePercentage: dynamicScorePercentage,
       filter: filter,
+      sortDocsOn: sortDocsOn,
     });
     return results;
   };

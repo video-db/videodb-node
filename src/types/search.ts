@@ -11,6 +11,7 @@ export type SearchBase = {
   scoreThreshold?: number;
   dynamicScorePercentage?: number;
   filter?: Array<Record<string, unknown>>;
+  sortDocsOn?: string;
 };
 
 export type SemanticSearchBase = SearchBase;

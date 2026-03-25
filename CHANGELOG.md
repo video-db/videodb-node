@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.4] (2026-03-26)
+
+### Added
+
+- `sortDocsOn` parameter in `Collection.search()` and `Video.search()` to sort docs by "score" or "start"
+- `modelConfig` parameter in `Scene.describe()` for custom model configuration
+- `Video.update()` method to update video metadata (currently supports `name`)
+
+### Changed
+
+- `Video.name` is no longer readonly (required for `update()`)
+- Updated capture binary to v0.3.0
+- Bumped version to 0.2.4
+
+---
+
 ## [0.2.3] (2026-03-18)
 
 ### Changed

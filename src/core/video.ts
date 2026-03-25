@@ -74,7 +74,7 @@ export class Video implements IVideo {
   public readonly id: string;
   public readonly collectionId: string;
   public readonly length: string;
-  public readonly name: string;
+  public name: string;
   public readonly description?: string;
   public readonly size: string;
   public readonly streamUrl: string;
@@ -112,6 +112,7 @@ export class Video implements IVideo {
    * @param scoreThreshold - [optional] Score Threshold
    * @param dynamicScorePercentage - [optional] Percentage of dynamic score to consider
    * @param filter - [optional] Additional metadata filters
+   * @param sortDocsOn - [optional] Sort docs within each video by "score" or "start"
    */
   public search = async (
     query: string,
@@ -120,7 +121,8 @@ export class Video implements IVideo {
     resultThreshold?: number,
     scoreThreshold?: number,
     dynamicScorePercentage?: number,
-    filter?: Array<Record<string, unknown>>
+    filter?: Array<Record<string, unknown>>,
+    sortDocsOn?: string
   ) => {
     const s = new SearchFactory(this.#vhttp);
     const searchFunc = s.getSearch(searchType ?? DefaultSearchType);
@@ -133,8 +135,24 @@ export class Video implements IVideo {
       scoreThreshold: scoreThreshold,
       dynamicScorePercentage: dynamicScorePercentage,
       filter: filter,
+      sortDocsOn: sortDocsOn,
     });
     return results;
+  };
+
+  /**
+   * Update the video's metadata
+   * @param options - Fields to update
+   * @param options.name - New name for the video
+   */
+  public update = async (options: { name?: string }) => {
+    const data: Record<string, unknown> = {};
+    if (options.name !== undefined) data.name = options.name;
+    const res = await this.#vhttp.patch<{ id: string; name: string }, typeof data>(
+      [video, this.id],
+      data
+    );
+    if (options.name !== undefined) this.name = res.data.name ?? options.name;
   };
 
   /**

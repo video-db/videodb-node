@@ -1,6 +1,6 @@
 {
   "name": "videodb",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A NodeJS wrapper for VideoDB's API written in TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -40,11 +40,11 @@
   },
   "binaryConfig": {
     "baseUrl": "https://artifacts.videodb.io/capture",
-    "version": "0.2.10",
+    "version": "0.3.0",
     "checksums": {
-      "darwin-arm64": "fc4be7de94153aa9f492b014db7b4f7378e45c3c6f1b5f3f838c2c007bde832f",
-      "darwin-x64": "bdfc3aa33a961ff532a99639ea95c181d51baee74a1eda555598ce45c30908ac",
-      "win32-x64": "3f9b9a355edc54dd06cef051b0ec7ed55df6beef6eb9e299fa6ba5f02ba3a50a"
+      "darwin-arm64": "4cf3ffadab2e3951819547086ddbad6f6fe2976a35590882a5967fa4ee30a4b7",
+      "darwin-x64": "8e9d2b44bb70bea48f172ca0edb34a5f699b226ff7a795aaf8e5011499596150",
+      "win32-x64": "2f47eac709c5852661ec6d073fb3691800e208a348c9d6cad61841d26eea89f4"
     }
   },
   "repository": {
