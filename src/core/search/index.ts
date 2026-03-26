@@ -90,6 +90,9 @@ class SemanticSearch
     if (data.filter !== undefined) {
       reqData.filter = data.filter;
     }
+    if (data.sortDocsOn !== undefined) {
+      reqData.sort_docs_on = data.sortDocsOn;
+    }
     return reqData;
   };
 
