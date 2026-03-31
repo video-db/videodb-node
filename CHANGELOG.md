@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.5] (2026-03-31)
+
+### Changed
+- Pinned `axios` dependency's version to `1.14.0`
+- Updated `.npmrc` to install new versions which are atleast 7 days old
+
 ## [0.2.4] (2026-03-26)
 
 ### Added
