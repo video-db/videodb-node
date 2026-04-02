@@ -1,11 +1,19 @@
 # Changelog
 
-## [0.2.5] (2026-04-03)
+## [0.2.6] (2026-04-03)
 
 ### Changed
 
 - Binary updates for better audio input device support
 - Updated capture binary to v0.3.1
+
+---
+
+## [0.2.5] (2026-03-31)
+
+### Changed
+- Pinned `axios` dependency's version to `1.14.0`
+- Updated `.npmrc` to install new versions which are atleast 7 days old
 
 ---
 
