@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.5] (2026-04-03)
+
+### Changed
+
+- Binary updates for better audio input device support
+- Updated capture binary to v0.3.1
+
+---
+
 ## [0.2.4] (2026-03-26)
 
 ### Added
