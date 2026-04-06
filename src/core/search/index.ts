@@ -4,8 +4,8 @@ import {
   KeywordSearchDefaultValues,
 } from '@/constants';
 import type { Search } from '@/interfaces/core';
-import type { SearchType } from '@/types/search';
-import { IndexTypeValues, SearchTypeValues } from '@/core/config';
+import type { AnySearchType } from '@/types/search';
+import { IndexTypeValues, SearchTypeValues, InternalSearchTypeValues } from '@/core/config';
 import type { SearchResponse } from '@/types/response';
 import type {
   KeywordCollectionSearch,
@@ -28,7 +28,7 @@ class SceneSearch implements Search<SceneVideoSearch, SceneCollectionSearch> {
 
   private getRequestData = (data: SceneVideoSearch | SceneCollectionSearch) => {
     const reqData: Record<string, unknown> = {
-      search_type: data.searchType ?? SearchTypeValues.scene,
+      search_type: data.searchType ?? InternalSearchTypeValues.scene,
       index_type: IndexTypeValues.scene,
       query: data.query,
       score_threshold:
@@ -175,8 +175,8 @@ class LLMSearch
     data: SemanticVideoSearch | SemanticCollectionSearch
   ) => {
     const reqData: Record<string, unknown> = {
-      search_type: data.searchType ?? SearchTypeValues.llm,
-      index_type: data.indexType ?? SearchTypeValues.llm,
+      search_type: data.searchType ?? InternalSearchTypeValues.llm,
+      index_type: data.indexType ?? InternalSearchTypeValues.llm,
       query: data.query,
       score_threshold:
         data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
@@ -223,7 +223,7 @@ export class SearchFactory {
   constructor(http: HttpClient) {
     this.vhttp = http;
   }
-  getSearch(type: SearchType) {
+  getSearch(type: AnySearchType) {
     return new searchType[type](this.vhttp);
   }
 }

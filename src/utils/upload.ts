@@ -8,6 +8,7 @@ import { Image } from '@/core/image';
 import type { AudioBase, ImageBase, VideoBase } from '@/interfaces/core';
 import FormData from 'form-data';
 import { createReadStream } from 'fs';
+import { parse } from 'path';
 import { HttpClient } from './httpClient';
 
 const { upload_url, collection, upload } = ApiPath;
@@ -61,9 +62,11 @@ export const uploadToServer = async (
     urlToUpload = data.url;
   }
 
+  const name = data.name || ('filePath' in data ? parse(data.filePath).name : undefined);
+
   const finalData = {
     url: urlToUpload,
-    name: data.name,
+    name,
     description: data.description,
     callback_url: data.callbackUrl,
     media_type: data.mediaType,

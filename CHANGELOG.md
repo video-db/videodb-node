@@ -6,6 +6,13 @@
 
 - Binary updates for better audio input device support
 - Updated capture binary to v0.3.1
+- Split `SearchTypeValues` into public (`semantic`, `keyword`) and internal (`InternalSearchTypeValues`: `scene`, `llm`) to avoid exposing unsupported search types to users
+
+### Fixed
+
+- Added input validation for `segmenter`, `start`, and `end` in `Video.getTranscript()` and `Audio.getTranscript()`
+- Fixed file upload name extraction for paths containing dots
+- Improved `getTranscript` docstrings for both Video and Audio
 
 ---
 
