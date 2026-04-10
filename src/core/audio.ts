@@ -26,7 +26,7 @@ interface TranscriptResponse {
 export class Audio implements IAudio {
   public readonly id: string;
   public readonly collectionId: string;
-  public readonly length: string;
+  public readonly length: number;
   public readonly name: string;
   public readonly size: string;
   public readonly userId: string;
@@ -42,7 +42,7 @@ export class Audio implements IAudio {
   constructor(http: HttpClient, data: AudioBase) {
     this.id = data.id;
     this.collectionId = data.collectionId;
-    this.length = data.length;
+    this.length = Number(data.length) || 0;
     this.name = data.name;
     this.size = data.size;
     this.userId = data.userId;

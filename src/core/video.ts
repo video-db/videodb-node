@@ -75,7 +75,7 @@ const VALID_SEGMENTERS: Set<string> = new Set([Segmenter.word, Segmenter.sentenc
 export class Video implements IVideo {
   public readonly id: string;
   public readonly collectionId: string;
-  public readonly length: string;
+  public readonly length: number;
   public name: string;
   public readonly description?: string;
   public readonly size: string;
@@ -94,7 +94,7 @@ export class Video implements IVideo {
   constructor(http: HttpClient, data: VideoBase) {
     this.id = data.id;
     this.collectionId = data.collectionId;
-    this.length = data.length;
+    this.length = Number(data.length) || 0;
     this.name = data.name;
     this.description = data.description;
     this.size = data.size;
@@ -177,7 +177,7 @@ export class Video implements IVideo {
     }
 
     const body: { length: number; timeline?: Timeline } = {
-      length: Number(this.length),
+      length: this.length,
     };
     if (timeline) body.timeline = timeline;
 
@@ -735,7 +735,7 @@ export class Video implements IVideo {
     insertVideo: Video,
     timestamp: number
   ): Promise<string | null> => {
-    const videoLength = Number(this.length);
+    const videoLength = this.length;
     if (timestamp > videoLength) {
       timestamp = videoLength;
     }

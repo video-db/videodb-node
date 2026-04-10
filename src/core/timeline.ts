@@ -19,6 +19,10 @@ export class Timeline implements ITimeline {
    * @returns Timeline object
    */
   constructor(connection: Connection) {
+    console.warn(
+      'Timeline from videodb/core/timeline is deprecated and will be removed in a future release. ' +
+      'Use EditorTimeline from videodb/core/editor instead.'
+    );
     this.#vhttp = connection.vhttp;
     this.timeline = [];
     this.streamUrl = '';
