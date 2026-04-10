@@ -30,7 +30,7 @@ import { uploadToServer } from '@/utils/upload';
 import {
   DefaultSearchType,
   DefaultIndexType,
-  SearchTypeValues,
+  InternalSearchTypeValues,
 } from '@/core/config';
 import { SearchFactory } from './search';
 import { SearchResult } from './search/searchResult';
@@ -567,7 +567,7 @@ export class Collection implements ICollection {
   ): Promise<Array<{ video: Video }>> => {
     const res = await this.#vhttp.post<Array<{ video: VideoBase }>, object>(
       [collection, this.id, search, title],
-      { query, search_type: SearchTypeValues.llm }
+      { query, search_type: InternalSearchTypeValues.llm }
     );
     return (res.data || []).map(result => ({
       video: new Video(this.#vhttp, result.video),

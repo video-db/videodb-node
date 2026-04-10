@@ -1,6 +1,8 @@
-import { IndexTypeValues, SearchTypeValues } from '@/core/config';
+import { IndexTypeValues, SearchTypeValues, InternalSearchTypeValues } from '@/core/config';
 
 export type SearchType = keyof typeof SearchTypeValues;
+export type InternalSearchType = keyof typeof InternalSearchTypeValues;
+export type AnySearchType = SearchType | InternalSearchType;
 export type IndexType = `${IndexTypeValues}`;
 
 export type SearchBase = {
