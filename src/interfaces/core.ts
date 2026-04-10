@@ -41,7 +41,7 @@ export interface ICollection extends CollectionBase {
 export interface VideoBase {
   collectionId: string;
   id: string;
-  length: string;
+  length: string | number;
   name: string;
   description?: string;
   size: string;
@@ -84,7 +84,7 @@ export interface IVideo extends Omit<VideoBase, 'thumbnail'> {
 export interface AudioBase {
   collectionId: string;
   id: string;
-  length: string;
+  length: string | number;
   name: string;
   size: string;
   userId: string;
