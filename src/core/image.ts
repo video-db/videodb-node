@@ -84,12 +84,13 @@ export class Frame extends Image {
     };
   }
 
-  public async describe(prompt?: string, modelName?: string): Promise<string> {
+  public async describe(prompt?: string, modelName?: string, modelConfig?: Record<string, unknown>): Promise<string> {
     const response = await this.#vhttp.post<{ description: string }, object>(
       [ApiPath.video, this.videoId, ApiPath.frame, this.id, ApiPath.describe],
       {
         prompt,
         model_name: modelName,
+        model_config: modelConfig,
       }
     );
     this.description = response.data.description;
