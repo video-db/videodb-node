@@ -480,8 +480,6 @@ export class EditorVideoAsset {
     const volume = config.volume ?? 1;
 
     if (start < 0) throw new Error('start must be non-negative');
-    if (volume < 0 || volume > 5)
-      throw new Error('volume must be between 0 and 5');
 
     this.id = config.id;
     this.start = start;
@@ -538,8 +536,6 @@ export class EditorAudioAsset {
 
   constructor(config: EditorAudioAssetConfig) {
     const volume = config.volume ?? 1;
-    if (volume < 0 || volume > 5)
-      throw new Error('volume must be between 0 and 5');
     this.id = config.id;
     this.start = config.start ?? 0;
     this.volume = volume;
