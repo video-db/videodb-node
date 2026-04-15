@@ -1,6 +1,9 @@
 import { ApiPath, Segmenter } from '@/constants';
 import type { AudioBase, IAudio } from '@/interfaces/core';
 import { HttpClient } from '@/utils/httpClient';
+import { VideodbError } from '@/utils/error';
+
+const VALID_SEGMENTERS: Set<string> = new Set([Segmenter.word, Segmenter.sentence, Segmenter.time]);
 
 const { audio, generate_url, transcription } = ApiPath;
 
@@ -23,7 +26,7 @@ interface TranscriptResponse {
 export class Audio implements IAudio {
   public readonly id: string;
   public readonly collectionId: string;
-  public readonly length: string;
+  public readonly length: number;
   public readonly name: string;
   public readonly size: string;
   public readonly userId: string;
@@ -39,7 +42,7 @@ export class Audio implements IAudio {
   constructor(http: HttpClient, data: AudioBase) {
     this.id = data.id;
     this.collectionId = data.collectionId;
-    this.length = data.length;
+    this.length = Number(data.length) || 0;
     this.name = data.name;
     this.size = data.size;
     this.userId = data.userId;
@@ -78,6 +81,22 @@ export class Audio implements IAudio {
     length: number = 1,
     force?: boolean
   ): Promise<void> => {
+    if (!VALID_SEGMENTERS.has(segmenter)) {
+      throw new VideodbError(
+        `Invalid segmenter '${segmenter}'. Must be one of: ${[...VALID_SEGMENTERS].sort().join(', ')}`
+      );
+    }
+    if (start !== undefined && start < 0) {
+      throw new VideodbError(`start must be non-negative, got ${start}`);
+    }
+    if (end !== undefined && end < 0) {
+      throw new VideodbError(`end must be non-negative, got ${end}`);
+    }
+    if (start !== undefined && end !== undefined && start > end) {
+      throw new VideodbError(
+        `start (${start}) must be less than or equal to end (${end})`
+      );
+    }
     if (this.transcript && !force && !start && !end) {
       return;
     }
@@ -99,11 +118,17 @@ export class Audio implements IAudio {
 
   /**
    * Get timestamped transcript segments for the audio
-   * @param start - Start time in seconds
-   * @param end - End time in seconds
-   * @param segmenter - Segmentation type (word, sentence, time)
-   * @param length - Length of segments when using time segmenter
-   * @param force - Force fetch new transcript
+   * @param start - Start time in seconds (must be >= 0 and <= end)
+   * @param end - End time in seconds (must be >= 0 and >= start)
+   * @param segmenter - How to split the transcript into segments.
+   *   Must be one of `Segmenter.word` (default, one segment per word),
+   *   `Segmenter.sentence` (one segment per sentence), or
+   *   `Segmenter.time` (fixed-duration segments controlled by `length`)
+   * @param length - Duration in seconds for each segment when
+   *   segmenter is `Segmenter.time` (default 1)
+   * @param force - Force re-fetch transcript from the server, bypassing the local cache
+   * @throws {VideodbError} If segmenter is not a valid value, or if
+   *   start/end are negative or start > end
    * @returns List of transcript segments
    */
   public getTranscript = async (

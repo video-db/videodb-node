@@ -147,6 +147,10 @@ export const TextStyleDefaultValues: TextStyleProps = {
 export enum SearchTypeValues {
   keyword = 'keyword',
   semantic = 'semantic',
+}
+
+/** Search types used internally by the SDK.  */
+export enum InternalSearchTypeValues {
   scene = 'scene',
   llm = 'llm',
 }

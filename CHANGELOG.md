@@ -1,10 +1,28 @@
 # Changelog
 
+## [0.2.6] (2026-04-03)
+
+### Changed
+
+- Binary updates for better audio input device support
+- Updated capture binary to v0.3.1
+- Split `SearchTypeValues` into public (`semantic`, `keyword`) and internal (`InternalSearchTypeValues`: `scene`, `llm`) to avoid exposing unsupported search types to users
+
+### Fixed
+
+- Added input validation for `segmenter`, `start`, and `end` in `Video.getTranscript()` and `Audio.getTranscript()`
+- Fixed file upload name extraction for paths containing dots
+- Improved `getTranscript` docstrings for both Video and Audio
+
+---
+
 ## [0.2.5] (2026-03-31)
 
 ### Changed
 - Pinned `axios` dependency's version to `1.14.0`
 - Updated `.npmrc` to install new versions which are atleast 7 days old
+
+---
 
 ## [0.2.4] (2026-03-26)
 

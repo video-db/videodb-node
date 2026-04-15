@@ -65,6 +65,8 @@ const {
   clip,
 } = ApiPath;
 
+const VALID_SEGMENTERS: Set<string> = new Set([Segmenter.word, Segmenter.sentence, Segmenter.time]);
+
 /**
  * The base Video class
  * @remarks
@@ -73,7 +75,7 @@ const {
 export class Video implements IVideo {
   public readonly id: string;
   public readonly collectionId: string;
-  public readonly length: string;
+  public readonly length: number;
   public name: string;
   public readonly description?: string;
   public readonly size: string;
@@ -92,7 +94,7 @@ export class Video implements IVideo {
   constructor(http: HttpClient, data: VideoBase) {
     this.id = data.id;
     this.collectionId = data.collectionId;
-    this.length = data.length;
+    this.length = Number(data.length) || 0;
     this.name = data.name;
     this.description = data.description;
     this.size = data.size;
@@ -175,7 +177,7 @@ export class Video implements IVideo {
     }
 
     const body: { length: number; timeline?: Timeline } = {
-      length: Number(this.length),
+      length: this.length,
     };
     if (timeline) body.timeline = timeline;
 
@@ -214,11 +216,17 @@ export class Video implements IVideo {
   /**
    * Fetches the transcript of the video if it exists, generates one
    * if it doesn't.
-   * @param start - Start time in seconds (optional)
-   * @param end - End time in seconds (optional)
-   * @param segmenter - Segmentation type (word, sentence, time) (optional)
-   * @param length - Length of segments when using time segmenter (optional)
-   * @param force - Force fetch new transcript (optional)
+   * @param start - Start time in seconds (must be >= 0 and <= end)
+   * @param end - End time in seconds (must be >= 0 and >= start)
+   * @param segmenter - How to split the transcript into segments.
+   *   Must be one of `Segmenter.word` (default, one segment per word),
+   *   `Segmenter.sentence` (one segment per sentence), or
+   *   `Segmenter.time` (fixed-duration segments controlled by `length`)
+   * @param length - Duration in seconds for each segment when
+   *   segmenter is `Segmenter.time` (default 1)
+   * @param force - Force re-fetch transcript from the server, bypassing the local cache
+   * @throws {VideodbError} If segmenter is not a valid value, or if
+   *   start/end are negative or start > end
    * @returns The transcript data
    */
   public getTranscript = async (
@@ -228,6 +236,22 @@ export class Video implements IVideo {
     length?: number,
     force?: boolean
   ): Promise<Transcript> => {
+    if (segmenter !== undefined && !VALID_SEGMENTERS.has(segmenter)) {
+      throw new VideodbError(
+        `Invalid segmenter '${segmenter}'. Must be one of: ${[...VALID_SEGMENTERS].sort().join(', ')}`
+      );
+    }
+    if (start !== undefined && start < 0) {
+      throw new VideodbError(`start must be non-negative, got ${start}`);
+    }
+    if (end !== undefined && end < 0) {
+      throw new VideodbError(`end must be non-negative, got ${end}`);
+    }
+    if (start !== undefined && end !== undefined && start > end) {
+      throw new VideodbError(
+        `start (${start}) must be less than or equal to end (${end})`
+      );
+    }
     if (this.transcript && !start && !end && !segmenter && !length && !force) {
       return this.transcript;
     }
@@ -711,7 +735,7 @@ export class Video implements IVideo {
     insertVideo: Video,
     timestamp: number
   ): Promise<string | null> => {
-    const videoLength = Number(this.length);
+    const videoLength = this.length;
     if (timestamp > videoLength) {
       timestamp = videoLength;
     }

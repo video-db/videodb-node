@@ -1,6 +1,6 @@
 {
   "name": "videodb",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "A NodeJS wrapper for VideoDB's API written in TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -40,11 +40,11 @@
   },
   "binaryConfig": {
     "baseUrl": "https://artifacts.videodb.io/capture",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "checksums": {
-      "darwin-arm64": "4cf3ffadab2e3951819547086ddbad6f6fe2976a35590882a5967fa4ee30a4b7",
-      "darwin-x64": "8e9d2b44bb70bea48f172ca0edb34a5f699b226ff7a795aaf8e5011499596150",
-      "win32-x64": "2f47eac709c5852661ec6d073fb3691800e208a348c9d6cad61841d26eea89f4"
+      "darwin-arm64": "cefc35883acd53f63dc50f8deb186ea0a8e17c65e646af8e81a309251a220b9d",
+      "darwin-x64": "8b456607ba3628092081d92c1a22fcf4e8156f4e83b2d3d119bf0244eaa870b2",
+      "win32-x64": "e388639c15ab35ac32179d3fc05a363f0f71d4d90265c6b48fb1af56ecae7736"
     }
   },
   "repository": {
@@ -71,13 +71,13 @@
     "@types/node": "^20.10.3",
     "@types/uuid": "^9.0.8",
     "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "^6.13.2",
-    "@typescript-eslint/parser": "^6.13.2",
+    "@typescript-eslint/eslint-plugin": "^8.58.1",
+    "@typescript-eslint/parser": "^8.58.1",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.0.1",
-    "eslint-plugin-tsdoc": "^0.2.17",
+    "eslint-plugin-tsdoc": "^0.5.2",
     "husky": "^8.0.3",
     "jest": "^29.7.0",
     "prettier": "^3.1.0",
@@ -90,7 +90,7 @@
     "typescript": "^5.3.2"
   },
   "dependencies": {
-    "axios": "1.14.0",
+    "axios": "^1.15.0",
     "form-data": "^4.0.0",
     "lodash": "^4.17.21",
     "tar": "^7.4.3",
