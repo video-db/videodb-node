@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as https from 'https';
-import * as crypto from 'crypto';
-import { execFileSync } from 'child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as https from 'node:https';
+import * as crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import type { BinaryConfig, PlatformInfo } from './types';
 
 /** Name of the macOS .app bundle that wraps the capture binary for TCC compatibility */
@@ -39,9 +39,12 @@ export class RecorderInstaller {
       baseUrl: 'https://artifacts.videodb.io/capture',
       version: '0.3.1',
       checksums: {
-        'darwin-x64': '8b456607ba3628092081d92c1a22fcf4e8156f4e83b2d3d119bf0244eaa870b2',
-        'darwin-arm64': 'cefc35883acd53f63dc50f8deb186ea0a8e17c65e646af8e81a309251a220b9d',
-        'win32-x64': 'e388639c15ab35ac32179d3fc05a363f0f71d4d90265c6b48fb1af56ecae7736',
+        'darwin-x64':
+          '8b456607ba3628092081d92c1a22fcf4e8156f4e83b2d3d119bf0244eaa870b2',
+        'darwin-arm64':
+          'cefc35883acd53f63dc50f8deb186ea0a8e17c65e646af8e81a309251a220b9d',
+        'win32-x64':
+          'e388639c15ab35ac32179d3fc05a363f0f71d4d90265c6b48fb1af56ecae7736',
       },
     };
 
@@ -93,7 +96,7 @@ export class RecorderInstaller {
         MACOS_APP_BUNDLE,
         'Contents',
         'MacOS',
-        'capture',
+        'capture'
       );
     } else if (process.platform === 'win32') {
       binPath = path.join(this.binDir, 'capture.exe');
@@ -305,7 +308,9 @@ export class RecorderInstaller {
             execFileSync('codesign', ['--force', '--sign', '-', appBundlePath]);
             console.log('VideoDB Capture: Code signed .app bundle');
           } catch (e) {
-            console.warn('VideoDB Capture: codesign failed, screen recording may not work on macOS 26+');
+            console.warn(
+              'VideoDB Capture: codesign failed, screen recording may not work on macOS 26+'
+            );
           }
         }
       }
@@ -353,7 +358,7 @@ export class RecorderInstaller {
     }
 
     return new Promise(resolve => {
-      const { spawn } = require('child_process');
+      const { spawn } = require('node:child_process');
       const binaryPath = this.getBinaryPath();
 
       const proc = spawn(binaryPath, ['--version']);
