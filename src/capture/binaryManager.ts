@@ -1,6 +1,6 @@
-import { spawn, type ChildProcess } from 'child_process';
-import * as readline from 'readline';
-import { EventEmitter } from 'events';
+import { spawn, type ChildProcess } from 'node:child_process';
+import * as readline from 'node:readline';
+import { EventEmitter } from 'node:events';
 import { v4 as uuidv4 } from 'uuid';
 import {
   PROTOCOL_PREFIX,
@@ -49,7 +49,7 @@ export class BinaryManager extends EventEmitter {
   private getBinaryCommand(): { command: string; args: string[] } {
     if (this.isDev) {
       // In dev mode, use a mock binary (Node.js script)
-      const path = require('path');
+      const path = require('node:path');
       return {
         command: 'node',
         args: [path.join(__dirname, '..', '..', 'mock', 'binary.js')],
@@ -88,7 +88,7 @@ export class BinaryManager extends EventEmitter {
    */
   private handleMessage(msg: BinaryMessage): void {
     if (msg.type === 'response') {
-      const response = msg as BinaryResponse;
+      const response = msg;
       const { commandId, status, result } = response;
       const promise = this.pendingCommands.get(commandId);
       if (promise) {
@@ -100,7 +100,7 @@ export class BinaryManager extends EventEmitter {
         this.pendingCommands.delete(commandId);
       }
     } else if (msg.type === 'event') {
-      const event = msg as BinaryEvent;
+      const event = msg;
       this.emit(event.event, event.payload);
     }
   }
@@ -301,7 +301,7 @@ export class BinaryManager extends EventEmitter {
         resolve: resolve as (value: unknown) => void,
         reject,
       });
-      this.process!.stdin!.write(payload, (err) => {
+      this.process!.stdin!.write(payload, err => {
         if (err) {
           const pending = this.pendingCommands.get(commandId);
           if (pending) {
