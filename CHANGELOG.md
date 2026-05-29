@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.7] (2026-05-29)
+
+### Added
+
+- Linux x64 support for VideoDB Capture binary
+
+### Changed
+
+- Updated capture binary to v0.3.2
+
+---
+
 ## [0.2.6] (2026-04-03)
 
 ### Changed
