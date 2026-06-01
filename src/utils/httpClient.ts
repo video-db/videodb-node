@@ -35,6 +35,32 @@ export interface HttpClientAuthConfig {
 }
 
 /**
+ * Optional configuration for HttpClient
+ *
+ * `headers` is a free-form bag of extra headers merged into every
+ * request. Keys are auto-formatted to `x-kebab-case` to mirror
+ * `videodb-python`'s kwarg-to-header behavior, e.g. `org_id` → `x-org-id`.
+ */
+export interface HttpClientOptions {
+  headers?: Record<string, string>;
+}
+
+const formatExtraHeaders = (
+  headers?: Record<string, string>
+): Record<string, string> => {
+  if (!headers) return {};
+  const formatted: Record<string, string> = {};
+  for (const [key, value] of Object.entries(headers)) {
+    const normalized = key.toLowerCase().replace(/_/g, '-');
+    const headerKey = normalized.startsWith('x-')
+      ? normalized
+      : `x-${normalized}`;
+    formatted[headerKey] = value;
+  }
+  return formatted;
+};
+
+/**
  * Api initialization to make axios config
  * options available to all child classes
  * internally.
@@ -55,18 +81,29 @@ export class HttpClient {
    * Create an HttpClient with auth configuration
    * @param baseURL - Base URL for the API
    * @param authConfig - Authentication configuration (apiKey or sessionToken)
+   * @param options - Optional client configuration (custom headers)
    */
-  protected constructor(baseURL: string, authConfig: HttpClientAuthConfig);
+  protected constructor(
+    baseURL: string,
+    authConfig: HttpClientAuthConfig,
+    options?: HttpClientOptions
+  );
   /**
    * Create an HttpClient with API key (legacy signature)
    * @param baseURL - Base URL for the API
    * @param apiKey - API key for authentication
+   * @param options - Optional client configuration (custom headers)
    * @deprecated Use the object-based constructor instead
    */
-  protected constructor(baseURL: string, apiKey: string);
   protected constructor(
     baseURL: string,
-    authConfigOrApiKey: HttpClientAuthConfig | string
+    apiKey: string,
+    options?: HttpClientOptions
+  );
+  protected constructor(
+    baseURL: string,
+    authConfigOrApiKey: HttpClientAuthConfig | string,
+    options?: HttpClientOptions
   ) {
     // Handle both signatures
     const authConfig: HttpClientAuthConfig =
@@ -83,6 +120,7 @@ export class HttpClient {
       headers: {
         'x-access-token': token || '',
         'x-videodb-client': SDK_CLIENT_HEADER,
+        ...formatExtraHeaders(options?.headers),
       },
       timeout: HttpClientDefaultValues.timeout,
     });

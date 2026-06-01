@@ -12,6 +12,12 @@ export interface ConnectionConfig {
   sessionToken?: string;
   /** Base URL for the API (optional, defaults to https://api.videodb.io) */
   baseUrl?: string;
+  /**
+   * Extra headers to attach to every request. Keys are auto-formatted to
+   * `x-kebab-case` (e.g. `org_id` → `x-org-id`), mirroring `videodb-python`'s
+   * kwarg-to-header behavior.
+   */
+  headers?: Record<string, string>;
 }
 
 /**
