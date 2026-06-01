@@ -18,7 +18,11 @@ import type {
   ListCaptureSessionsConfig,
   CreateCaptureSessionConfig,
 } from '@/types/capture';
-import { HttpClient, type HttpClientAuthConfig } from '@/utils/httpClient';
+import {
+  HttpClient,
+  type HttpClientAuthConfig,
+  type HttpClientOptions,
+} from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
 
 const {
@@ -40,13 +44,18 @@ const {
 } = ApiPath;
 
 class VdbHttpClient extends HttpClient {
-  constructor(baseURL: string, authConfig: HttpClientAuthConfig);
-  constructor(baseURL: string, apiKey: string);
   constructor(
     baseURL: string,
-    authConfigOrApiKey: HttpClientAuthConfig | string
+    authConfig: HttpClientAuthConfig,
+    options?: HttpClientOptions
+  );
+  constructor(baseURL: string, apiKey: string, options?: HttpClientOptions);
+  constructor(
+    baseURL: string,
+    authConfigOrApiKey: HttpClientAuthConfig | string,
+    options?: HttpClientOptions
   ) {
-    super(baseURL, authConfigOrApiKey as HttpClientAuthConfig);
+    super(baseURL, authConfigOrApiKey as HttpClientAuthConfig, options);
   }
 }
 
@@ -63,22 +72,32 @@ export class Connection {
    * Create a connection with auth configuration
    * @param baseURL - Base URL for the API
    * @param authConfig - Authentication configuration (apiKey or sessionToken)
+   * @param options - Optional client configuration (custom headers).
+   *                  `headers` are auto-formatted to `x-kebab-case`, mirroring
+   *                  the kwarg-to-header behavior of `videodb-python`.
    */
-  constructor(baseURL: string, authConfig: HttpClientAuthConfig);
+  constructor(
+    baseURL: string,
+    authConfig: HttpClientAuthConfig,
+    options?: HttpClientOptions
+  );
   /**
    * Create a connection with API key (legacy signature)
    * @param baseURL - Base URL for the API
    * @param apiKey - API key for authentication
+   * @param options - Optional client configuration (custom headers)
    * @deprecated Use the object-based constructor instead
    */
-  constructor(baseURL: string, apiKey: string);
+  constructor(baseURL: string, apiKey: string, options?: HttpClientOptions);
   constructor(
     baseURL: string,
-    authConfigOrApiKey: HttpClientAuthConfig | string
+    authConfigOrApiKey: HttpClientAuthConfig | string,
+    options?: HttpClientOptions
   ) {
     this.vhttp = new VdbHttpClient(
       baseURL,
-      authConfigOrApiKey as HttpClientAuthConfig
+      authConfigOrApiKey as HttpClientAuthConfig,
+      options
     );
   }
 
