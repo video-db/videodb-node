@@ -38,7 +38,7 @@ function connect(
     return new Connection(baseURL, { apiKey });
   }
 
-  // Handle new signature: connect({ apiKey?, sessionToken?, baseUrl? })
+  // Handle new signature: connect({ apiKey?, sessionToken?, baseUrl?, headers? })
   const config = configOrApiKey;
   const url = config.baseUrl || VIDEO_DB_API;
 
@@ -53,10 +53,14 @@ function connect(
     );
   }
 
-  return new Connection(url, {
-    apiKey: config.apiKey,
-    sessionToken: config.sessionToken,
-  });
+  return new Connection(
+    url,
+    {
+      apiKey: config.apiKey,
+      sessionToken: config.sessionToken,
+    },
+    config.headers ? { headers: config.headers } : undefined
+  );
 }
 
 export { Collection } from './core/collection';

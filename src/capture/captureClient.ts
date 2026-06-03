@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { BinaryManager } from './binaryManager';
 import {
   PermissionType,
@@ -244,8 +244,9 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       throw new Error('channels must include channelId for each channel');
     }
 
-    const primaryVideo = channels.find(ch => ch.is_primary && ch.type === 'video')
-      || channels.find(ch => ch.type === 'video');
+    const primaryVideo =
+      channels.find(ch => ch.is_primary && ch.type === 'video') ||
+      channels.find(ch => ch.type === 'video');
 
     await this.binaryManager.sendCommand('startRecording', {
       uploadToken: this.sessionToken,

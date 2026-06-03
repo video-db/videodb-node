@@ -26,13 +26,14 @@ import {
   NoDataResponse,
 } from '@/types/response';
 import type { Timeline, Transcript } from '@/types/video';
-import { playStream, SnakeKeysToCamelCase } from '@/utils';
+import { fromCamelToSnake, playStream, SnakeKeysToCamelCase } from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import {
   DefaultIndexType,
   DefaultSearchType,
   IndexTypeValues,
   SceneExtractionType,
+  SubtitleStyleDefaultValues,
 } from '@/core/config';
 import { SearchFactory } from './search';
 import { SearchResult } from './search/searchResult';
@@ -635,12 +636,13 @@ export class Video implements IVideo {
    *
    */
   public addSubtitle = async (config?: Partial<SubtitleStyleProps>) => {
+    const merged: SubtitleStyleProps = { ...SubtitleStyleDefaultValues, ...config };
     const res = await this.#vhttp.post<
       GenerateStreamResponse,
-      { type: string; subtitle_style: Partial<SubtitleStyleProps> }
+      { type: string; subtitle_style: Record<string, unknown> }
     >([video, this.id, workflow], {
       type: Workflows.addSubtitles,
-      subtitle_style: { ...config },
+      subtitle_style: fromCamelToSnake(merged),
     });
     return res.data.streamUrl;
   };
