@@ -71,6 +71,14 @@ const convertValueSnakeToCamel = (v: unknown): unknown => {
 export const fromSnakeToCamel = <T extends object>(
   data: T
 ): SnakeKeysToCamelCase<T> => {
+  if (_.isArray(data)) {
+    return data.map((item: unknown) =>
+      _.isObject(item) && item !== null && !_.isArray(item)
+        ? fromSnakeToCamel(item as object)
+        : item
+    ) as SnakeKeysToCamelCase<T>;
+  }
+
   return _(data)
     .mapKeys((_v: unknown, k: string) => _.camelCase(k))
     .mapValues(convertValueSnakeToCamel)
