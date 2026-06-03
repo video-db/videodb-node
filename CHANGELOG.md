@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.7] (2026-06-03)
+
+### Added
+
+- Custom headers support in `connect()` via a new `headers` option. Keys are auto-formatted to `x-kebab-case` (e.g. `org_id` → `x-org-id`), mirroring `videodb-python`'s kwarg-to-header behavior
+- `HttpClientOptions` exported alongside `HttpClient` for downstream consumers
+
+### Changed
+
+- All Node.js built-in imports now use the `node:` specifier prefix (`node:fs`, `node:path`, `node:child_process`, etc.) for stricter ESM/CJS interop
+
+### Fixed
+
+- `Video.addSubtitle()` now merges defaults from `SubtitleStyleDefaultValues` and converts keys to snake_case before sending, so partial style overrides are applied correctly server-side
+
+---
+
 ## [0.2.6] (2026-04-03)
 
 ### Changed
