@@ -7,6 +7,7 @@ import type {
 import {
   AuthenticationError,
   InvalidRequestError,
+  RequestTimeoutError,
   VideodbError,
 } from '@/utils/error';
 import { fromSnakeToCamel } from '@/utils';
@@ -21,8 +22,28 @@ import axios, {
 } from 'axios';
 import FormData from 'form-data';
 
-const POLLING_INTERVAL = 5000;
-const MAX_POLLING_TIME = 500000;
+const POLLING_INTERVAL = HttpClientDefaultValues.pollInterval;
+const MAX_POLLING_TIME = HttpClientDefaultValues.maxPollTime;
+
+/**
+ * Per-call polling controls, mirroring the Python client's
+ * `wait` / `max_poll_time` / `poll_interval` kwargs.
+ */
+export interface RequestPollOptions {
+  /** When false, skip polling the async output URL and return immediately. */
+  wait?: boolean;
+  /** Override the max poll time (ms) for this call. */
+  maxPollTime?: number;
+  /** Override the poll interval (ms) for this call. */
+  pollInterval?: number;
+  /**
+   * When false, do NOT snake→camel convert the response body. Use for endpoints
+   * whose payload contains user-defined opaque key maps (e.g. index `data`,
+   * `field_schema`, aggregate buckets) that must be preserved verbatim to match
+   * the server/Python SDK. Defaults to true.
+   */
+  convert?: boolean;
+}
 
 /**
  * Authentication configuration for HttpClient
@@ -147,10 +168,14 @@ export class HttpClient {
    * @param url - The output URL to poll
    * @returns The final response data (already converted to camelCase)
    */
-  #getOutput = async <R>(url: string): Promise<R> => {
+  #getOutput = async <R>(
+    url: string,
+    maxPollTime: number = MAX_POLLING_TIME,
+    pollInterval: number = POLLING_INTERVAL
+  ): Promise<R> => {
     const startTime = Date.now();
 
-    while (Date.now() - startTime < MAX_POLLING_TIME) {
+    while (Date.now() - startTime < maxPollTime) {
       const response = await this.#db.get<ApiResponseOf<R>>(url);
       const data = response.data;
 
@@ -158,7 +183,7 @@ export class HttpClient {
         data.status === ResponseStatus.in_progress ||
         data.status === ResponseStatus.processing
       ) {
-        await this.#sleep(POLLING_INTERVAL);
+        await this.#sleep(pollInterval);
         continue;
       }
 
@@ -175,8 +200,8 @@ export class HttpClient {
       return this.#convertResponseData(data.data);
     }
 
-    throw new VideodbError(
-      'Job timed out after ' + MAX_POLLING_TIME / 1000 + ' seconds'
+    throw new RequestTimeoutError(
+      'Polling timed out after ' + Math.round(maxPollTime / 1000) + 's'
     );
   };
 
@@ -186,7 +211,8 @@ export class HttpClient {
    * @typeParam D - The request data type (must be provided in snake_case)
    */
   #makeRequest = async <R, D = undefined>(
-    options: AxiosRequestConfig<D>
+    options: AxiosRequestConfig<D>,
+    poll?: RequestPollOptions
   ): Promise<ResponseOf<R>> => {
     try {
       const response = await this.#db.request<
@@ -195,23 +221,36 @@ export class HttpClient {
         D
       >(options);
       const data = response.data;
+      const convert = poll?.convert !== false;
+
+      // wait=false: do not poll the async output URL; return data as-is.
+      if (poll?.wait === false) {
+        return {
+          ...data,
+          data: convert ? this.#convertResponseData(data.data) : data.data,
+        } as ResponseOf<R>;
+      }
 
       if (data.status === ResponseStatus.processing) {
         if (data.request_type === 'async') {
           return {
             ...data,
-            data: this.#convertResponseData(data.data),
+            data: convert ? this.#convertResponseData(data.data) : data.data,
           } as ResponseOf<R>;
         }
 
         const outputUrl = (data.data as { output_url?: string })?.output_url;
         if (outputUrl) {
-          const result = await this.#getOutput<R>(outputUrl);
+          const result = await this.#getOutput<R>(
+            outputUrl,
+            poll?.maxPollTime,
+            poll?.pollInterval
+          );
           return { data: result, success: true } as ResponseOf<R>;
         }
       }
 
-      return this.#parseResponse(data);
+      return this.#parseResponse(data, convert);
     } catch (error) {
       if (error instanceof VideodbError) {
         throw error;
@@ -225,13 +264,16 @@ export class HttpClient {
   /**
    * Parses API response and converts data to camelCase
    */
-  #parseResponse = <R>(data: ApiResponseOf<R>): ResponseOf<R> => {
+  #parseResponse = <R>(
+    data: ApiResponseOf<R>,
+    convert: boolean = true
+  ): ResponseOf<R> => {
     if (data.success === false) {
       throw new VideodbError(data.message);
     }
     return {
       ...data,
-      data: this.#convertResponseData(data.data),
+      data: convert ? this.#convertResponseData(data.data) : data.data,
     } as ResponseOf<R>;
   };
 
@@ -265,13 +307,17 @@ export class HttpClient {
 
   public get = async <R>(
     urlSeries: string[],
-    options?: AxiosRequestConfig<undefined>
+    options?: AxiosRequestConfig<undefined>,
+    poll?: RequestPollOptions
   ) => {
-    return await this.#makeRequest<R>({
-      method: 'GET',
-      url: urlSeries.join('/'),
-      ...options,
-    });
+    return await this.#makeRequest<R>(
+      {
+        method: 'GET',
+        url: urlSeries.join('/'),
+        ...options,
+      },
+      poll
+    );
   };
 
   public delete = async <R>(
@@ -288,18 +334,22 @@ export class HttpClient {
   public post = async <R, D = undefined>(
     urlSeries: string[],
     data?: D,
-    options?: AxiosRequestConfig<D>
+    options?: AxiosRequestConfig<D>,
+    poll?: RequestPollOptions
   ) => {
-    return await this.#makeRequest<R, D>({
-      method: 'POST',
-      url: urlSeries.join('/'),
-      data,
-      headers: new AxiosHeaders({
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      }),
-      ...options,
-    });
+    return await this.#makeRequest<R, D>(
+      {
+        method: 'POST',
+        url: urlSeries.join('/'),
+        data,
+        headers: new AxiosHeaders({
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        }),
+        ...options,
+      },
+      poll
+    );
   };
 
   public put = async <R, D = undefined>(

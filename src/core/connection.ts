@@ -24,6 +24,11 @@ import {
   type HttpClientOptions,
 } from '@/utils/httpClient';
 import { uploadToServer } from '@/utils/upload';
+import { Sandbox, type SandboxBase } from '@/core/sandbox';
+import { VoiceClone, type VoiceCloneBase } from '@/core/voiceClone';
+import { GenerationJob, fetchJobStatus, type JobStatus } from '@/core/job';
+import type { Audio } from '@/core/audio';
+import type { Image } from '@/core/image';
 
 const {
   collection,
@@ -41,6 +46,9 @@ const {
   websocket,
   capture,
   session,
+  sandbox,
+  voice_clone,
+  async_response,
 } = ApiPath;
 
 class VdbHttpClient extends HttpClient {
@@ -573,5 +581,155 @@ export class Connection {
       { expires_in: expiresIn }
     );
     return res.data.token;
+  };
+
+  /**
+   * Fetch the normalized status of a generation job.
+   * @param jobId - ID of the generation job
+   */
+  public getJobStatus = async (jobId: string): Promise<JobStatus> => {
+    return fetchJobStatus(this.vhttp, jobId);
+  };
+
+  /**
+   * Poll a generation job until it completes and return the generated asset.
+   * @param jobId - ID of the generation job
+   * @param timeout - Maximum seconds to wait (default 600)
+   * @param interval - Seconds between polls (default 5)
+   * @param resultType - Expected asset type (`"audio"` or `"image"`)
+   */
+  public waitForJob = async (
+    jobId: string,
+    timeout: number = 600,
+    interval: number = 5,
+    resultType?: string
+  ): Promise<Audio | Image | Record<string, unknown>> => {
+    const job = new GenerationJob(this.vhttp, { jobId, resultType });
+    return job.wait(timeout, interval);
+  };
+
+  /**
+   * Create a persistent GPU sandbox.
+   * @param tier - Compute tier (see {@link SandboxTier})
+   * @param name - Human-readable name
+   * @param callbackUrl - URL to notify on provisioning events
+   */
+  public createSandbox = async (
+    tier?: string,
+    name?: string,
+    callbackUrl?: string
+  ): Promise<Sandbox> => {
+    const res = await this.vhttp.post<SandboxBase, object>([sandbox], {
+      tier,
+      name,
+      callback_url: callbackUrl,
+    });
+    return new Sandbox(this.vhttp, res.data);
+  };
+
+  /**
+   * Fetch a sandbox by ID.
+   * @param sandboxId - ID of the sandbox
+   */
+  public getSandbox = async (sandboxId: string): Promise<Sandbox> => {
+    const res = await this.vhttp.get<SandboxBase>([sandbox, sandboxId]);
+    return new Sandbox(this.vhttp, res.data);
+  };
+
+  /**
+   * List sandboxes, optionally filtered by status.
+   * @param status - Filter by sandbox status (see {@link SandboxStatus})
+   */
+  public listSandboxes = async (status?: string): Promise<Sandbox[]> => {
+    const res = await this.vhttp.get<{ sandboxes?: SandboxBase[] }>(
+      [sandbox],
+      status ? { params: { status } } : undefined
+    );
+    return (res.data?.sandboxes || []).map(s => new Sandbox(this.vhttp, s));
+  };
+
+  /**
+   * Create a reusable cloned voice.
+   * @param refAudioId - ID of the reference audio asset
+   * @param name - Name for the voice clone
+   * @param description - Description of the voice clone
+   * @param refText - Reference transcript for the audio
+   * @param language - Language code
+   * @param collectionId - Collection to create the clone in
+   */
+  public createVoiceClone = async (
+    refAudioId: string,
+    name?: string,
+    description?: string,
+    refText?: string,
+    language?: string,
+    collectionId?: string
+  ): Promise<VoiceClone> => {
+    const res = await this.vhttp.post<VoiceCloneBase, object>([voice_clone], {
+      ref_audio_id: refAudioId,
+      name,
+      description,
+      ref_text: refText,
+      language,
+      collection_id: collectionId,
+    });
+    return new VoiceClone(this.vhttp, res.data);
+  };
+
+  /**
+   * Fetch a voice clone by ID.
+   * @param voiceCloneId - ID of the voice clone
+   */
+  public getVoiceClone = async (voiceCloneId: string): Promise<VoiceClone> => {
+    const res = await this.vhttp.get<VoiceCloneBase>([
+      voice_clone,
+      voiceCloneId,
+    ]);
+    return new VoiceClone(this.vhttp, res.data);
+  };
+
+  /**
+   * List voice clones.
+   * @param page - Page number (default 1)
+   * @param pageSize - Page size (default 20)
+   * @param language - Filter by language code
+   */
+  public listVoiceClones = async (
+    page: number = 1,
+    pageSize: number = 20,
+    language?: string
+  ): Promise<VoiceClone[]> => {
+    const params: Record<string, unknown> = { page, page_size: pageSize };
+    if (language) params.language = language;
+    const res = await this.vhttp.get<{ voiceClones?: VoiceCloneBase[] }>(
+      [voice_clone],
+      { params }
+    );
+    return (res.data?.voiceClones || []).map(
+      v => new VoiceClone(this.vhttp, v)
+    );
+  };
+
+  /**
+   * Delete a voice clone by ID.
+   * @param voiceCloneId - ID of the voice clone
+   */
+  public deleteVoiceClone = async (voiceCloneId: string): Promise<void> => {
+    await this.vhttp.delete([voice_clone, voiceCloneId]);
+  };
+
+  /**
+   * Fetch a stored async response by ID without polling.
+   * @param id - ID of the async response
+   */
+  public getAsyncResponse = async (
+    id: string
+  ): Promise<Record<string, unknown>> => {
+    const res = await this.vhttp.get<Record<string, unknown>>(
+      [async_response, id],
+      undefined,
+      { wait: false }
+    );
+    return res.data;
   };
 }

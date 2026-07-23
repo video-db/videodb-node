@@ -101,7 +101,9 @@ export {
   RTStreamSceneIndex,
   RTStreamSearchResult,
   RTStreamShot,
-  type RTStreamExportResult,
+  RTStreamExportResult,
+  RTStreamUnderstanding,
+  RTStreamIndex,
 } from './core/rtstream';
 export {
   WebSocketConnection,
@@ -111,6 +113,51 @@ export {
 export { CaptureSession, type CaptureSessionBase } from './core/captureSession';
 export { SceneIndex, type SceneData, type AlertData } from './core/sceneIndex';
 export { SpokenIndex } from './core/spokenIndex';
+
+// Indexing v2 — retrieval, understanding, generation, compute
+export {
+  Understanding,
+  UnderstandingAnalyzer,
+  normalizeUnderstandingAnalyzers,
+  normalizeAnalyzerType,
+  defaultAnalyzerName,
+  type AnalyzerSpec,
+  type AnalyzerData,
+  type UnderstandingData,
+} from './core/understanding';
+export {
+  Index,
+  IndexRecord,
+  FieldSchema,
+  RecordPage,
+  type IndexData,
+  type IndexRecordData,
+  type FieldSchemaData,
+} from './core/indexManifest';
+export { GenerationJob, type JobStatus, type JobData } from './core/job';
+export { Sandbox, type SandboxBase } from './core/sandbox';
+export { SandboxModel, type SandboxModelValue } from './core/sandboxModels';
+export { VoiceClone, type VoiceCloneBase } from './core/voiceClone';
+export {
+  AskResponse,
+  SearchResponse,
+  warnLegacySearchOnce,
+  type AskResponseData,
+  type SearchResponseData,
+} from './core/search/responses';
+export type { VideoSearchOptions, IndexSource } from './core/video';
+export type { CollectionSearchOptions } from './core/collection';
+export {
+  IndexCapability,
+  FieldGroup,
+  SandboxTier,
+  SandboxStatus,
+} from './constants';
+export {
+  buildIframeEmbedCode,
+  playerUrlToEmbedUrl,
+} from './utils';
+export { RequestTimeoutError } from './utils/error';
 
 // Capture session types
 export {
