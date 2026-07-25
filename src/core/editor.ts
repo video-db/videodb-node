@@ -1,4 +1,6 @@
 import { ApiPath } from '@/constants';
+import { buildIframeEmbedCode } from '@/utils';
+import { VideodbError } from '@/utils/error';
 import { HttpClient } from '@/utils/httpClient';
 import type { Connection } from './connection';
 
@@ -837,5 +839,38 @@ export class EditorTimeline {
       { stream_url: streamUrl }
     );
     return res.data;
+  }
+
+  /**
+   * Generate an HTML iframe embed code for the editor timeline.
+   * @param width - Width of the iframe (default `"100%"`)
+   * @param height - Height of the iframe in pixels (default `405`)
+   * @param title - Title attribute (default `"VideoDB Player"`)
+   * @param allowFullscreen - Whether to allow fullscreen (default `true`)
+   * @param autoGenerate - If true and playerUrl is missing, auto-generate it (default `true`)
+   * @throws {VideodbError} If the player URL is not available.
+   */
+  async getEmbedCode(
+    width: string = '100%',
+    height: number = 405,
+    title: string = 'VideoDB Player',
+    allowFullscreen: boolean = true,
+    autoGenerate: boolean = true
+  ): Promise<string> {
+    if (!this.playerUrl && autoGenerate) {
+      await this.generateStream();
+    }
+    if (!this.playerUrl) {
+      throw new VideodbError(
+        'player_url not available. Call generateStream() first or set autoGenerate=true.'
+      );
+    }
+    return buildIframeEmbedCode(
+      this.playerUrl,
+      width,
+      height,
+      title,
+      allowFullscreen
+    );
   }
 }

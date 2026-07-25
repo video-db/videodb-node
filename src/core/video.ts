@@ -13,6 +13,13 @@ import type {
   ImageBase,
 } from '@/interfaces/core';
 import { Frame, Image } from '@/core/image';
+import { Index, type RawIndexManifest } from '@/core/indexManifest';
+import {
+  Understanding,
+  normalizeUnderstandingAnalyzers,
+  type AnalyzerSpec,
+  type UnderstandingData,
+} from '@/core/understanding';
 import { Scene, SceneCollection } from '@/core/scene';
 import {
   ListSceneIndex,
@@ -26,7 +33,12 @@ import {
   NoDataResponse,
 } from '@/types/response';
 import type { Timeline, Transcript } from '@/types/video';
-import { fromCamelToSnake, playStream, SnakeKeysToCamelCase } from '@/utils';
+import {
+  buildIframeEmbedCode,
+  fromCamelToSnake,
+  playStream,
+  SnakeKeysToCamelCase,
+} from '@/utils';
 import { HttpClient } from '@/utils/httpClient';
 import {
   DefaultIndexType,
@@ -37,6 +49,14 @@ import {
 } from '@/core/config';
 import { SearchFactory } from './search';
 import { SearchResult } from './search/searchResult';
+import {
+  AskResponse,
+  SearchResponse,
+  warnLegacySearchOnce,
+  type AskResponseData,
+  type SearchResponseData,
+} from './search/responses';
+import type { SearchResponse as SearchApiResponse } from '@/types/response';
 import {
   ExtractSceneConfig,
   IndexSceneConfig,
@@ -64,9 +84,59 @@ const {
   compile,
   collection,
   clip,
+  understand,
+  indexes,
+  ask,
+  semantic_search,
+  query: queryPath,
+  aggregate,
+  search: searchPath,
 } = ApiPath;
 
-const VALID_SEGMENTERS: Set<string> = new Set([Segmenter.word, Segmenter.sentence, Segmenter.time]);
+const VALID_SEGMENTERS: Set<string> = new Set([
+  Segmenter.word,
+  Segmenter.sentence,
+  Segmenter.time,
+]);
+
+/**
+ * Options for {@link Video.search}. Combines new-style (v2) params with
+ * legacy-shaped params; passing any legacy param routes the call to
+ * {@link Video.legacySearch}.
+ */
+export interface VideoSearchOptions {
+  // legacy-shaped
+  searchType?: SearchType;
+  indexType?: IndexType;
+  resultThreshold?: number;
+  scoreThreshold?: number;
+  dynamicScorePercentage?: number;
+  filter?: Array<Record<string, unknown>>;
+  sortDocsOn?: string;
+  sceneIndexId?: string;
+  indexId?: string;
+  algorithm?: string;
+  namespace?: string;
+  // new (v2)
+  topK?: number;
+  mode?: string;
+  returnFields?: unknown[] | Record<string, unknown> | string;
+  includeClip?: boolean;
+  sessionId?: string;
+  config?: Record<string, unknown>;
+  // unsupported in search() — surfaced for a clear error
+  indexName?: string;
+  indexNames?: string[] | string;
+  indexIds?: string[] | string;
+  // internal — rejected
+  deepsearchConfig?: unknown;
+}
+
+/** Accepted `source` shapes for {@link Video.index}. */
+export type IndexSource =
+  | { toIndexSource: () => Record<string, unknown> }
+  | Record<string, unknown>
+  | unknown[];
 
 /**
  * The base Video class
@@ -80,9 +150,9 @@ export class Video implements IVideo {
   public name: string;
   public readonly description?: string;
   public readonly size: string;
-  public readonly streamUrl: string;
+  public streamUrl: string;
   public readonly userId: string;
-  public readonly playerUrl: string;
+  public playerUrl: string;
   public thumbnail?: string;
   public transcript?: Transcript;
   #vhttp: HttpClient;
@@ -107,7 +177,220 @@ export class Video implements IVideo {
   }
 
   /**
-   * Search for a query in the video
+   * Search this video.
+   *
+   * New search is used by default. Calls that pass legacy-shaped parameters are
+   * routed to {@link legacySearch} with a one-time warning.
+   * @param query - Search query
+   * @param options - Search options (new-style, or legacy-shaped)
+   */
+  public search = async (
+    query: string,
+    options: VideoSearchOptions = {}
+  ): Promise<SearchResponse | SearchResult> => {
+    const oldParams: (keyof VideoSearchOptions)[] = [
+      'searchType',
+      'indexType',
+      'resultThreshold',
+      'dynamicScorePercentage',
+      'sceneIndexId',
+      'indexId',
+      'algorithm',
+      'sortDocsOn',
+      'namespace',
+    ];
+    const newParams: (keyof VideoSearchOptions)[] = [
+      'topK',
+      'mode',
+      'returnFields',
+      'includeClip',
+      'sessionId',
+      'config',
+    ];
+    const unsupported: (keyof VideoSearchOptions)[] = [
+      'indexName',
+      'indexNames',
+      'indexId',
+      'indexIds',
+    ];
+
+    const hasOld = oldParams.some(
+      k => options[k] !== undefined && options[k] !== null
+    );
+    const hasNew = newParams.some(
+      k => options[k] !== undefined && options[k] !== null
+    );
+    const hasUnsupported = unsupported.some(
+      k => options[k] !== undefined && options[k] !== null
+    );
+
+    if (options.deepsearchConfig != null) {
+      throw new VideodbError(
+        'deepsearchConfig is internal and cannot be passed to search().'
+      );
+    }
+    if (hasOld && (hasNew || hasUnsupported)) {
+      throw new VideodbError(
+        'Cannot mix legacy search params with new search params. ' +
+          'Use search(...) for new search or legacySearch(...) for legacy search.'
+      );
+    }
+    if (hasUnsupported) {
+      throw new VideodbError(
+        'indexName/indexNames/indexId/indexIds are not supported in search(). ' +
+          'Use semanticSearch(), query(), or aggregate() for index-specific calls.'
+      );
+    }
+
+    if (hasOld) {
+      warnLegacySearchOnce();
+      return this.legacySearch(
+        query,
+        options.searchType,
+        options.indexType,
+        options.resultThreshold,
+        options.scoreThreshold,
+        options.dynamicScorePercentage,
+        options.filter,
+        options.sortDocsOn
+      );
+    }
+
+    return this.#newSearch(query, options);
+  };
+
+  #newSearch = async (
+    query: string,
+    options: VideoSearchOptions
+  ): Promise<SearchResponse> => {
+    const payload: Record<string, unknown> = { query };
+    if (options.topK != null) payload.top_k = options.topK;
+    if (options.mode != null) payload.mode = options.mode;
+    if (options.returnFields != null)
+      payload.return_fields = options.returnFields;
+    if (options.includeClip != null) payload.include_clip = options.includeClip;
+    if (options.sessionId != null) payload.session_id = options.sessionId;
+    if (options.config != null) payload.config = options.config;
+    const res = await this.#vhttp.post<Record<string, unknown>, typeof payload>(
+      [video, this.id, searchPath, 'v2'],
+      payload
+    );
+    return new SearchResponse(this.#vhttp, res.data as SearchResponseData);
+  };
+
+  /**
+   * Ask a question and get an answer generated from retrieved video context.
+   * @param question - The question to answer
+   * @param topK - Number of context chunks to retrieve (default 15)
+   * @param mode - Retrieval/answer mode (default `"default"`)
+   * @param includeSources - Whether to include source shots (default false)
+   */
+  public ask = async (
+    question: string,
+    topK: number = 15,
+    mode: string = 'default',
+    includeSources: boolean = false
+  ): Promise<AskResponse> => {
+    const res = await this.#vhttp.post<Record<string, unknown>, object>(
+      [video, this.id, ask],
+      { question, top_k: topK, mode, include_sources: includeSources }
+    );
+    return new AskResponse(this.#vhttp, res.data as AskResponseData);
+  };
+
+  /**
+   * Semantic search across one or more indexes on this video.
+   */
+  public semanticSearch = async (
+    query: string,
+    options: {
+      indexNames?: string[] | string;
+      topK?: number;
+      scoreThreshold?: number;
+      filter?: unknown[] | Record<string, unknown>;
+      returnFields?: unknown[] | Record<string, unknown> | string;
+      indexIds?: string[] | string;
+    } = {}
+  ): Promise<SearchResult> => {
+    const res = await this.#vhttp.post<SearchApiResponse, object>(
+      [video, this.id, semantic_search],
+      {
+        query,
+        index_names: options.indexNames,
+        index_ids: options.indexIds,
+        top_k: options.topK ?? 10,
+        score_threshold: options.scoreThreshold,
+        filter: options.filter,
+        return_fields: options.returnFields,
+      }
+    );
+    return new SearchResult(this.#vhttp, res.data);
+  };
+
+  /**
+   * Structured query against an index on this video.
+   */
+  public query = async (
+    options: {
+      indexName?: string;
+      filter?: unknown[] | Record<string, unknown>;
+      limit?: number;
+      returnFields?: unknown[] | Record<string, unknown> | string;
+      sort?: string | [string, string][];
+      indexId?: string;
+    } = {}
+  ): Promise<SearchResult> => {
+    const res = await this.#vhttp.post<SearchApiResponse, object>(
+      [video, this.id, queryPath],
+      {
+        index_name: options.indexName,
+        index_id: options.indexId,
+        filter: options.filter,
+        limit: options.limit ?? 100,
+        return_fields: options.returnFields,
+        sort: options.sort,
+      }
+    );
+    return new SearchResult(this.#vhttp, res.data);
+  };
+
+  /**
+   * Aggregate over an index on this video.
+   */
+  public aggregate = async (
+    options: {
+      indexName?: string;
+      filter?: unknown[] | Record<string, unknown>;
+      groupBy?: string;
+      metric?: string;
+      limit?: number;
+      sort?: string | [string, string][];
+      indexId?: string;
+    } = {}
+  ): Promise<Record<string, unknown> | Record<string, unknown>[]> => {
+    // convert:false — aggregate buckets are keyed by user field names/values.
+    const res = await this.#vhttp.post<
+      Record<string, unknown> | Record<string, unknown>[],
+      object
+    >(
+      [video, this.id, aggregate],
+      {
+        index_name: options.indexName,
+        index_id: options.indexId,
+        filter: options.filter,
+        group_by: options.groupBy,
+        metric: options.metric ?? 'count',
+        limit: options.limit ?? 100,
+        sort: options.sort,
+      },
+      undefined,
+      { convert: false }
+    );
+    return res.data;
+  };
+
+  /**
+   * Legacy search (pre-v2). Delegates to the {@link SearchFactory}.
    * @param query - Search query
    * @param searchType - [optional] Type of search to be performed
    * @param indexType - [optional] Index Type
@@ -117,7 +400,7 @@ export class Video implements IVideo {
    * @param filter - [optional] Additional metadata filters
    * @param sortDocsOn - [optional] Sort docs within each video by "score" or "start"
    */
-  public search = async (
+  public legacySearch = async (
     query: string,
     searchType?: SearchType,
     indexType?: IndexType,
@@ -126,7 +409,7 @@ export class Video implements IVideo {
     dynamicScorePercentage?: number,
     filter?: Array<Record<string, unknown>>,
     sortDocsOn?: string
-  ) => {
+  ): Promise<SearchResult> => {
     const s = new SearchFactory(this.#vhttp);
     const searchFunc = s.getSearch(searchType ?? DefaultSearchType);
     const results = await searchFunc.searchInsideVideo({
@@ -151,10 +434,10 @@ export class Video implements IVideo {
   public update = async (options: { name?: string }) => {
     const data: Record<string, unknown> = {};
     if (options.name !== undefined) data.name = options.name;
-    const res = await this.#vhttp.patch<{ id: string; name: string }, typeof data>(
-      [video, this.id],
-      data
-    );
+    const res = await this.#vhttp.patch<
+      { id: string; name: string },
+      typeof data
+    >([video, this.id], data);
     if (options.name !== undefined) this.name = res.data.name ?? options.name;
   };
 
@@ -187,6 +470,8 @@ export class Video implements IVideo {
       body
     );
 
+    this.streamUrl = res.data.streamUrl;
+    if (res.data.playerUrl) this.playerUrl = res.data.playerUrl;
     return res.data.streamUrl;
   };
 
@@ -385,14 +670,16 @@ export class Video implements IVideo {
     };
 
     const payload: Record<string, unknown> = { ...defaultConfig };
-    if (config.extractionType !== undefined) payload.extraction_type = config.extractionType;
-    if (config.extractionConfig !== undefined) payload.extraction_config = config.extractionConfig;
+    if (config.extractionType !== undefined)
+      payload.extraction_type = config.extractionType;
+    if (config.extractionConfig !== undefined)
+      payload.extraction_config = config.extractionConfig;
     if (config.force !== undefined) payload.force = config.force;
 
-    const res = await this.#vhttp.post<
-      SceneCollectionResponse,
-      typeof payload
-    >([video, this.id, scenes], payload);
+    const res = await this.#vhttp.post<SceneCollectionResponse, typeof payload>(
+      [video, this.id, scenes],
+      payload
+    );
 
     return this._formatSceneCollectionData(res.data.sceneCollection);
   };
@@ -447,9 +734,12 @@ export class Video implements IVideo {
     if (config.prompt !== undefined) payload.prompt = config.prompt;
     if (config.metadata !== undefined) payload.metadata = config.metadata;
     if (config.modelName !== undefined) payload.model_name = config.modelName;
-    if (config.modelConfig !== undefined) payload.model_config = config.modelConfig;
+    if (config.modelConfig !== undefined)
+      payload.model_config = config.modelConfig;
     if (config.name !== undefined) payload.name = config.name;
-    if (config.callbackUrl !== undefined) payload.callback_url = config.callbackUrl;
+    if (config.callbackUrl !== undefined)
+      payload.callback_url = config.callbackUrl;
+    if (config.sandboxId !== undefined) payload.sandbox_id = config.sandboxId;
     if (config.scenes) {
       payload.scenes = config.scenes.map((s: Scene) => s.getRequestData());
     }
@@ -522,6 +812,7 @@ export class Video implements IVideo {
     modelConfig?: Record<string, unknown>;
     name?: string;
     callbackUrl?: string;
+    sandboxId?: string;
   }): Promise<string | undefined> => {
     const {
       prompt,
@@ -530,6 +821,7 @@ export class Video implements IVideo {
       modelConfig = {},
       name,
       callbackUrl,
+      sandboxId,
     } = config ?? {};
 
     const extractionType = batchConfig.type ?? 'time';
@@ -561,6 +853,7 @@ export class Video implements IVideo {
         model_config: modelConfig,
         name,
         callback_url: callbackUrl,
+        sandbox_id: sandboxId,
       }
     );
 
@@ -631,12 +924,248 @@ export class Video implements IVideo {
   };
 
   /**
+   * Create an understanding run for this video.
+   * @param analyzers - Analyzer definitions. The SDK accepts the friendly
+   *   analyzer type `spoken_words` and maps it to the server analyzer.
+   * @param options - Optional run-level config (segmentation/sampling/transform/
+   *   audioChunking/callbackUrl) plus any extra fields.
+   */
+  public understand = async (
+    analyzers: AnalyzerSpec[],
+    options: {
+      segmentation?: Record<string, unknown>;
+      sampling?: Record<string, unknown>;
+      transform?: Record<string, unknown>;
+      audioChunking?: Record<string, unknown>;
+      callbackUrl?: string;
+      [key: string]: unknown;
+    } = {}
+  ): Promise<Understanding> => {
+    const normalized = normalizeUnderstandingAnalyzers(analyzers);
+    const payload: Record<string, unknown> = { analyzers: normalized };
+    if (options.segmentation != null)
+      payload.segmentation = options.segmentation;
+    if (options.sampling != null) payload.sampling = options.sampling;
+    if (options.transform != null) payload.transform = options.transform;
+    if (options.audioChunking != null)
+      payload.audio_chunking = options.audioChunking;
+    if (options.callbackUrl != null) payload.callback_url = options.callbackUrl;
+    for (const [key, value] of Object.entries(options)) {
+      if (
+        ![
+          'segmentation',
+          'sampling',
+          'transform',
+          'audioChunking',
+          'callbackUrl',
+        ].includes(key) &&
+        value != null
+      ) {
+        payload[key] = value;
+      }
+    }
+
+    const res = await this.#vhttp.post<UnderstandingData, typeof payload>(
+      [video, this.id, understand],
+      payload
+    );
+    const data: UnderstandingData = res.data ?? {};
+    if (!data.analyzers) {
+      data.analyzers = normalized.map(a => ({
+        name: a.name,
+        type: a.type,
+        status: 'pending',
+      }));
+    }
+    return new Understanding(this.#vhttp, this.id, {
+      collectionId: this.collectionId,
+      ...data,
+    });
+  };
+
+  /**
+   * Get an understanding run by id.
+   * @param understandingId - Understanding run id
+   */
+  public getUnderstanding = async (
+    understandingId: string
+  ): Promise<Understanding> => {
+    if (!understandingId) throw new VideodbError('understandingId is required');
+    const res = await this.#vhttp.get<UnderstandingData>([
+      video,
+      this.id,
+      understand,
+      understandingId,
+    ]);
+    return new Understanding(this.#vhttp, this.id, {
+      understandingId,
+      collectionId: this.collectionId,
+      ...(res.data ?? {}),
+    });
+  };
+
+  /** List understanding runs for this video. */
+  public listUnderstandings = async (): Promise<Understanding[]> => {
+    const res = await this.#vhttp.get<{
+      understandingResults?: UnderstandingData[];
+    }>([video, this.id, understand]);
+    const results = res.data?.understandingResults ?? [];
+    return results.map(
+      item =>
+        new Understanding(this.#vhttp, this.id, {
+          collectionId: this.collectionId,
+          ...item,
+        })
+    );
+  };
+
+  /** Delete an understanding run. */
+  public deleteUnderstanding = async (
+    understandingId: string
+  ): Promise<void> => {
+    if (!understandingId) throw new VideodbError('understandingId is required');
+    await this.#vhttp.delete([video, this.id, understand, understandingId]);
+  };
+
+  static #formatIndexSource(source: IndexSource): Record<string, unknown> {
+    if (source === null || source === undefined) {
+      throw new VideodbError('source is required');
+    }
+    if (
+      typeof source === 'object' &&
+      'toIndexSource' in source &&
+      typeof (source as { toIndexSource?: unknown }).toIndexSource ===
+        'function'
+    ) {
+      return (
+        source as { toIndexSource: () => Record<string, unknown> }
+      ).toIndexSource();
+    }
+    if (Array.isArray(source)) {
+      return { scenes: source };
+    }
+    if (typeof source === 'object') {
+      const s = source as Record<string, unknown>;
+      if (Array.isArray(s.scenes) || s.understanding_id) {
+        return s;
+      }
+      throw new VideodbError(
+        "source dict must carry 'scenes' (temporal records) or an 'understanding_id' reference"
+      );
+    }
+    throw new VideodbError(
+      "source must be an analyzer object, a dict with 'scenes' or 'understanding_id', or a list of temporal records"
+    );
+  }
+
+  #formatIndex = (indexData: RawIndexManifest): Index => {
+    const { video_id, collection_id, ...rest } = indexData;
+    return new Index(
+      this.#vhttp,
+      video_id || this.id,
+      collection_id || this.collectionId,
+      rest
+    );
+  };
+
+  /**
+   * Create a retrieval-ready index from an understanding artifact.
+   * @param source - An {@link UnderstandingAnalyzer} (indexed by reference), a
+   *   dict carrying `scenes` or an `understanding_id`, or a list of records.
+   * @param options - name / useFor / fields / callbackUrl
+   */
+  public index = async (
+    source: IndexSource,
+    options: {
+      name?: string;
+      useFor?: string[];
+      fields?: Record<string, string[]>;
+      callbackUrl?: string;
+    } = {}
+  ): Promise<Index | undefined> => {
+    const res = await this.#vhttp.post<RawIndexManifest, object>(
+      [video, this.id, indexes],
+      {
+        source: Video.#formatIndexSource(source),
+        name: options.name,
+        use_for: options.useFor,
+        fields: options.fields,
+        callback_url: options.callbackUrl,
+      },
+      undefined,
+      { convert: false }
+    );
+    if (!res.data) return undefined;
+    return this.#formatIndex(res.data as unknown as RawIndexManifest);
+  };
+
+  /**
+   * Get an index manifest by its ID or name.
+   * @param options - Either `indexId` or `name` must be provided.
+   */
+  public getIndex = async (options: {
+    indexId?: string;
+    name?: string;
+  }): Promise<Index | undefined> => {
+    if (!options.indexId && !options.name) {
+      throw new VideodbError('Either indexId or name is required');
+    }
+    const params: Record<string, unknown> = {
+      collection_id: this.collectionId,
+    };
+    let path: string[];
+    if (options.indexId) {
+      path = [video, this.id, indexes, options.indexId];
+    } else {
+      path = [video, this.id, indexes];
+      params.name = options.name;
+    }
+    const res = await this.#vhttp.get<RawIndexManifest>(path, { params }, {
+      convert: false,
+    });
+    if (!res.data) return undefined;
+    return this.#formatIndex(res.data as unknown as RawIndexManifest);
+  };
+
+  /**
+   * List all the indexes of the video.
+   * @param useFor - (optional) Filter by retrieval capability.
+   */
+  public listIndexes = async (useFor?: string): Promise<Index[]> => {
+    const params: Record<string, unknown> = {
+      collection_id: this.collectionId,
+    };
+    if (useFor != null) params.use_for = useFor;
+    const res = await this.#vhttp.get<{ indexes?: RawIndexManifest[] }>(
+      [video, this.id, indexes],
+      { params },
+      { convert: false }
+    );
+    const data = res.data as unknown as { indexes?: RawIndexManifest[] };
+    return (data?.indexes ?? []).map(i => this.#formatIndex(i));
+  };
+
+  /**
+   * Delete an index. Removes the index's retrieval structures only.
+   * @param indexId - The id of the index to be deleted
+   */
+  public deleteIndex = async (indexId: string): Promise<void> => {
+    if (!indexId) throw new VideodbError('indexId is required');
+    await this.#vhttp.delete([video, this.id, indexes, indexId], {
+      params: { collection_id: this.collectionId },
+    });
+  };
+
+  /**
    * Overlays subtitles on top of a video
    * @returns an awaited stream url for subtitled overlayed video
    *
    */
   public addSubtitle = async (config?: Partial<SubtitleStyleProps>) => {
-    const merged: SubtitleStyleProps = { ...SubtitleStyleDefaultValues, ...config };
+    const merged: SubtitleStyleProps = {
+      ...SubtitleStyleDefaultValues,
+      ...config,
+    };
     const res = await this.#vhttp.post<
       GenerateStreamResponse,
       { type: string; subtitle_style: Record<string, unknown> }
@@ -653,6 +1182,39 @@ export class Video implements IVideo {
    */
   public play = () => {
     return playStream(this.streamUrl);
+  };
+
+  /**
+   * Generate an HTML iframe embed code for the video.
+   * @param width - Width of the iframe (default `"100%"`)
+   * @param height - Height of the iframe in pixels (default `405`)
+   * @param title - Title attribute (default `"VideoDB Player"`)
+   * @param allowFullscreen - Whether to allow fullscreen (default `true`)
+   * @param autoGenerate - If true and playerUrl is missing, auto-generate it (default `true`)
+   * @throws {VideodbError} If the player URL is not available.
+   */
+  public getEmbedCode = async (
+    width: string = '100%',
+    height: number = 405,
+    title: string = 'VideoDB Player',
+    allowFullscreen: boolean = true,
+    autoGenerate: boolean = true
+  ): Promise<string> => {
+    if (!this.playerUrl && autoGenerate) {
+      await this.generateStream();
+    }
+    if (!this.playerUrl) {
+      throw new VideodbError(
+        'player_url not available. Call generateStream() first or set autoGenerate=true.'
+      );
+    }
+    return buildIframeEmbedCode(
+      this.playerUrl,
+      width,
+      height,
+      title,
+      allowFullscreen
+    );
   };
 
   /**
