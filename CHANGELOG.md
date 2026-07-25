@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.3.0] (2026-07-25)
+
+Indexing v2 — a new retrieval architecture plus a generation/compute stack, ported from `videodb-python`'s `feat/add-indexing-v2`.
+
+### Added
+
+- **Search v2 on `Video` and `Collection`** — new `search()` dispatcher with dedicated `ask()`, `semanticSearch()`, `query()`, and `aggregate()` methods, returning the v2 `SearchResponse` / `AskResponse` envelopes (iterable `SearchResult`). `legacySearch()` preserves the old behavior behind a one-time deprecation warning
+- **Understanding runs** — `Video.understand()` / `getUnderstanding()` / `listUnderstandings()` / `deleteUnderstanding()`, backed by new `Understanding` and `UnderstandingAnalyzer` classes and analyzer-normalization helpers (`normalizeUnderstandingAnalyzers`, `normalizeAnalyzerType`, `defaultAnalyzerName`)
+- **Index manifest** — `Video.index()` / `getIndex()` / `listIndexes()` / `deleteIndex()`, backed by new `Index`, `IndexRecord`, `FieldSchema`, and `RecordPage` classes with `IndexCapability` and `FieldGroup` constants
+- **Sandboxes (persistent GPU compute pools)** — `Connection.createSandbox()` / `getSandbox()` / `listSandboxes()`, a `Sandbox` class with `waitForReady()` / `stop()` / `waitForStop()` lifecycle polling, and `SandboxTier` / `SandboxStatus` constants
+- **Async generation jobs** — `GenerationJob` with `wait()` polling, plus `Connection.getJobStatus()` and `waitForJob()`. `Collection.generateImage()` / `generateVoice()` / `generateText()` gain self-inference model routing (`SandboxModel`), `sandboxId`, and `wait` options, returning a `GenerationJob` when the server dispatches async work
+- **Voice clones** — `VoiceClone` class and CRUD on both `Connection` and `Collection` (`createVoiceClone` / `getVoiceClone` / `listVoiceClones` / `deleteVoiceClone`), plus `voiceCloneId` support in `generateVoice()`
+- **Real-time stream understanding & indexing** — new `RTStreamUnderstanding` and `RTStreamIndex` classes with `understand()` / `index()` on `RTStream`, alert management (`createAlert` / `listAlerts` / `enableAlert` / `disableAlert`), and record retrieval
+- **Embed-code helpers** — `getEmbedCode()` on `Video`, `Shot`, `Timeline`, and RTStream types, plus `buildIframeEmbedCode()` / `playerUrlToEmbedUrl()` utilities. `Video`, `Shot`, and RTStream types now carry `playerUrl`
+- **`sandboxId` threading** into `Video.indexScenes()` / `indexVisuals()`, `Scene.describe()` (also gains `modelConfig`), and all `RTStream` indexing methods, to route inference to a specific sandbox
+- **`Connection.getAsyncResponse()`** to fetch a stored async response without polling
+
+### Changed
+
+- `HttpClient` `get`/`post` accept a `wait` flag and per-call poll overrides (`maxPollTime` / `pollInterval`); the async-output poll loop was rewritten from `backoff` to a monotonic-clock loop that throws `RequestTimeoutError` on timeout
+- `uploadBytes()` helper added for in-memory uploads; `upload()` refactored to reuse it, and large `generateText()` prompts are now offloaded to a presigned URL (`prompt_url`) above ~250 KB to avoid gateway payload limits
+- `ResponseStatus` gains `complete`; new `ApiPath` segments and polling defaults added
+
+### Fixed
+
+- `Sandbox.isReady` and `waitForReady()` now treat `alert` as a ready state (matching `videodb-python`'s `READY_STATUSES`) and no longer report `provisioning` as ready
+
+---
+
 ## [0.2.7] (2026-06-03)
 
 ### Added
