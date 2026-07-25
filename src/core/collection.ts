@@ -304,12 +304,55 @@ export class Collection implements ICollection {
    */
   public search = async (
     query: string,
-    options: CollectionSearchOptions = {}
+    optionsOrSearchType: CollectionSearchOptions | SearchType = {},
+    indexType?: IndexType,
+    resultThreshold?: number,
+    scoreThreshold?: number,
+    dynamicScorePercentage?: number,
+    filter?: Array<Record<string, unknown>>,
+    sortDocsOn?: string,
+    namespace?: string,
+    sceneIndexId?: string
   ): Promise<SearchResponse | SearchResult | RTStreamSearchResult> => {
+    // Back-compat: the pre-v2 signature was fully positional —
+    //   search(query, searchType, indexType, resultThreshold, scoreThreshold,
+    //          dynamicScorePercentage, filter, sortDocsOn, namespace, sceneIndexId)
+    // Detect it (2nd arg is a SearchType string, or any trailing positional arg
+    // is present) and fold it into an options object, forcing legacy routing —
+    // mirroring videodb-python's `has_old = bool(args)`.
+    const positionalLegacy =
+      typeof optionsOrSearchType === 'string' ||
+      indexType !== undefined ||
+      resultThreshold !== undefined ||
+      scoreThreshold !== undefined ||
+      dynamicScorePercentage !== undefined ||
+      filter !== undefined ||
+      sortDocsOn !== undefined ||
+      namespace !== undefined ||
+      sceneIndexId !== undefined;
+
+    const options: CollectionSearchOptions = positionalLegacy
+      ? {
+          searchType:
+            typeof optionsOrSearchType === 'string'
+              ? (optionsOrSearchType as SearchType)
+              : undefined,
+          indexType,
+          resultThreshold,
+          scoreThreshold,
+          dynamicScorePercentage,
+          filter,
+          sortDocsOn,
+          namespace,
+          sceneIndexId,
+        }
+      : (optionsOrSearchType as CollectionSearchOptions);
+
     const oldParams: (keyof CollectionSearchOptions)[] = [
       'searchType',
       'indexType',
       'resultThreshold',
+      'scoreThreshold',
       'dynamicScorePercentage',
       'sceneIndexId',
       'indexId',
@@ -332,9 +375,9 @@ export class Collection implements ICollection {
       'indexIds',
     ];
 
-    const hasOld = oldParams.some(
-      k => options[k] !== undefined && options[k] !== null
-    );
+    const hasOld =
+      positionalLegacy ||
+      oldParams.some(k => options[k] !== undefined && options[k] !== null);
     const hasNew = newParams.some(
       k => options[k] !== undefined && options[k] !== null
     );
