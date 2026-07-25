@@ -613,16 +613,22 @@ export class Connection {
    * @param tier - Compute tier (see {@link SandboxTier})
    * @param name - Human-readable name
    * @param callbackUrl - URL to notify on provisioning events
+   * @param modelCategories - Model categories to prepare for this sandbox, e.g. `["vlm", "image_generation"]`
+   * @param models - Specific model names to prepare for this sandbox
    */
   public createSandbox = async (
     tier?: string,
     name?: string,
-    callbackUrl?: string
+    callbackUrl?: string,
+    modelCategories?: string[],
+    models?: string[]
   ): Promise<Sandbox> => {
     const res = await this.vhttp.post<SandboxBase, object>([sandbox], {
       tier,
       name,
       callback_url: callbackUrl,
+      model_categories: modelCategories,
+      models,
     });
     return new Sandbox(this.vhttp, res.data);
   };
@@ -639,12 +645,19 @@ export class Connection {
   /**
    * List sandboxes, optionally filtered by status.
    * @param status - Filter by sandbox status (see {@link SandboxStatus})
+   * @param page - Page number (default 1)
+   * @param pageSize - Sandboxes per page (default 20, maximum 100)
    */
-  public listSandboxes = async (status?: string): Promise<Sandbox[]> => {
-    const res = await this.vhttp.get<{ sandboxes?: SandboxBase[] }>(
-      [sandbox],
-      status ? { params: { status } } : undefined
-    );
+  public listSandboxes = async (
+    status?: string,
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<Sandbox[]> => {
+    const params: Record<string, unknown> = { page, page_size: pageSize };
+    if (status) params.status = status;
+    const res = await this.vhttp.get<{ sandboxes?: SandboxBase[] }>([sandbox], {
+      params,
+    });
     return (res.data?.sandboxes || []).map(s => new Sandbox(this.vhttp, s));
   };
 

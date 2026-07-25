@@ -10,6 +10,8 @@ const TERMINAL_STATUSES: string[] = [
   SandboxStatus.failed,
 ];
 
+const READY_STATUSES: string[] = [SandboxStatus.active, SandboxStatus.alert];
+
 /**
  * Plain-data shape a {@link Sandbox} is constructed from (camelCase).
  */
@@ -22,6 +24,10 @@ export interface SandboxBase {
   createdAt?: string;
   startedAt?: string;
   stoppedAt?: string;
+  modelCategories?: string[];
+  models?: string[];
+  region?: string;
+  expiresAt?: string;
 }
 
 /**
@@ -38,6 +44,10 @@ export class Sandbox {
   public createdAt?: string;
   public startedAt?: string;
   public stoppedAt?: string;
+  public modelCategories: string[];
+  public models: string[];
+  public region?: string;
+  public expiresAt?: string;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: SandboxBase = {}) {
@@ -49,6 +59,10 @@ export class Sandbox {
     this.createdAt = data.createdAt;
     this.startedAt = data.startedAt;
     this.stoppedAt = data.stoppedAt;
+    this.modelCategories = data.modelCategories ?? [];
+    this.models = data.models ?? [];
+    this.region = data.region;
+    this.expiresAt = data.expiresAt;
   }
 
   #update = (data?: SandboxBase): void => {
@@ -60,6 +74,10 @@ export class Sandbox {
     this.createdAt = data.createdAt ?? this.createdAt;
     this.startedAt = data.startedAt ?? this.startedAt;
     this.stoppedAt = data.stoppedAt ?? this.stoppedAt;
+    this.modelCategories = data.modelCategories ?? this.modelCategories;
+    this.models = data.models ?? this.models;
+    this.region = data.region ?? this.region;
+    this.expiresAt = data.expiresAt ?? this.expiresAt;
   };
 
   /**
@@ -86,7 +104,7 @@ export class Sandbox {
     const deadline = Date.now() + timeout * 1000;
     for (;;) {
       await this.refresh();
-      if (this.status === SandboxStatus.active) return this;
+      if (this.status && READY_STATUSES.includes(this.status)) return this;
       if (this.status && TERMINAL_STATUSES.includes(this.status)) {
         throw new VideodbError(
           `Sandbox ${this.id} entered terminal state: ${this.status}`
@@ -144,10 +162,7 @@ export class Sandbox {
   }
 
   public get isReady(): boolean {
-    return (
-      this.status === SandboxStatus.provisioning ||
-      this.status === SandboxStatus.active
-    );
+    return this.status ? READY_STATUSES.includes(this.status) : false;
   }
 
   public toString(): string {
