@@ -1,4 +1,6 @@
 import { SearchResult } from '@/core/search/searchResult';
+import type { VideoSearchOptions } from '@/core/video';
+import type { CollectionSearchOptions } from '@/core/collection';
 import { Video } from '@/core/video';
 import { Audio } from '@/core/audio';
 import { Image } from '@/core/image';
@@ -32,7 +34,7 @@ export interface ICollection extends CollectionBase {
     data: URLUploadConfig
   ) => Promise<Video | Audio | Image | undefined>;
   // Note: search method signature is more complex in implementation to support RTStream namespace
-  search: (query: string, searchType?: SearchType) => Promise<unknown>;
+  search: (query: string, options?: CollectionSearchOptions) => Promise<unknown>;
 }
 
 /**
@@ -73,7 +75,7 @@ export interface IVideo extends Omit<VideoBase, 'thumbnail'> {
     callbackUrl?: string
   ) => Promise<{ success: boolean; message?: string }>;
   indexScenes: (config: IndexSceneConfig) => Promise<string | undefined>;
-  search: (query: string, searchType?: SearchType) => Promise<SearchResult>;
+  search: (query: string, options?: VideoSearchOptions) => Promise<unknown>;
   generateThumbnail: (time?: number) => Promise<string | Image>;
   addSubtitle: (config: SubtitleStyleProps) => Promise<string>;
 }

@@ -144,6 +144,7 @@ export type SearchResponse = {
       score: number;
       start: number;
       stream_link?: string;
+      stream_url?: string;
       player_url?: string;
       text: string;
       scene_index_id?: string;

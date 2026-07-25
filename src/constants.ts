@@ -70,12 +70,68 @@ export const ApiPath = {
   start: 'start',
   stop: 'stop',
   export: 'export',
+  // indexing-v2 additions
+  indexes: 'indexes',
+  records: 'records',
+  understand: 'understand',
+  ask: 'ask',
+  semantic_search: 'semantic-search',
+  query: 'query',
+  aggregate: 'aggregate',
+  job: 'job',
+  sandbox: 'sandbox',
+  voice_clone: 'voice_clone',
+  identities: 'identities',
+  merge: 'merge',
+  split: 'split',
+  async_response: 'async-response',
+} as const;
+
+/**
+ * Retrieval capabilities an index can be built for (the `use_for` values).
+ */
+export const IndexCapability = {
+  semantic: 'semantic',
+  query: 'query',
+  aggregate: 'aggregate',
+} as const;
+
+/**
+ * Field groups that map artifact fields to retrieval capabilities.
+ */
+export const FieldGroup = {
+  semantic: 'semantic',
+  fts: 'fts',
+  filter: 'filter',
+  aggregate: 'aggregate',
+  sort: 'sort',
+} as const;
+
+/**
+ * Compute tier a sandbox can be provisioned at.
+ */
+export const SandboxTier = {
+  small: 'small',
+  medium: 'medium',
+} as const;
+
+/**
+ * Lifecycle status of a sandbox.
+ */
+export const SandboxStatus = {
+  provisioning: 'provisioning',
+  active: 'active',
+  stopping: 'stopping',
+  stopped: 'stopped',
+  failed: 'failed',
+  alert: 'alert',
 } as const;
 
 export const ResponseStatus = {
   processing: 'processing',
   in_progress: 'in progress',
   success: 'success',
+  complete: 'complete',
 } as const;
 
 export const MeetingStatus = {
@@ -190,6 +246,10 @@ export const HttpClientDefaultValues = {
   max_retries: 3,
   timeout: 60 * 1000,
   backoff_factor: 0.1,
+  /** Max time (ms) to poll an async output URL before timing out. */
+  maxPollTime: 500 * 1000,
+  /** Interval (ms) between polls of an async output URL. */
+  pollInterval: 5 * 1000,
 } as const;
 
 export const MaxSupported = {

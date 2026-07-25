@@ -15,10 +15,29 @@ export class AuthenticationError<T = unknown> extends VdbBaseError {
 }
 
 export class InvalidRequestError<C = unknown> extends VdbBaseError {
-  public response: AxiosResponse;
-  constructor(response: AxiosResponse, cause?: C) {
-    super(`Error ${response.status}: ${response.statusText}`, { cause });
-    this.response = response;
+  public response?: AxiosResponse;
+  constructor(responseOrMessage: AxiosResponse | string, cause?: C) {
+    if (typeof responseOrMessage === 'string') {
+      super(`Invalid Request Error: ${responseOrMessage}`, { cause });
+    } else {
+      super(
+        `Error ${responseOrMessage.status}: ${responseOrMessage.statusText}`,
+        { cause }
+      );
+      this.response = responseOrMessage;
+    }
+    this.name = 'InvalidRequestError';
+  }
+}
+
+/**
+ * Raised when a request or a client-side poll loop times out.
+ * Mirrors `videodb.exceptions.RequestTimeoutError`.
+ */
+export class RequestTimeoutError<T = undefined> extends VdbBaseError {
+  constructor(message?: string, cause?: T) {
+    super(`Request Timeout Error: ${message}`, { cause });
+    this.name = 'RequestTimeoutError';
   }
 }
 

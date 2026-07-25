@@ -2,7 +2,8 @@ import { ApiPath } from '@/constants';
 import type { IShot, ShotBase } from '@/interfaces/core';
 import type { GenerateStreamResponse } from '@/types/response';
 import type { Timeline } from '@/types/video';
-import { playStream } from '@/utils';
+import { buildIframeEmbedCode, playStream } from '@/utils';
+import { VideodbError } from '@/utils/error';
 import { HttpClient } from '@/utils/httpClient';
 
 const { video, stream } = ApiPath;
@@ -73,5 +74,38 @@ export class Shot implements IShot {
   play = async () => {
     const streamUrl = await this.generateStream();
     return playStream(streamUrl);
+  };
+
+  /**
+   * Generate an HTML iframe embed code for the shot.
+   * @param width - Width of the iframe (default `"100%"`)
+   * @param height - Height of the iframe in pixels (default `405`)
+   * @param title - Title attribute (default `"VideoDB Player"`)
+   * @param allowFullscreen - Whether to allow fullscreen (default `true`)
+   * @param autoGenerate - If true and playerUrl is missing, auto-generate it (default `true`)
+   * @throws {VideodbError} If the player URL is not available.
+   */
+  getEmbedCode = async (
+    width: string = '100%',
+    height: number = 405,
+    title: string = 'VideoDB Player',
+    allowFullscreen: boolean = true,
+    autoGenerate: boolean = true
+  ): Promise<string> => {
+    if (!this.playerUrl && autoGenerate) {
+      await this.generateStream();
+    }
+    if (!this.playerUrl) {
+      throw new VideodbError(
+        'player_url not available. Call generateStream() first or set autoGenerate=true.'
+      );
+    }
+    return buildIframeEmbedCode(
+      this.playerUrl,
+      width,
+      height,
+      title,
+      allowFullscreen
+    );
   };
 }

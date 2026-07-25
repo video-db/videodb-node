@@ -40,13 +40,19 @@ export class Scene {
     this.#vhttp = http;
   }
 
-  public async describe(prompt?: string, modelName?: string, modelConfig?: Record<string, unknown>): Promise<string> {
+  public async describe(
+    prompt?: string,
+    modelName?: string,
+    modelConfig?: Record<string, unknown>,
+    sandboxId?: string
+  ): Promise<string> {
     const response = await this.#vhttp.post<{ description: string }, object>(
       [ApiPath.video, this.videoId, ApiPath.scene, this.id, ApiPath.describe],
       {
         prompt,
         model_name: modelName,
         model_config: modelConfig,
+        sandbox_id: sandboxId,
       }
     );
     this.description = response.data.description;

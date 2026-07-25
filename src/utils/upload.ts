@@ -32,6 +32,43 @@ export const getUploadUrl = async (http: HttpClient, collectionId: string) => {
 };
 
 /**
+ * Upload in-memory content via a presigned upload URL and return the object URL.
+ * Mirrors `videodb._upload.upload_bytes`.
+ *
+ * @param http - The HttpClient instance
+ * @param content - The content to upload (string or Buffer)
+ * @param name - Name of the object (used as the `name` query param and filename)
+ * @param contentType - MIME type of the content (default `application/octet-stream`)
+ * @param collectionId - Collection to presign against
+ * @returns The presigned object URL (the content is now reachable at this URL)
+ */
+export const uploadBytes = async (
+  http: HttpClient,
+  content: string | Buffer,
+  name: string,
+  contentType: string = 'application/octet-stream',
+  collectionId?: string
+): Promise<string> => {
+  const res = await http.get<GetUploadUrl>(
+    [collection, collectionId ?? '', upload_url],
+    { params: { name } }
+  );
+  const uploadUrl = res.data.uploadUrl;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', content, { filename: name, contentType });
+    await http.post<unknown, FormData>([uploadUrl], formData, {
+      headers: formData.getHeaders(),
+    });
+  } catch (err) {
+    throw new VideodbError('Error while uploading content', err);
+  }
+
+  return uploadUrl;
+};
+
+/**
  * @param filePath - absolute path to a file
  * @param url - a url to a pre-uploaded file
  * @param callbackUrl - A url that will be called once upload is finished

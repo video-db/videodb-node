@@ -10,22 +10,96 @@ import type {
   IndexSpokenWordsConfig,
 } from '@/types/capture';
 import { HttpClient } from '@/utils/httpClient';
-import { playStream } from '@/utils';
+import { playStream, buildIframeEmbedCode } from '@/utils';
+import { VideodbError } from '@/utils/error';
+
+/** Constructor input for {@link RTStreamSceneIndex} (adds self-hosted sandbox id). */
+interface RTStreamSceneIndexData extends RTStreamSceneIndexBase {
+  /** Sandbox ID used for self-hosted inference */
+  sandboxId?: string;
+}
+
+/** Constructor input for {@link RTStreamUnderstanding}. */
+interface RTStreamUnderstandingBase {
+  id?: string;
+  understandingId?: string;
+  rtstreamId?: string;
+  status?: string;
+  store?: boolean;
+  segmentation?: Record<string, unknown>;
+  analyzers?: Record<string, unknown>[];
+  outputs?: Record<string, unknown>;
+}
+
+/** Constructor input for {@link RTStreamIndex}. */
+interface RTStreamIndexBase {
+  id?: string;
+  indexId?: string;
+  rtstreamId?: string;
+  name?: string;
+  status?: string;
+  useFor?: string[];
+  sourceUnderstandingId?: string;
+  output?: string;
+}
 
 /**
  * Result of exporting an RTStream recording
  */
-export interface RTStreamExportResult {
+export class RTStreamExportResult {
   /** ID of the exported video or audio asset */
-  videoId: string;
+  public videoId: string;
   /** URL to stream the exported asset (may be undefined for audio) */
-  streamUrl?: string;
+  public streamUrl?: string;
   /** URL to play the exported asset in a player (may be undefined for audio) */
-  playerUrl?: string;
+  public playerUrl?: string;
   /** Name of the exported recording */
-  name?: string;
+  public name?: string;
   /** Duration of the exported recording in seconds (may be undefined on idempotent calls) */
-  duration?: number;
+  public duration?: number;
+
+  constructor(data: {
+    videoId: string;
+    streamUrl?: string;
+    playerUrl?: string;
+    name?: string;
+    duration?: number;
+  }) {
+    this.videoId = data.videoId;
+    this.streamUrl = data.streamUrl;
+    this.playerUrl = data.playerUrl;
+    this.name = data.name;
+    this.duration = data.duration;
+  }
+
+  /**
+   * Generate an HTML iframe embed code for the exported recording.
+   * @param width - Width of the iframe (default `"100%"`)
+   * @param height - Height of the iframe in pixels (default `405`)
+   * @param title - Title attribute for the iframe (default `"VideoDB Player"`)
+   * @param allowFullscreen - Whether to allow fullscreen (default `true`)
+   * @returns HTML iframe string
+   * @throws {VideodbError} If `playerUrl` is not available
+   */
+  public getEmbedCode = (
+    width: string = '100%',
+    height: number = 405,
+    title: string = 'VideoDB Player',
+    allowFullscreen: boolean = true
+  ): string => {
+    if (!this.playerUrl) {
+      throw new VideodbError(
+        'player_url not available. Export may have failed or returned audio-only content.'
+      );
+    }
+    return buildIframeEmbedCode(
+      this.playerUrl,
+      width,
+      height,
+      title,
+      allowFullscreen
+    );
+  };
 }
 
 export interface RTStreamPlayerConfig {
@@ -94,6 +168,40 @@ export class RTStreamShot {
     }
     return null;
   };
+
+  /**
+   * Generate an HTML iframe embed code for the rtstream shot.
+   * @param width - Width of the iframe (default `"100%"`)
+   * @param height - Height of the iframe in pixels (default `405`)
+   * @param title - Title attribute for the iframe (default `"VideoDB Player"`)
+   * @param allowFullscreen - Whether to allow fullscreen (default `true`)
+   * @param autoGenerate - If `true` and `playerUrl` is missing, auto-generate it (default `true`)
+   * @returns HTML iframe string
+   * @throws {VideodbError} If `playerUrl` is not available
+   */
+  public getEmbedCode = async (
+    width: string = '100%',
+    height: number = 405,
+    title: string = 'VideoDB Player',
+    allowFullscreen: boolean = true,
+    autoGenerate: boolean = true
+  ): Promise<string> => {
+    if (!this.playerUrl && autoGenerate) {
+      await this.generateStream();
+    }
+    if (!this.playerUrl) {
+      throw new VideodbError(
+        'player_url not available. Call generateStream() first or set autoGenerate=true.'
+      );
+    }
+    return buildIframeEmbedCode(
+      this.playerUrl,
+      width,
+      height,
+      title,
+      allowFullscreen
+    );
+  };
 }
 
 /**
@@ -128,9 +236,11 @@ export class RTStreamSceneIndex {
   public prompt?: string;
   public name?: string;
   public status?: string;
+  /** Sandbox ID used for self-hosted inference */
+  public sandboxId?: string;
   #vhttp: HttpClient;
 
-  constructor(http: HttpClient, data: RTStreamSceneIndexBase) {
+  constructor(http: HttpClient, data: RTStreamSceneIndexData) {
     this.#vhttp = http;
     this.rtstreamIndexId = data.rtstreamIndexId;
     this.rtstreamId = data.rtstreamId;
@@ -139,6 +249,7 @@ export class RTStreamSceneIndex {
     this.prompt = data.prompt;
     this.name = data.name;
     this.status = data.status;
+    this.sandboxId = data.sandboxId;
   }
 
   /**
@@ -340,6 +451,350 @@ export class RTStreamSceneIndex {
 }
 
 /**
+ * RTStreamUnderstanding class to interact with a continuous understanding job.
+ *
+ * Produced by {@link RTStream.understand}. It runs VLM analysis over stream
+ * windows and, when `store=true`, persists the output so it can be indexed
+ * later. Understanding is independent of scene indexing.
+ */
+export class RTStreamUnderstanding {
+  /** Understanding id (`und-...`) */
+  public id: string;
+  /** ID of the parent RTStream */
+  public rtstreamId: string;
+  /** Job status (`running` | `stopped` | `failed`) */
+  public status?: string;
+  /** Whether output is persisted for later indexing */
+  public store: boolean;
+  /** Time segmentation, e.g. `{ type: 'time', window: '10s' }` */
+  public segmentation: Record<string, unknown>;
+  /** Analyzer specs for this understanding */
+  public analyzers: Record<string, unknown>[];
+  /** Named output source descriptors, e.g. `outputs.scene` */
+  public outputs: Record<string, unknown>;
+  #vhttp: HttpClient;
+
+  constructor(http: HttpClient, data: RTStreamUnderstandingBase) {
+    this.#vhttp = http;
+    this.id = (data.understandingId ?? data.id) as string;
+    this.rtstreamId = data.rtstreamId as string;
+    this.status = data.status;
+    this.store = data.store ?? true;
+    this.segmentation = data.segmentation ?? {};
+    this.analyzers = data.analyzers ?? [];
+    this.outputs = data.outputs ?? {};
+  }
+
+  /**
+   * Reload this understanding from the server.
+   * @returns This understanding, updated
+   */
+  public refresh = async (): Promise<RTStreamUnderstanding> => {
+    const res = await this.#vhttp.get<RTStreamUnderstandingBase>([
+      ApiPath.rtstream,
+      this.rtstreamId,
+      ApiPath.understand,
+      this.id,
+    ]);
+    const data = res.data;
+    if (data) {
+      this.id = data.understandingId ?? data.id ?? this.id;
+      this.rtstreamId = data.rtstreamId ?? this.rtstreamId;
+      this.status = data.status;
+      this.store = data.store ?? true;
+      this.segmentation = data.segmentation ?? {};
+      this.analyzers = data.analyzers ?? [];
+      this.outputs = data.outputs ?? {};
+    }
+    return this;
+  };
+
+  /**
+   * Resume processing new stream windows.
+   */
+  public start = async (): Promise<void> => {
+    await this.#vhttp.patch(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.understand,
+        this.id,
+        ApiPath.status,
+      ],
+      { action: 'start' }
+    );
+    this.status = 'running';
+  };
+
+  /**
+   * Pause processing new stream windows. Existing records remain available.
+   */
+  public stop = async (): Promise<void> => {
+    await this.#vhttp.patch(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.understand,
+        this.id,
+        ApiPath.status,
+      ],
+      { action: 'stop' }
+    );
+    this.status = 'stopped';
+  };
+
+  /**
+   * Get understanding output records for a time range.
+   * @param start - Start Unix timestamp
+   * @param end - End Unix timestamp
+   * @param output - Analyzer output name (default: `"scene"`)
+   * @param page - Page number (default: 1)
+   * @param pageSize - Records per page (default: 100)
+   * @returns Records payload with `records` and `nextPage`
+   */
+  public getRecords = async (
+    start: number,
+    end: number,
+    output: string = 'scene',
+    page: number = 1,
+    pageSize: number = 100
+  ): Promise<Record<string, unknown>> => {
+    const rawParams: Record<string, unknown> = {
+      start,
+      end,
+      output,
+      page,
+      page_size: pageSize,
+    };
+    const params: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(rawParams)) {
+      if (value !== undefined && value !== null) params[key] = value;
+    }
+
+    const res = await this.#vhttp.get<Record<string, unknown>>(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.understand,
+        this.id,
+        ApiPath.records,
+      ],
+      { params }
+    );
+    return res.data || {};
+  };
+}
+
+/**
+ * RTStreamIndex — a continuous index over an understanding output.
+ *
+ * Produced by {@link RTStream.index}. Materializes an understanding's stored
+ * output into a searchable index; has its own lifecycle, separate from the
+ * understanding.
+ */
+export class RTStreamIndex {
+  /** Index id (`idx-...`) */
+  public id: string;
+  /** ID of the parent RTStream */
+  public rtstreamId: string;
+  /** Index name */
+  public name?: string;
+  /** `running` | `stopped` | `failed` */
+  public status?: string;
+  /** Index capabilities, e.g. `['semantic']` */
+  public useFor: string[];
+  /** Understanding this index consumes */
+  public sourceUnderstandingId?: string;
+  /** Analyzer output name being indexed (e.g. `"scene"`) */
+  public output: string;
+  #vhttp: HttpClient;
+
+  constructor(http: HttpClient, data: RTStreamIndexBase) {
+    this.#vhttp = http;
+    this.id = (data.indexId ?? data.id) as string;
+    this.rtstreamId = data.rtstreamId as string;
+    this.name = data.name;
+    this.status = data.status;
+    this.useFor = data.useFor ?? ['semantic'];
+    this.sourceUnderstandingId = data.sourceUnderstandingId;
+    this.output = data.output ?? 'scene';
+  }
+
+  /**
+   * Reload this index from the server.
+   * @returns This index, updated
+   */
+  public refresh = async (): Promise<RTStreamIndex> => {
+    const res = await this.#vhttp.get<RTStreamIndexBase>([
+      ApiPath.rtstream,
+      this.rtstreamId,
+      ApiPath.indexes,
+      this.id,
+    ]);
+    const data = res.data;
+    if (data) {
+      this.id = data.indexId ?? data.id ?? this.id;
+      this.rtstreamId = data.rtstreamId ?? this.rtstreamId;
+      this.name = data.name;
+      this.status = data.status;
+      this.useFor = data.useFor ?? ['semantic'];
+      this.sourceUnderstandingId = data.sourceUnderstandingId;
+      this.output = data.output ?? 'scene';
+    }
+    return this;
+  };
+
+  /**
+   * Resume materializing new understanding output into the index.
+   */
+  public start = async (): Promise<void> => {
+    await this.#vhttp.patch(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.indexes,
+        this.id,
+        ApiPath.status,
+      ],
+      { action: 'start' }
+    );
+    this.status = 'running';
+  };
+
+  /**
+   * Pause materializing. Existing indexed records remain searchable.
+   */
+  public stop = async (): Promise<void> => {
+    await this.#vhttp.patch(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.indexes,
+        this.id,
+        ApiPath.status,
+      ],
+      { action: 'stop' }
+    );
+    this.status = 'stopped';
+  };
+
+  /**
+   * Get materialized index records.
+   * @param start - Start Unix timestamp (optional)
+   * @param end - End Unix timestamp (optional)
+   * @param page - Page number (default: 1)
+   * @param pageSize - Records per page (default: 100)
+   * @returns Records payload
+   */
+  public getRecords = async (
+    start?: number,
+    end?: number,
+    page: number = 1,
+    pageSize: number = 100
+  ): Promise<Record<string, unknown>> => {
+    const params: Record<string, unknown> = { page, page_size: pageSize };
+    if (start !== undefined && start !== null) params.start = start;
+    if (end !== undefined && end !== null) params.end = end;
+
+    const res = await this.#vhttp.get<Record<string, unknown>>(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.indexes,
+        this.id,
+        ApiPath.records,
+      ],
+      { params }
+    );
+    return res.data || {};
+  };
+
+  /**
+   * Attach an event alert to this index.
+   * @param eventId - ID of the event
+   * @param callbackUrl - URL to receive the alert callback
+   * @param wsConnectionId - WebSocket connection ID for real-time alerts (optional)
+   * @returns Alert ID
+   */
+  public createAlert = async (
+    eventId: string,
+    callbackUrl: string,
+    wsConnectionId?: string
+  ): Promise<string | null> => {
+    const data: Record<string, unknown> = {
+      event_id: eventId,
+      callback_url: callbackUrl,
+    };
+    if (wsConnectionId) data.ws_connection_id = wsConnectionId;
+
+    const res = await this.#vhttp.post<{ alertId: string }, typeof data>(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.indexes,
+        this.id,
+        ApiPath.alert,
+      ],
+      data
+    );
+    return res.data?.alertId || null;
+  };
+
+  /**
+   * List all alerts on this index.
+   * @returns List of alerts
+   */
+  public listAlerts = async (): Promise<unknown[]> => {
+    const res = await this.#vhttp.get<{ alerts: unknown[] }>([
+      ApiPath.rtstream,
+      this.rtstreamId,
+      ApiPath.indexes,
+      this.id,
+      ApiPath.alert,
+    ]);
+    return res.data?.alerts || [];
+  };
+
+  /**
+   * Enable an alert on this index.
+   * @param alertId - ID of the alert
+   */
+  public enableAlert = async (alertId: string): Promise<void> => {
+    await this.#vhttp.patch(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.indexes,
+        this.id,
+        ApiPath.alert,
+        alertId,
+        ApiPath.status,
+      ],
+      { action: 'enable' }
+    );
+  };
+
+  /**
+   * Disable an alert on this index.
+   * @param alertId - ID of the alert
+   */
+  public disableAlert = async (alertId: string): Promise<void> => {
+    await this.#vhttp.patch(
+      [
+        ApiPath.rtstream,
+        this.rtstreamId,
+        ApiPath.indexes,
+        this.id,
+        ApiPath.alert,
+        alertId,
+        ApiPath.status,
+      ],
+      { action: 'disable' }
+    );
+  };
+}
+
+/**
  * RTStream class to interact with the RTStream
  */
 export class RTStream {
@@ -415,13 +870,13 @@ export class RTStream {
       typeof data
     >([ApiPath.rtstream, this.id, ApiPath.export], data);
 
-    return {
+    return new RTStreamExportResult({
       videoId: res.data.videoId,
       streamUrl: res.data.streamUrl,
       playerUrl: res.data.playerUrl,
       name: res.data.name,
       duration: res.data.duration,
-    };
+    });
   };
 
   /**
@@ -455,6 +910,40 @@ export class RTStream {
     this.streamUrl = res.data?.streamUrl;
     this.playerUrl = res.data?.playerUrl;
     return this.playerUrl || null;
+  };
+
+  /**
+   * Generate an HTML iframe embed code for the rtstream.
+   *
+   * Note: Unlike other objects, RTStream does not support autoGenerate because
+   * `generateStream()` requires start and end parameters. Call
+   * `generateStream(start, end)` first to populate `playerUrl`.
+   *
+   * @param width - Width of the iframe (default `"100%"`)
+   * @param height - Height of the iframe in pixels (default `405`)
+   * @param title - Title attribute for the iframe (default `"VideoDB Player"`)
+   * @param allowFullscreen - Whether to allow fullscreen (default `true`)
+   * @returns HTML iframe string
+   * @throws {VideodbError} If `playerUrl` is not available
+   */
+  public getEmbedCode = (
+    width: string = '100%',
+    height: number = 405,
+    title: string = 'VideoDB Player',
+    allowFullscreen: boolean = true
+  ): string => {
+    if (!this.playerUrl) {
+      throw new VideodbError(
+        'player_url not available. Call generateStream(start, end) first to generate a stream.'
+      );
+    }
+    return buildIframeEmbedCode(
+      this.playerUrl,
+      width,
+      height,
+      title,
+      allowFullscreen
+    );
   };
 
   /**
@@ -499,6 +988,7 @@ export class RTStream {
     modelConfig?: Record<string, unknown>;
     name?: string;
     wsConnectionId?: string;
+    sandboxId?: string;
   }): Promise<RTStreamSceneIndex | null> => {
     const {
       extractionType = 'time_based',
@@ -508,6 +998,7 @@ export class RTStream {
       modelConfig = {},
       name,
       wsConnectionId,
+      sandboxId,
     } = config;
 
     const data: Record<string, unknown> = {
@@ -520,8 +1011,9 @@ export class RTStream {
     };
 
     if (wsConnectionId) data.ws_connection_id = wsConnectionId;
+    if (sandboxId) data.sandbox_id = sandboxId;
 
-    const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
+    const res = await this.#vhttp.post<RTStreamSceneIndexData, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
       data
     );
@@ -536,6 +1028,7 @@ export class RTStream {
       prompt: res.data.prompt,
       name: res.data.name,
       status: res.data.status,
+      sandboxId: res.data.sandboxId,
     });
   };
 
@@ -554,7 +1047,7 @@ export class RTStream {
    * @returns RTStreamSceneIndex object
    */
   public indexVisuals = async (
-    config: Partial<IndexVisualsConfig> = {}
+    config: Partial<IndexVisualsConfig> & { sandboxId?: string } = {}
   ): Promise<RTStreamSceneIndex | null> => {
     let extractionType: string | undefined;
     let extractionConfig: Record<string, unknown> | undefined;
@@ -580,8 +1073,9 @@ export class RTStream {
     };
 
     if (config.socketId) data.ws_connection_id = config.socketId;
+    if (config.sandboxId) data.sandbox_id = config.sandboxId;
 
-    const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
+    const res = await this.#vhttp.post<RTStreamSceneIndexData, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
       data
     );
@@ -596,6 +1090,7 @@ export class RTStream {
       prompt: res.data.prompt,
       name: res.data.name,
       status: res.data.status,
+      sandboxId: res.data.sandboxId,
     });
   };
 
@@ -605,7 +1100,7 @@ export class RTStream {
    */
   public listSceneIndexes = async (): Promise<RTStreamSceneIndex[]> => {
     const res = await this.#vhttp.get<{
-      sceneIndexes: RTStreamSceneIndexBase[];
+      sceneIndexes: RTStreamSceneIndexData[];
     }>([ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene]);
 
     return (res.data?.sceneIndexes || []).map(
@@ -618,6 +1113,7 @@ export class RTStream {
           prompt: index.prompt,
           name: index.name,
           status: index.status,
+          sandboxId: index.sandboxId,
         })
     );
   };
@@ -630,7 +1126,7 @@ export class RTStream {
   public getSceneIndex = async (
     indexId: string
   ): Promise<RTStreamSceneIndex> => {
-    const res = await this.#vhttp.get<RTStreamSceneIndexBase>([
+    const res = await this.#vhttp.get<RTStreamSceneIndexData>([
       ApiPath.rtstream,
       this.id,
       ApiPath.index,
@@ -645,6 +1141,7 @@ export class RTStream {
       prompt: res.data.prompt,
       name: res.data.name,
       status: res.data.status,
+      sandboxId: res.data.sandboxId,
     });
   };
 
@@ -663,7 +1160,7 @@ export class RTStream {
    * @returns RTStreamSceneIndex object
    */
   public indexAudio = async (
-    config: Partial<IndexSpokenWordsConfig> = {}
+    config: Partial<IndexSpokenWordsConfig> & { sandboxId?: string } = {}
   ): Promise<RTStreamSceneIndex | null> => {
     let extractionConfig: Record<string, unknown> | undefined;
 
@@ -685,8 +1182,9 @@ export class RTStream {
     };
 
     if (config.socketId) data.ws_connection_id = config.socketId;
+    if (config.sandboxId) data.sandbox_id = config.sandboxId;
 
-    const res = await this.#vhttp.post<RTStreamSceneIndexBase, typeof data>(
+    const res = await this.#vhttp.post<RTStreamSceneIndexData, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.index, ApiPath.scene],
       data
     );
@@ -701,6 +1199,7 @@ export class RTStream {
       prompt: res.data.prompt,
       name: res.data.name,
       status: res.data.status,
+      sandboxId: res.data.sandboxId,
     });
   };
 
@@ -782,6 +1281,156 @@ export class RTStream {
       { action: 'stop', mode, engine }
     );
     return res.data || {};
+  };
+
+  /**
+   * Start a continuous VLM understanding job on the stream.
+   *
+   * Understanding is independent of indexing: it produces VLM output per
+   * stream window and (when `store=true`) persists it so it can be indexed
+   * later.
+   *
+   * @param options - Understanding configuration
+   * @param options.segmentation - Time segmentation, e.g. `{ type: 'time', window: '10s' }`
+   * @param options.analyzers - Analyzer specs (initially one `vlm` analyzer)
+   * @param options.store - Persist output for later indexing (default: `true`)
+   * @param options.wsConnectionId - WebSocket connection ID for real-time updates (optional)
+   * @returns The understanding job, RTStreamUnderstanding object
+   */
+  public understand = async (
+    options: {
+      segmentation?: Record<string, unknown>;
+      analyzers?: Record<string, unknown>[];
+      store?: boolean;
+      wsConnectionId?: string;
+    } = {}
+  ): Promise<RTStreamUnderstanding | null> => {
+    const data: Record<string, unknown> = {
+      segmentation: options.segmentation ?? {},
+      analyzers: options.analyzers ?? [],
+      store: options.store ?? true,
+    };
+    if (options.wsConnectionId) data.ws_connection_id = options.wsConnectionId;
+
+    const res = await this.#vhttp.post<RTStreamUnderstandingBase, typeof data>(
+      [ApiPath.rtstream, this.id, ApiPath.understand],
+      data
+    );
+
+    if (!res.data) return null;
+
+    const understandingData = res.data;
+    understandingData.rtstreamId = understandingData.rtstreamId ?? this.id;
+    return new RTStreamUnderstanding(this.#vhttp, understandingData);
+  };
+
+  /**
+   * Get an understanding job by id.
+   * @param understandingId - ID of the understanding job
+   * @returns The understanding job, RTStreamUnderstanding object
+   */
+  public getUnderstanding = async (
+    understandingId: string
+  ): Promise<RTStreamUnderstanding | null> => {
+    if (!understandingId) {
+      throw new VideodbError('understanding_id is required');
+    }
+    const res = await this.#vhttp.get<RTStreamUnderstandingBase>([
+      ApiPath.rtstream,
+      this.id,
+      ApiPath.understand,
+      understandingId,
+    ]);
+
+    if (!res.data) return null;
+
+    const understandingData = res.data;
+    understandingData.rtstreamId = understandingData.rtstreamId ?? this.id;
+    return new RTStreamUnderstanding(this.#vhttp, understandingData);
+  };
+
+  /**
+   * List all understanding jobs on the stream.
+   * @returns List of RTStreamUnderstanding objects
+   */
+  public listUnderstanding = async (): Promise<RTStreamUnderstanding[]> => {
+    const res = await this.#vhttp.get<{
+      understandings: RTStreamUnderstandingBase[];
+    }>([ApiPath.rtstream, this.id, ApiPath.understand]);
+
+    return (res.data?.understandings ?? []).map(item => {
+      item.rtstreamId = item.rtstreamId ?? this.id;
+      return new RTStreamUnderstanding(this.#vhttp, item);
+    });
+  };
+
+  /**
+   * Materialize an understanding output into a searchable index.
+   * @param options - Index configuration
+   * @param options.source - Understanding output descriptor, e.g. `understanding.outputs.scene`
+   * @param options.name - Index name (optional)
+   * @param options.useFor - Capabilities; defaults server-side to `['semantic']`
+   * @returns The index, RTStreamIndex object
+   */
+  public index = async (options: {
+    source: Record<string, unknown>;
+    name?: string;
+    useFor?: string[];
+  }): Promise<RTStreamIndex | null> => {
+    const data: Record<string, unknown> = { source: options.source };
+    if (options.name !== undefined) data.name = options.name;
+    if (options.useFor !== undefined) data.use_for = options.useFor;
+
+    const res = await this.#vhttp.post<RTStreamIndexBase, typeof data>(
+      [ApiPath.rtstream, this.id, ApiPath.indexes],
+      data
+    );
+
+    if (!res.data) return null;
+
+    const indexData = res.data;
+    indexData.rtstreamId = indexData.rtstreamId ?? this.id;
+    return new RTStreamIndex(this.#vhttp, indexData);
+  };
+
+  /**
+   * Get an index by id.
+   * @param indexId - ID of the index
+   * @returns RTStreamIndex object
+   */
+  public getIndex = async (indexId: string): Promise<RTStreamIndex | null> => {
+    if (!indexId) {
+      throw new VideodbError('index_id is required');
+    }
+    const res = await this.#vhttp.get<RTStreamIndexBase>([
+      ApiPath.rtstream,
+      this.id,
+      ApiPath.indexes,
+      indexId,
+    ]);
+
+    if (!res.data) return null;
+
+    const indexData = res.data;
+    indexData.rtstreamId = indexData.rtstreamId ?? this.id;
+    return new RTStreamIndex(this.#vhttp, indexData);
+  };
+
+  /**
+   * List all indexes on the stream.
+   * @returns List of RTStreamIndex objects
+   */
+  public listIndexes = async (): Promise<RTStreamIndex[]> => {
+    const res = await this.#vhttp.get<{ indexes: RTStreamIndexBase[] }>([
+      ApiPath.rtstream,
+      this.id,
+      ApiPath.indexes,
+    ]);
+
+    return (res.data?.indexes ?? []).map(item => {
+      item.rtstreamId = item.rtstreamId ?? this.id;
+      return new RTStreamIndex(this.#vhttp, item);
+    });
   };
 
   /**

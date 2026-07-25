@@ -98,6 +98,7 @@ export type IndexSceneConfig = {
   name?: string | null;
   callbackUrl?: string | null;
   scenes?: Scene[];
+  sandboxId?: string;
 };
 
 export type IndexConfig = {

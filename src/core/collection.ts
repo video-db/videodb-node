@@ -25,8 +25,9 @@ import type {
   AudioResponse,
   ImageResponse,
 } from '@/types/response';
+import type { SearchResponse as SearchApiResponse } from '@/types/response';
 import { HttpClient } from '@/utils/httpClient';
-import { uploadToServer } from '@/utils/upload';
+import { uploadToServer, uploadBytes } from '@/utils/upload';
 import {
   DefaultSearchType,
   DefaultIndexType,
@@ -34,13 +35,24 @@ import {
 } from '@/core/config';
 import { SearchFactory } from './search';
 import { SearchResult } from './search/searchResult';
+import {
+  AskResponse,
+  SearchResponse,
+  warnLegacySearchOnce,
+  type AskResponseData,
+  type SearchResponseData,
+} from './search/responses';
 import { Video } from './video';
 import { Audio } from './audio';
 import { Image } from './image';
 import { Meeting } from './meeting';
 import { CaptureSession } from './captureSession';
 import { RTStream, RTStreamSearchResult, RTStreamShot } from './rtstream';
+import { GenerationJob, type JobData } from './job';
+import { VoiceClone, type VoiceCloneBase } from './voiceClone';
 import { VideodbError } from '@/utils/error';
+
+const MAX_GENERATE_TEXT_PAYLOAD_SIZE = 250 * 1024;
 
 const {
   video,
@@ -55,7 +67,45 @@ const {
   title,
   meeting,
   record,
+  ask,
+  semantic_search,
+  query: queryPath,
+  aggregate,
+  voice_clone,
 } = ApiPath;
+
+/**
+ * Options for {@link Collection.search}. Combines new-style (v2) params with
+ * legacy-shaped params; passing any legacy param (or `namespace: "rtstream"`)
+ * routes the call to {@link Collection.legacySearch}.
+ */
+export interface CollectionSearchOptions {
+  // legacy-shaped
+  searchType?: SearchType;
+  indexType?: IndexType;
+  resultThreshold?: number;
+  scoreThreshold?: number;
+  dynamicScorePercentage?: number;
+  filter?: Array<Record<string, unknown>>;
+  sortDocsOn?: string;
+  namespace?: string;
+  sceneIndexId?: string;
+  indexId?: string;
+  algorithm?: string;
+  // new (v2)
+  topK?: number;
+  mode?: string;
+  returnFields?: unknown[] | Record<string, unknown> | string;
+  includeClip?: boolean;
+  sessionId?: string;
+  config?: Record<string, unknown>;
+  // unsupported in search()
+  indexName?: string;
+  indexNames?: string[] | string;
+  indexIds?: string[] | string;
+  // internal — rejected
+  deepsearchConfig?: unknown;
+}
 
 /**
  * The base VideoDB class
@@ -243,7 +293,270 @@ export class Collection implements ICollection {
    * @param sceneIndexId - [optional] Filter by specific scene index
    * @returns SearchResult or RTStreamSearchResult object
    */
+  /**
+   * Search this collection.
+   *
+   * New search is used by default. Calls that pass legacy-shaped parameters
+   * (or `namespace: "rtstream"`) are routed to {@link legacySearch} with a
+   * one-time warning.
+   * @param query - Search query
+   * @param options - Search options (new-style or legacy-shaped)
+   */
   public search = async (
+    query: string,
+    optionsOrSearchType: CollectionSearchOptions | SearchType = {},
+    indexType?: IndexType,
+    resultThreshold?: number,
+    scoreThreshold?: number,
+    dynamicScorePercentage?: number,
+    filter?: Array<Record<string, unknown>>,
+    sortDocsOn?: string,
+    namespace?: string,
+    sceneIndexId?: string
+  ): Promise<SearchResponse | SearchResult | RTStreamSearchResult> => {
+    // Back-compat: the pre-v2 signature was fully positional —
+    //   search(query, searchType, indexType, resultThreshold, scoreThreshold,
+    //          dynamicScorePercentage, filter, sortDocsOn, namespace, sceneIndexId)
+    // Detect it (2nd arg is a SearchType string, or any trailing positional arg
+    // is present) and fold it into an options object, forcing legacy routing —
+    // mirroring videodb-python's `has_old = bool(args)`.
+    const positionalLegacy =
+      typeof optionsOrSearchType === 'string' ||
+      indexType !== undefined ||
+      resultThreshold !== undefined ||
+      scoreThreshold !== undefined ||
+      dynamicScorePercentage !== undefined ||
+      filter !== undefined ||
+      sortDocsOn !== undefined ||
+      namespace !== undefined ||
+      sceneIndexId !== undefined;
+
+    const options: CollectionSearchOptions = positionalLegacy
+      ? {
+          searchType:
+            typeof optionsOrSearchType === 'string'
+              ? (optionsOrSearchType as SearchType)
+              : undefined,
+          indexType,
+          resultThreshold,
+          scoreThreshold,
+          dynamicScorePercentage,
+          filter,
+          sortDocsOn,
+          namespace,
+          sceneIndexId,
+        }
+      : (optionsOrSearchType as CollectionSearchOptions);
+
+    const oldParams: (keyof CollectionSearchOptions)[] = [
+      'searchType',
+      'indexType',
+      'resultThreshold',
+      'scoreThreshold',
+      'dynamicScorePercentage',
+      'sceneIndexId',
+      'indexId',
+      'algorithm',
+      'sortDocsOn',
+      'namespace',
+    ];
+    const newParams: (keyof CollectionSearchOptions)[] = [
+      'topK',
+      'mode',
+      'returnFields',
+      'includeClip',
+      'sessionId',
+      'config',
+    ];
+    const unsupported: (keyof CollectionSearchOptions)[] = [
+      'indexName',
+      'indexNames',
+      'indexId',
+      'indexIds',
+    ];
+
+    const hasOld =
+      positionalLegacy ||
+      oldParams.some(k => options[k] !== undefined && options[k] !== null);
+    const hasNew = newParams.some(
+      k => options[k] !== undefined && options[k] !== null
+    );
+    const hasUnsupported = unsupported.some(
+      k => options[k] !== undefined && options[k] !== null
+    );
+
+    if (options.deepsearchConfig != null) {
+      throw new VideodbError(
+        'deepsearchConfig is internal and cannot be passed to search().'
+      );
+    }
+    if (hasOld && (hasNew || hasUnsupported)) {
+      throw new VideodbError(
+        'Cannot mix legacy search params with new search params. ' +
+          'Use search(...) for new search or legacySearch(...) for legacy search.'
+      );
+    }
+    if (hasUnsupported) {
+      throw new VideodbError(
+        'indexName/indexNames/indexId/indexIds are not supported in search(). ' +
+          'Use semanticSearch(), query(), or aggregate() for index-specific calls.'
+      );
+    }
+
+    if (hasOld) {
+      warnLegacySearchOnce();
+      return this.legacySearch(
+        query,
+        options.searchType,
+        options.indexType,
+        options.resultThreshold,
+        options.scoreThreshold,
+        options.dynamicScorePercentage,
+        options.filter,
+        options.sortDocsOn,
+        options.namespace,
+        options.sceneIndexId
+      );
+    }
+
+    return this.#newSearch(query, options);
+  };
+
+  #newSearch = async (
+    query: string,
+    options: CollectionSearchOptions
+  ): Promise<SearchResponse> => {
+    const payload: Record<string, unknown> = { query };
+    if (options.topK != null) payload.top_k = options.topK;
+    if (options.mode != null) payload.mode = options.mode;
+    if (options.returnFields != null)
+      payload.return_fields = options.returnFields;
+    if (options.includeClip != null) payload.include_clip = options.includeClip;
+    if (options.sessionId != null) payload.session_id = options.sessionId;
+    if (options.config != null) payload.config = options.config;
+    const res = await this.#vhttp.post<Record<string, unknown>, typeof payload>(
+      [collection, this.id, search, 'v2'],
+      payload
+    );
+    return new SearchResponse(this.#vhttp, res.data as SearchResponseData);
+  };
+
+  /**
+   * Ask a question and get an answer generated from retrieved collection context.
+   */
+  public ask = async (
+    question: string,
+    topK: number = 15,
+    mode: string = 'default',
+    includeSources: boolean = false
+  ): Promise<AskResponse> => {
+    const res = await this.#vhttp.post<Record<string, unknown>, object>(
+      [collection, this.id, ask],
+      { question, top_k: topK, mode, include_sources: includeSources }
+    );
+    return new AskResponse(this.#vhttp, res.data as AskResponseData);
+  };
+
+  /** Semantic search across one or more indexes in this collection. */
+  public semanticSearch = async (
+    query: string,
+    options: {
+      indexNames?: string[] | string;
+      topK?: number;
+      scoreThreshold?: number;
+      filter?: unknown[] | Record<string, unknown>;
+      returnFields?: unknown[] | Record<string, unknown> | string;
+      indexIds?: string[] | string;
+    } = {}
+  ): Promise<SearchResult> => {
+    const res = await this.#vhttp.post<SearchApiResponse, object>(
+      [collection, this.id, semantic_search],
+      {
+        query,
+        index_names: options.indexNames,
+        index_ids: options.indexIds,
+        top_k: options.topK ?? 10,
+        score_threshold: options.scoreThreshold,
+        filter: options.filter,
+        return_fields: options.returnFields,
+      }
+    );
+    return new SearchResult(this.#vhttp, res.data);
+  };
+
+  /** Structured query against an index in this collection. */
+  public query = async (
+    options: {
+      indexName?: string;
+      filter?: unknown[] | Record<string, unknown>;
+      limit?: number;
+      returnFields?: unknown[] | Record<string, unknown> | string;
+      sort?: string | [string, string][];
+      indexId?: string;
+    } = {}
+  ): Promise<SearchResult> => {
+    const res = await this.#vhttp.post<SearchApiResponse, object>(
+      [collection, this.id, queryPath],
+      {
+        index_name: options.indexName,
+        index_id: options.indexId,
+        filter: options.filter,
+        limit: options.limit ?? 100,
+        return_fields: options.returnFields,
+        sort: options.sort,
+      }
+    );
+    return new SearchResult(this.#vhttp, res.data);
+  };
+
+  /** Aggregate over an index in this collection. */
+  public aggregate = async (
+    options: {
+      indexName?: string;
+      filter?: unknown[] | Record<string, unknown>;
+      groupBy?: string;
+      metric?: string;
+      limit?: number;
+      sort?: string | [string, string][];
+      indexId?: string;
+    } = {}
+  ): Promise<Record<string, unknown> | Record<string, unknown>[]> => {
+    // convert:false — aggregate buckets are keyed by user field names/values.
+    const res = await this.#vhttp.post<
+      Record<string, unknown> | Record<string, unknown>[],
+      object
+    >(
+      [collection, this.id, aggregate],
+      {
+        index_name: options.indexName,
+        index_id: options.indexId,
+        filter: options.filter,
+        group_by: options.groupBy,
+        metric: options.metric ?? 'count',
+        limit: options.limit ?? 100,
+        sort: options.sort,
+      },
+      undefined,
+      { convert: false }
+    );
+    return res.data;
+  };
+
+  /**
+   * Legacy search (pre-v2), including RTStream namespace search.
+   * @param query - Search query
+   * @param searchType - [optional] Type of search to be performed
+   * @param indexType - [optional] Index Type
+   * @param resultThreshold - [optional] Result Threshold
+   * @param scoreThreshold - [optional] Score Threshold
+   * @param dynamicScorePercentage - [optional] Percentage of dynamic score to consider
+   * @param filter - [optional] Additional metadata filters
+   * @param sortDocsOn - [optional] Sort docs within each video by "score" or "start"
+   * @param namespace - [optional] Search namespace ("rtstream" to search RTStreams)
+   * @param sceneIndexId - [optional] Filter by specific scene index
+   * @returns SearchResult or RTStreamSearchResult object
+   */
+  public legacySearch = async (
     query: string,
     searchType?: SearchType,
     indexType?: IndexType,
@@ -259,7 +572,8 @@ export class Collection implements ICollection {
     if (namespace === 'rtstream') {
       const data: Record<string, unknown> = { query };
       if (sceneIndexId !== undefined) data.scene_index_id = sceneIndexId;
-      if (resultThreshold !== undefined) data.result_threshold = resultThreshold;
+      if (resultThreshold !== undefined)
+        data.result_threshold = resultThreshold;
       if (scoreThreshold !== undefined) data.score_threshold = scoreThreshold;
       if (dynamicScorePercentage !== undefined)
         data.dynamic_score_percentage = dynamicScorePercentage;
@@ -414,15 +728,41 @@ export class Collection implements ICollection {
   public generateImage = async (
     prompt: string,
     aspectRatio: '1:1' | '9:16' | '16:9' | '4:3' | '3:4' = '1:1',
-    callbackUrl?: string
-  ): Promise<Image | undefined> => {
-    const res = await this.#vhttp.post<ImageBase, object>(
+    callbackUrl?: string,
+    options: {
+      modelName?: string;
+      config?: Record<string, unknown>;
+      sandboxId?: string;
+      wait?: boolean;
+      pollInterval?: number;
+      timeout?: number;
+    } = {}
+  ): Promise<Image | GenerationJob | JobData | undefined> => {
+    const body: Record<string, unknown> = {
+      prompt,
+      aspect_ratio: aspectRatio,
+      callback_url: callbackUrl,
+    };
+    if (options.modelName != null) body.model_name = options.modelName;
+    if (options.config != null) body.config = options.config;
+    if (options.sandboxId != null) body.sandbox_id = options.sandboxId;
+
+    const res = await this.#vhttp.post<JobData, typeof body>(
       [collection, this.id, generate, image],
-      { prompt, aspect_ratio: aspectRatio, callback_url: callbackUrl }
+      body
     );
-    if (res.data) {
-      return new Image(this.#vhttp, res.data);
+    const data = res.data;
+    if (!data) return undefined;
+    if (data.jobId || data.job_id) {
+      const job = GenerationJob.fromData(this.#vhttp, data, 'image');
+      return options.wait
+        ? ((await job.wait(
+            options.timeout ?? 600,
+            options.pollInterval ?? 5
+          )) as Image | JobData)
+        : job;
     }
+    return new Image(this.#vhttp, data as unknown as ImageBase);
   };
 
   /**
@@ -462,7 +802,13 @@ export class Collection implements ICollection {
   ): Promise<Audio | undefined> => {
     const res = await this.#vhttp.post<AudioBase, object>(
       [collection, this.id, generate, audio],
-      { prompt, duration, audio_type: 'sound_effect', config, callback_url: callbackUrl }
+      {
+        prompt,
+        duration,
+        audio_type: 'sound_effect',
+        config,
+        callback_url: callbackUrl,
+      }
     );
     if (res.data) {
       return new Audio(this.#vhttp, res.data);
@@ -481,15 +827,53 @@ export class Collection implements ICollection {
     textContent: string,
     voiceName: string = 'Default',
     config: Record<string, unknown> = {},
-    callbackUrl?: string
-  ): Promise<Audio | undefined> => {
-    const res = await this.#vhttp.post<AudioBase, object>(
-      [collection, this.id, generate, audio],
-      { text: textContent, audio_type: 'voice', voice_name: voiceName, config, callback_url: callbackUrl }
-    );
-    if (res.data) {
-      return new Audio(this.#vhttp, res.data);
+    callbackUrl?: string,
+    options: {
+      modelName?: string;
+      sandboxId?: string;
+      voiceCloneId?: string;
+      cloneVoiceId?: string;
+      wait?: boolean;
+      pollInterval?: number;
+      timeout?: number;
+    } = {}
+  ): Promise<Audio | GenerationJob | JobData | undefined> => {
+    if (
+      options.voiceCloneId != null &&
+      options.cloneVoiceId != null &&
+      options.voiceCloneId !== options.cloneVoiceId
+    ) {
+      throw new VideodbError(
+        'voiceCloneId and cloneVoiceId must match when both are provided'
+      );
     }
+    const resolvedVoiceCloneId = options.voiceCloneId ?? options.cloneVoiceId;
+
+    const res = await this.#vhttp.post<JobData, object>(
+      [collection, this.id, generate, audio],
+      {
+        text: textContent,
+        audio_type: 'voice',
+        voice_name: voiceName,
+        model_name: options.modelName ?? 'elevenlabs',
+        config,
+        callback_url: callbackUrl,
+        sandbox_id: options.sandboxId,
+        voice_clone_id: resolvedVoiceCloneId,
+      }
+    );
+    const data = res.data;
+    if (!data) return undefined;
+    if (data.jobId || data.job_id) {
+      const job = GenerationJob.fromData(this.#vhttp, data, 'audio');
+      return options.wait
+        ? ((await job.wait(
+            options.timeout ?? 600,
+            options.pollInterval ?? 5
+          )) as Audio | JobData)
+        : job;
+    }
+    return new Audio(this.#vhttp, data as unknown as AudioBase);
   };
 
   /**
@@ -522,18 +906,100 @@ export class Collection implements ICollection {
    */
   public generateText = async (
     prompt: string,
-    modelName: 'basic' | 'pro' | 'ultra' = 'basic',
-    responseType: 'text' | 'json' = 'text'
+    modelName: string = 'basic',
+    responseType: 'text' | 'json' = 'text',
+    options: {
+      wait?: boolean;
+      callbackUrl?: string;
+      sandboxId?: string;
+      maxTokens?: number;
+      temperature?: number;
+      modelConfig?: Record<string, unknown>;
+    } = {}
   ): Promise<string | Record<string, unknown>> => {
-    const res = await this.#vhttp.post<
-      string | Record<string, unknown>,
-      object
-    >([collection, this.id, generate, text], {
+    const wait = options.wait ?? true;
+    const payload: Record<string, unknown> = {
       prompt,
       model_name: modelName,
       response_type: responseType,
-    });
+      callback_url: options.callbackUrl,
+      sandbox_id: options.sandboxId,
+      max_tokens: options.maxTokens,
+      temperature: options.temperature,
+      model_config: options.modelConfig,
+    };
+
+    // Large prompts are uploaded via a presigned URL and sent as prompt_url.
+    const payloadSize = Buffer.byteLength(JSON.stringify(payload), 'utf-8');
+    if (payloadSize > MAX_GENERATE_TEXT_PAYLOAD_SIZE) {
+      const promptUrl = await uploadBytes(
+        this.#vhttp,
+        prompt,
+        `generate_text_prompt_${Date.now()}.txt`,
+        'text/plain; charset=utf-8',
+        this.id
+      );
+      delete payload.prompt;
+      payload.prompt_url = promptUrl;
+    }
+
+    const res = await this.#vhttp.post<
+      string | Record<string, unknown>,
+      typeof payload
+    >([collection, this.id, generate, text], payload, undefined, { wait });
     return res.data;
+  };
+
+  /**
+   * Create a reusable cloned voice from a reference audio asset.
+   */
+  public createVoiceClone = async (
+    refAudioId: string,
+    name?: string,
+    description?: string,
+    refText?: string,
+    language?: string
+  ): Promise<VoiceClone> => {
+    const res = await this.#vhttp.post<VoiceCloneBase, object>([voice_clone], {
+      ref_audio_id: refAudioId,
+      name,
+      description,
+      ref_text: refText,
+      language,
+      collection_id: this.id,
+    });
+    return new VoiceClone(this.#vhttp, res.data);
+  };
+
+  /** Fetch a voice clone by ID. */
+  public getVoiceClone = async (voiceCloneId: string): Promise<VoiceClone> => {
+    const res = await this.#vhttp.get<VoiceCloneBase>([
+      voice_clone,
+      voiceCloneId,
+    ]);
+    return new VoiceClone(this.#vhttp, res.data);
+  };
+
+  /** List voice clones. */
+  public listVoiceClones = async (
+    page: number = 1,
+    pageSize: number = 20,
+    language?: string
+  ): Promise<VoiceClone[]> => {
+    const params: Record<string, unknown> = { page, page_size: pageSize };
+    if (language) params.language = language;
+    const res = await this.#vhttp.get<{ voiceClones?: VoiceCloneBase[] }>(
+      [voice_clone],
+      { params }
+    );
+    return (res.data?.voiceClones || []).map(
+      v => new VoiceClone(this.#vhttp, v)
+    );
+  };
+
+  /** Delete a voice clone by ID. */
+  public deleteVoiceClone = async (voiceCloneId: string): Promise<void> => {
+    await this.#vhttp.delete([voice_clone, voiceCloneId]);
   };
 
   /**
@@ -550,7 +1016,11 @@ export class Collection implements ICollection {
   ): Promise<Video | undefined> => {
     const res = await this.#vhttp.post<VideoBase, object>(
       [collection, this.id, generate, video, dub],
-      { video_id: videoId, language_code: languageCode, callback_url: callbackUrl }
+      {
+        video_id: videoId,
+        language_code: languageCode,
+        callback_url: callbackUrl,
+      }
     );
     if (res.data) {
       return new Video(this.#vhttp, res.data);
@@ -696,12 +1166,19 @@ export class Collection implements ICollection {
   ): Promise<CaptureSession> => {
     const res = await this.#vhttp.get<
       CaptureSessionBase & { rtstreams?: Array<Record<string, unknown>> }
-    >([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session, sessionId]);
+    >([
+      ApiPath.collection,
+      this.id,
+      ApiPath.capture,
+      ApiPath.session,
+      sessionId,
+    ]);
 
     const responseData = res.data as Record<string, unknown>;
 
     // Normalize rtstreams before passing to CaptureSession
-    const rtstreams = (responseData.rtstreams as Array<Record<string, unknown>>) || [];
+    const rtstreams =
+      (responseData.rtstreams as Array<Record<string, unknown>>) || [];
     for (const rts of rtstreams) {
       if (rts && typeof rts === 'object') {
         if ('rtstream_id' in rts && !('id' in rts)) {
@@ -743,7 +1220,9 @@ export class Collection implements ICollection {
 
     const res = await this.#vhttp.get<{
       sessions: Array<Record<string, unknown>>;
-    }>([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session], { params });
+    }>([ApiPath.collection, this.id, ApiPath.capture, ApiPath.session], {
+      params,
+    });
 
     const sessions: CaptureSession[] = [];
     for (const sessionData of res.data?.sessions || []) {
@@ -754,7 +1233,8 @@ export class Collection implements ICollection {
       delete sessionData.session_id;
 
       // Normalize rtstreams
-      const rtstreams = (sessionData.rtstreams as Array<Record<string, unknown>>) || [];
+      const rtstreams =
+        (sessionData.rtstreams as Array<Record<string, unknown>>) || [];
       for (const rts of rtstreams) {
         if (rts && typeof rts === 'object') {
           if ('rtstream_id' in rts && !('id' in rts)) {
