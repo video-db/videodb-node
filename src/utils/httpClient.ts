@@ -171,7 +171,8 @@ export class HttpClient {
   #getOutput = async <R>(
     url: string,
     maxPollTime: number = MAX_POLLING_TIME,
-    pollInterval: number = POLLING_INTERVAL
+    pollInterval: number = POLLING_INTERVAL,
+    convert: boolean = true
   ): Promise<R> => {
     const startTime = Date.now();
 
@@ -195,9 +196,11 @@ export class HttpClient {
         if (data.response.success === false) {
           throw new VideodbError(data.response.message);
         }
-        return this.#convertResponseData(data.response.data);
+        return convert
+          ? this.#convertResponseData(data.response.data)
+          : data.response.data;
       }
-      return this.#convertResponseData(data.data);
+      return convert ? this.#convertResponseData(data.data) : data.data;
     }
 
     throw new RequestTimeoutError(
@@ -244,7 +247,8 @@ export class HttpClient {
           const result = await this.#getOutput<R>(
             outputUrl,
             poll?.maxPollTime,
-            poll?.pollInterval
+            poll?.pollInterval,
+            convert
           );
           return { data: result, success: true } as ResponseOf<R>;
         }
