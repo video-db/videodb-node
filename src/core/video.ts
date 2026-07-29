@@ -117,6 +117,9 @@ export interface VideoSearchOptions {
   indexId?: string;
   algorithm?: string;
   namespace?: string;
+  stitch?: boolean;
+  rerank?: boolean;
+  rerankParams?: Record<string, unknown>;
   // new (v2)
   topK?: number;
   mode?: string;
@@ -186,8 +189,50 @@ export class Video implements IVideo {
    */
   public search = async (
     query: string,
-    options: VideoSearchOptions = {}
+    optionsOrSearchType: VideoSearchOptions | SearchType = {},
+    indexType?: IndexType,
+    resultThreshold?: number,
+    scoreThreshold?: number,
+    dynamicScorePercentage?: number,
+    filter?: Array<Record<string, unknown>>,
+    sortDocsOn?: string
   ): Promise<SearchResponse | SearchResult> => {
+    // Back-compat: the pre-v2 signature was fully positional —
+    //   search(query, searchType, indexType, resultThreshold, scoreThreshold,
+    //          dynamicScorePercentage, filter, sortDocsOn)
+    // Detect it (2nd arg is a SearchType string, or any trailing positional arg
+    // is present) and fold it into an options object, forcing legacy routing —
+    // mirroring videodb-python's `has_old = bool(args)`.
+    const positionalLegacy =
+      typeof optionsOrSearchType === 'string' ||
+      indexType !== undefined ||
+      resultThreshold !== undefined ||
+      scoreThreshold !== undefined ||
+      dynamicScorePercentage !== undefined ||
+      filter !== undefined ||
+      sortDocsOn !== undefined;
+
+    const options: VideoSearchOptions = positionalLegacy
+      ? {
+          searchType:
+            typeof optionsOrSearchType === 'string'
+              ? (optionsOrSearchType as SearchType)
+              : undefined,
+          indexType,
+          resultThreshold,
+          scoreThreshold,
+          dynamicScorePercentage,
+          filter,
+          sortDocsOn,
+        }
+      : (optionsOrSearchType as VideoSearchOptions);
+
+    // Note: scoreThreshold is intentionally NOT a legacy trigger. It is shared
+    // by legacy and Search V2, so on its own it must not force legacy routing —
+    // it routes to new search unless a genuinely legacy param is present. A
+    // positional scoreThreshold still routes to legacy via `positionalLegacy`,
+    // mirroring videodb-python (score_threshold is positional-only, absent from
+    // its `old_params`).
     const oldParams: (keyof VideoSearchOptions)[] = [
       'searchType',
       'indexType',
@@ -198,6 +243,9 @@ export class Video implements IVideo {
       'algorithm',
       'sortDocsOn',
       'namespace',
+      'stitch',
+      'rerank',
+      'rerankParams',
     ];
     const newParams: (keyof VideoSearchOptions)[] = [
       'topK',
@@ -207,16 +255,19 @@ export class Video implements IVideo {
       'sessionId',
       'config',
     ];
+    // Only the multi-index (plural) selectors are unsupported by search().
+    // The singular `indexId` is a legacy selector (in `oldParams`) that must
+    // route to legacySearch, mirroring videodb-python whose `unsupported_params`
+    // holds `index_ids` but not `index_id`.
     const unsupported: (keyof VideoSearchOptions)[] = [
       'indexName',
       'indexNames',
-      'indexId',
       'indexIds',
     ];
 
-    const hasOld = oldParams.some(
-      k => options[k] !== undefined && options[k] !== null
-    );
+    const hasOld =
+      positionalLegacy ||
+      oldParams.some(k => options[k] !== undefined && options[k] !== null);
     const hasNew = newParams.some(
       k => options[k] !== undefined && options[k] !== null
     );
@@ -237,7 +288,7 @@ export class Video implements IVideo {
     }
     if (hasUnsupported) {
       throw new VideodbError(
-        'indexName/indexNames/indexId/indexIds are not supported in search(). ' +
+        'indexName/indexNames/indexIds are not supported in search(). ' +
           'Use semanticSearch(), query(), or aggregate() for index-specific calls.'
       );
     }
@@ -252,7 +303,10 @@ export class Video implements IVideo {
         options.scoreThreshold,
         options.dynamicScorePercentage,
         options.filter,
-        options.sortDocsOn
+        options.sortDocsOn,
+        options.sceneIndexId,
+        options.indexId,
+        options.algorithm
       );
     }
 
@@ -271,6 +325,10 @@ export class Video implements IVideo {
     if (options.includeClip != null) payload.include_clip = options.includeClip;
     if (options.sessionId != null) payload.session_id = options.sessionId;
     if (options.config != null) payload.config = options.config;
+    // Shared with legacy; forwarded to Search V2 like videodb-python's
+    // `_new_search(**kwargs)` passthrough of a `score_threshold` kwarg.
+    if (options.scoreThreshold != null)
+      payload.score_threshold = options.scoreThreshold;
     const res = await this.#vhttp.post<Record<string, unknown>, typeof payload>(
       [video, this.id, searchPath, 'v2'],
       payload
@@ -399,6 +457,10 @@ export class Video implements IVideo {
    * @param dynamicScorePercentage - [optional] Percentage of dynamic score to consider
    * @param filter - [optional] Additional metadata filters
    * @param sortDocsOn - [optional] Sort docs within each video by "score" or "start"
+   * @param sceneIndexId - [optional] Target a specific legacy scene index by id
+   * @param indexId - [optional] Alias for `sceneIndexId` (mirrors videodb-python's
+   *   `index_id` → `scene_index_id` aliasing)
+   * @param algorithm - [optional] Legacy ranking algorithm selector
    */
   public legacySearch = async (
     query: string,
@@ -408,8 +470,14 @@ export class Video implements IVideo {
     scoreThreshold?: number,
     dynamicScorePercentage?: number,
     filter?: Array<Record<string, unknown>>,
-    sortDocsOn?: string
+    sortDocsOn?: string,
+    sceneIndexId?: string,
+    indexId?: string,
+    algorithm?: string
   ): Promise<SearchResult> => {
+    // `indexId` is accepted as an alias for `sceneIndexId`; an explicit
+    // `sceneIndexId` wins if both are provided.
+    const resolvedSceneIndexId = sceneIndexId ?? indexId;
     const s = new SearchFactory(this.#vhttp);
     const searchFunc = s.getSearch(searchType ?? DefaultSearchType);
     const results = await searchFunc.searchInsideVideo({
@@ -422,6 +490,8 @@ export class Video implements IVideo {
       dynamicScorePercentage: dynamicScorePercentage,
       filter: filter,
       sortDocsOn: sortDocsOn,
+      sceneIndexId: resolvedSceneIndexId,
+      algorithm: algorithm,
     });
     return results;
   };
