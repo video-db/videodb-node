@@ -39,8 +39,8 @@ export class SearchResult implements Iterable<Shot> {
             sceneIndexId: doc.sceneIndexId,
             sceneIndexName: doc.sceneIndexName,
             metadata: doc.metadata,
-            streamUrl: doc.streamLink ?? doc.streamUrl,
-            playerUrl: doc.playerUrl,
+            streamUrl: doc.streamLink || doc.streamUrl || null,
+            playerUrl: doc.playerUrl ?? null,
           })
         );
       }

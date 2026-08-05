@@ -22,8 +22,8 @@ export class Shot implements IShot {
   public readonly sceneIndexId?: string;
   public readonly sceneIndexName?: string;
   public readonly metadata?: Record<string, unknown>;
-  public streamUrl?: string;
-  public playerUrl?: string;
+  public streamUrl?: string | null;
+  public playerUrl?: string | null;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: ShotBase) {
