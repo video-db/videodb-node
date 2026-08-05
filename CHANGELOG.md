@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.1] (2026-07-29)
+
+Parity fixes aligning `Video` legacy search and analyzer output with `videodb-python`.
+
+### Added
+
+- **Legacy scene-index targeting** — `Video.legacySearch()` now accepts `sceneIndexId`, `indexId` (an alias for `sceneIndexId`, matching `videodb-python`'s `index_id` → `scene_index_id` aliasing), and `algorithm`, forwarding them to the wire. `Video.search()` forwards these when it routes to legacy. `sceneIndexId` and `algorithm` were added to the `SearchBase` type and are now emitted by the legacy search request builders (`scene_index_id`, `algorithm`)
+
+### Fixed
+
+- **`search({ indexId })` no longer throws** — the singular `indexId` was incorrectly listed as an unsupported selector, so passing it raised "Cannot mix legacy search params" instead of routing to `legacySearch()`. It is now treated as a legacy selector, mirroring `videodb-python` whose `unsupported_params` holds `index_ids` but not `index_id`
+- **Legacy `SemanticSearch` payload parity** — `dynamic_score_percentage` (defaulting `null`) and `filter` (defaulting `[]`) are now always emitted, matching `videodb-python`'s `SemanticSearch` request payload; previously they were omitted when unset, which changed server-side ranking/results
+- **`Understanding.getAnalyzerOutput()` preserves raw keys** — the call now skips camelCase conversion (`convert: false`), so the server's snake_case keys (e.g. `scene_id`) survive. Camelcasing renamed `scene_id` → `sceneId`, which the index endpoint does not recognize, breaking the round-trip of analyzer output back into `Video.index()` as a `source`
+
 ## [0.3.0] (2026-07-25)
 
 Indexing v2 — a new retrieval architecture plus a generation/compute stack, ported from `videodb-python`'s `feat/add-indexing-v2`.

@@ -14,6 +14,10 @@ export type SearchBase = {
   dynamicScorePercentage?: number;
   filter?: Array<Record<string, unknown>>;
   sortDocsOn?: string;
+  /** Target a specific legacy scene index by id. */
+  sceneIndexId?: string;
+  /** Legacy ranking algorithm selector. */
+  algorithm?: string;
 };
 
 export type SemanticSearchBase = SearchBase;
