@@ -10,7 +10,7 @@ import type {
   RecordMeetingConfig,
   CaptureSessionBase,
 } from '@/interfaces/core';
-import { IndexType, SearchType } from '@/types/search';
+import { IndexType, SearchType, type AskOptions } from '@/types/search';
 import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
 import type {
   CreateCaptureSessionConfig,
@@ -443,16 +443,29 @@ export class Collection implements ICollection {
 
   /**
    * Ask a question and get an answer generated from retrieved collection context.
+   * @param question - The question to answer
+   * @param optionsOrTopK - Options object, or `topK` for the legacy positional form
+   * @param mode - Retrieval/answer mode, positional form only (default `"default"`)
+   * @param includeSources - Whether to include source shots, positional form only (default false)
    */
   public ask = async (
     question: string,
-    topK: number = 15,
-    mode: string = 'default',
-    includeSources: boolean = false
+    optionsOrTopK: AskOptions | number = {},
+    mode?: string,
+    includeSources?: boolean
   ): Promise<AskResponse> => {
+    const opts: AskOptions =
+      typeof optionsOrTopK === 'number'
+        ? { topK: optionsOrTopK, mode, includeSources }
+        : optionsOrTopK;
     const res = await this.#vhttp.post<Record<string, unknown>, object>(
       [collection, this.id, ask],
-      { question, top_k: topK, mode, include_sources: includeSources }
+      {
+        question,
+        top_k: opts.topK ?? 15,
+        mode: opts.mode ?? 'default',
+        include_sources: opts.includeSources ?? false,
+      }
     );
     return new AskResponse(this.#vhttp, res.data as AskResponseData);
   };

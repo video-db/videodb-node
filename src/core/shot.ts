@@ -13,8 +13,8 @@ const { video, stream } = ApiPath;
  */
 export class Shot implements IShot {
   public readonly videoId: string;
-  public readonly videoLength: number;
-  public readonly videoTitle: string;
+  public readonly videoLength?: number;
+  public readonly videoTitle?: string;
   public readonly start: number;
   public readonly end: number;
   public readonly text?: string;
@@ -22,8 +22,8 @@ export class Shot implements IShot {
   public readonly sceneIndexId?: string;
   public readonly sceneIndexName?: string;
   public readonly metadata?: Record<string, unknown>;
-  public streamUrl?: string;
-  public playerUrl?: string;
+  public streamUrl?: string | null;
+  public playerUrl?: string | null;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: ShotBase) {
@@ -43,16 +43,20 @@ export class Shot implements IShot {
   }
 
   /**
-   * Get the streaming URL for the shot
+   * Get the streaming URL for the shot.
+   * Shots produced by search arrive with a `streamUrl` but no `playerUrl`, so
+   * the request is only skipped when both are already known.
    * @returns A streaming URL for the shot
    */
   generateStream = async () => {
-    if (this.streamUrl) {
+    if (this.streamUrl && this.playerUrl) {
       return this.streamUrl;
     }
 
     const body = {
-      length: this.videoLength,
+      // Search V2 shots have no length; send null like videodb-python rather
+      // than letting JSON.stringify turn NaN into null implicitly.
+      length: this.videoLength ?? null,
       timeline: [[this.start, this.end]] as Timeline,
     };
 
@@ -96,9 +100,7 @@ export class Shot implements IShot {
       await this.generateStream();
     }
     if (!this.playerUrl) {
-      throw new VideodbError(
-        'player_url not available. Call generateStream() first or set autoGenerate=true.'
-      );
+      throw new VideodbError('player_url not available for this shot.');
     }
     return buildIframeEmbedCode(
       this.playerUrl,

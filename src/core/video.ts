@@ -62,7 +62,7 @@ import {
   IndexSceneConfig,
   SubtitleStyleProps,
 } from '@/types/config';
-import { SearchType, IndexType } from '@/types/search';
+import { SearchType, IndexType, type AskOptions } from '@/types/search';
 import { SceneIndexRecords, SceneIndexes } from '@/types';
 import { Shot } from './shot';
 import { VideodbError } from '@/utils/error';
@@ -339,19 +339,28 @@ export class Video implements IVideo {
   /**
    * Ask a question and get an answer generated from retrieved video context.
    * @param question - The question to answer
-   * @param topK - Number of context chunks to retrieve (default 15)
-   * @param mode - Retrieval/answer mode (default `"default"`)
-   * @param includeSources - Whether to include source shots (default false)
+   * @param optionsOrTopK - Options object, or `topK` for the legacy positional form
+   * @param mode - Retrieval/answer mode, positional form only (default `"default"`)
+   * @param includeSources - Whether to include source shots, positional form only (default false)
    */
   public ask = async (
     question: string,
-    topK: number = 15,
-    mode: string = 'default',
-    includeSources: boolean = false
+    optionsOrTopK: AskOptions | number = {},
+    mode?: string,
+    includeSources?: boolean
   ): Promise<AskResponse> => {
+    const opts: AskOptions =
+      typeof optionsOrTopK === 'number'
+        ? { topK: optionsOrTopK, mode, includeSources }
+        : optionsOrTopK;
     const res = await this.#vhttp.post<Record<string, unknown>, object>(
       [video, this.id, ask],
-      { question, top_k: topK, mode, include_sources: includeSources }
+      {
+        question,
+        top_k: opts.topK ?? 15,
+        mode: opts.mode ?? 'default',
+        include_sources: opts.includeSources ?? false,
+      }
     );
     return new AskResponse(this.#vhttp, res.data as AskResponseData);
   };

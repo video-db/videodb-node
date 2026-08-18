@@ -126,14 +126,14 @@ export interface IImage extends ImageBase {}
  */
 export interface ShotBase {
   videoId: string;
-  videoLength: number;
-  videoTitle: string;
+  videoLength?: number;
+  videoTitle?: string;
   start: number;
   end: number;
   text?: string;
   searchScore?: number;
-  streamUrl?: StreamableURL;
-  playerUrl?: StreamableURL;
+  streamUrl?: StreamableURL | null;
+  playerUrl?: StreamableURL | null;
   sceneIndexId?: string;
   sceneIndexName?: string;
   metadata?: Record<string, unknown>;
