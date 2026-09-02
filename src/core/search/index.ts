@@ -42,6 +42,12 @@ class SceneSearch implements Search<SceneVideoSearch, SceneCollectionSearch> {
     if (data.filter !== undefined) {
       reqData.filter = data.filter;
     }
+    if (data.sceneIndexId !== undefined) {
+      reqData.scene_index_id = data.sceneIndexId;
+    }
+    if (data.algorithm !== undefined) {
+      reqData.algorithm = data.algorithm;
+    }
     return reqData;
   };
 
@@ -83,15 +89,20 @@ class SemanticSearch
         data.scoreThreshold ?? SemanticSearchDefaultValues.scoreThreshold,
       result_threshold:
         data.resultThreshold ?? SemanticSearchDefaultValues.resultThreshold,
+      // Always emitted, matching videodb-python's SemanticSearch payload where
+      // `dynamic_score_percentage` is always present (null when unset) and
+      // legacy_search passes `filter=[]` by default.
+      dynamic_score_percentage: data.dynamicScorePercentage ?? null,
+      filter: data.filter ?? [],
     };
-    if (data.dynamicScorePercentage !== undefined) {
-      reqData.dynamic_score_percentage = data.dynamicScorePercentage;
-    }
-    if (data.filter !== undefined) {
-      reqData.filter = data.filter;
-    }
     if (data.sortDocsOn !== undefined) {
       reqData.sort_docs_on = data.sortDocsOn;
+    }
+    if (data.sceneIndexId !== undefined) {
+      reqData.scene_index_id = data.sceneIndexId;
+    }
+    if (data.algorithm !== undefined) {
+      reqData.algorithm = data.algorithm;
     }
     return reqData;
   };
@@ -141,6 +152,12 @@ class KeywordSearch
     if (data.filter !== undefined) {
       reqData.filter = data.filter;
     }
+    if (data.sceneIndexId !== undefined) {
+      reqData.scene_index_id = data.sceneIndexId;
+    }
+    if (data.algorithm !== undefined) {
+      reqData.algorithm = data.algorithm;
+    }
     return reqData;
   };
 
@@ -188,6 +205,12 @@ class LLMSearch
     }
     if (data.filter !== undefined) {
       reqData.filter = data.filter;
+    }
+    if (data.sceneIndexId !== undefined) {
+      reqData.scene_index_id = data.sceneIndexId;
+    }
+    if (data.algorithm !== undefined) {
+      reqData.algorithm = data.algorithm;
     }
     return reqData;
   };

@@ -381,17 +381,29 @@ export class Understanding {
     throw new Error(`Analyzer not found: ${nameOrId}`);
   };
 
-  /** Return output for an analyzer by name or id. */
+  /**
+   * Return output for an analyzer by name or id.
+   *
+   * Returned with the server's raw snake_case keys (e.g. `scene_id`) — this
+   * output is meant to be round-tripped back into `Video.index` as a `source`,
+   * and the server keys off `scene_id`. Camelcasing it (the default response
+   * conversion) would rename `scene_id` to `sceneId`, which the index endpoint
+   * no longer recognizes, so the round-trip must skip conversion.
+   */
   public getAnalyzerOutput = async (nameOrId: string): Promise<unknown> => {
-    const res = await this.#vhttp.get<unknown>([
-      video,
-      this.videoId,
-      understand,
-      this.id ?? '',
-      'analyzers',
-      nameOrId,
-      'output',
-    ]);
+    const res = await this.#vhttp.get<unknown>(
+      [
+        video,
+        this.videoId,
+        understand,
+        this.id ?? '',
+        'analyzers',
+        nameOrId,
+        'output',
+      ],
+      undefined,
+      { convert: false }
+    );
     return res.data;
   };
 
