@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2] (2026-09-02)
+
+A patch fixing snake_case-to-camelCase conversion of responses whose payload is a top-level array.
+
+### Fixed
+
+- **Top-level arrays survive the response key conversion** — `fromSnakeToCamel()` ran arrays through lodash `mapKeys`, which returns a plain object keyed `"0"`, `"1"`, and so on, so any response whose `data` was an array came back as an index-keyed object. `Collection.searchTitle()` and `Video.getThumbnails()` threw `(res.data || []).map is not a function`, and `Connection.getInvoices()` resolved to an object instead of the array its signature declares. Arrays are now mapped element-wise, matching the guard `fromCamelToSnake()` already had; object conversion is unchanged
+
 ## [0.3.1] (2026-09-02)
 
 Parity fixes aligning `Video` legacy search and analyzer output with `videodb-python`, plus fixes for Search v2 result shapes and `ask()` argument handling.
