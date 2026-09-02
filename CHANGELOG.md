@@ -1,18 +1,26 @@
 # Changelog
 
-## [0.3.1] (2026-07-29)
+## [0.3.1] (2026-09-02)
 
-Parity fixes aligning `Video` legacy search and analyzer output with `videodb-python`.
+Parity fixes aligning `Video` legacy search and analyzer output with `videodb-python`, plus fixes for Search v2 result shapes and `ask()` argument handling.
 
 ### Added
 
 - **Legacy scene-index targeting** — `Video.legacySearch()` now accepts `sceneIndexId`, `indexId` (an alias for `sceneIndexId`, matching `videodb-python`'s `index_id` → `scene_index_id` aliasing), and `algorithm`, forwarding them to the wire. `Video.search()` forwards these when it routes to legacy. `sceneIndexId` and `algorithm` were added to the `SearchBase` type and are now emitted by the legacy search request builders (`scene_index_id`, `algorithm`)
+
+### Changed
+
+- **`ask()` accepts an options object** — `Video.ask()` and `Collection.ask()` now take an `AskOptions` (`topK`, `mode`, `includeSources`) as their second argument. The parameter was previously `topK: number`, so an options object was serialised into `top_k` and `mode` / `includeSources` were silently dropped. The positional form (`ask(question, 20, 'default', true)`) still works, and `AskOptions` is exported from `@/types/search`
+- **`Shot` metadata widened for Search v2** — `videoLength` and `videoTitle` are now optional and `streamUrl` / `playerUrl` nullable on both `Shot` and `ShotBase`, since Search v2 omits length and title and sends explicit nulls for stream keys. `getEmbedCode()`'s error no longer suggests `generateStream()` or `autoGenerate`, neither of which helps when the server returns no player URL
 
 ### Fixed
 
 - **`search({ indexId })` no longer throws** — the singular `indexId` was incorrectly listed as an unsupported selector, so passing it raised "Cannot mix legacy search params" instead of routing to `legacySearch()`. It is now treated as a legacy selector, mirroring `videodb-python` whose `unsupported_params` holds `index_ids` but not `index_id`
 - **Legacy `SemanticSearch` payload parity** — `dynamic_score_percentage` (defaulting `null`) and `filter` (defaulting `[]`) are now always emitted, matching `videodb-python`'s `SemanticSearch` request payload; previously they were omitted when unset, which changed server-side ranking/results
 - **`Understanding.getAnalyzerOutput()` preserves raw keys** — the call now skips camelCase conversion (`convert: false`), so the server's snake_case keys (e.g. `scene_id`) survive. Camelcasing renamed `scene_id` → `sceneId`, which the index endpoint does not recognize, breaking the round-trip of analyzer output back into `Video.index()` as a `source`
+- **`getEmbedCode({ autoGenerate: true })` on search shots** — `generateStream()` short-circuited when `streamUrl` alone was set, so shots returned by search never fetched their `playerUrl` and `getEmbedCode()` threw despite auto-generation. The request is now skipped only when both URLs are already known, and sends `length: null` for shots that carry no video length rather than letting `JSON.stringify` coerce `NaN`
+- **`videoLength` is no longer `NaN`** — `parseFloat(result.length)` produced `NaN` when Search v2 sent `length: null`. Values now pass through a finite-number coercion that yields `undefined` for null, empty, or non-numeric input
+- **`streamUrl` no longer dropped from serialised shots** — `doc.streamLink ?? doc.streamUrl` fell through a real `null` onto a key the server never emits, leaving `streamUrl` as `undefined` so `JSON.stringify()` omitted it entirely. It now uses `||` and normalises absent streams to `null`, matching `videodb-python`
 
 ## [0.3.0] (2026-07-25)
 

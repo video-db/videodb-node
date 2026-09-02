@@ -49,3 +49,10 @@ export type SceneVideoSearch = {
 export type SceneCollectionSearch = {
   collectionId: string;
 } & SceneSearchBase;
+
+/** Options for `Video.ask` / `Collection.ask`. */
+export type AskOptions = {
+  topK?: number;
+  mode?: string;
+  includeSources?: boolean;
+};
