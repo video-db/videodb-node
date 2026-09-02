@@ -8,6 +8,13 @@ import { HttpClient } from '@/utils/httpClient';
 /** Camelcase version of SearchResponse for internal use */
 type SearchResponseCamel = SnakeKeysToCamelCase<SearchResponse>;
 
+/** Search V2 sends `length: null`; never turn a missing value into NaN. */
+const toFiniteNumber = (value: unknown): number | undefined => {
+  if (value === null || value === undefined || value === '') return undefined;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : undefined;
+};
+
 export class SearchResult implements Iterable<Shot> {
   #vhttp: HttpClient;
   #searchResponse: SearchResponseCamel;
@@ -34,13 +41,16 @@ export class SearchResult implements Iterable<Shot> {
             text: doc.text,
             searchScore: doc.score,
             videoId: result.videoId,
-            videoTitle: result.title,
-            videoLength: parseFloat(result.length),
+            videoTitle: result.title ?? undefined,
+            videoLength: toFiniteNumber(result.length),
             sceneIndexId: doc.sceneIndexId,
             sceneIndexName: doc.sceneIndexName,
             metadata: doc.metadata,
-            streamUrl: doc.streamLink ?? doc.streamUrl,
-            playerUrl: doc.playerUrl,
+            // `||`, not `??` — mirrors videodb-python's
+            // `doc.get("stream_link") or doc.get("stream_url")`, and normalises
+            // the absent-key `undefined` to `null` so serialised shots match.
+            streamUrl: doc.streamLink || doc.streamUrl || null,
+            playerUrl: doc.playerUrl ?? null,
           })
         );
       }
