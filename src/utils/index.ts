@@ -1,4 +1,5 @@
 import { PLAYER_URL } from '@/constants';
+import { openBrowser } from '@/utils/openBrowser';
 import _ from 'lodash';
 import { AudioBase, VideoBase } from '@/interfaces/core';
 
@@ -118,7 +119,17 @@ export const fromCamelToSnake = <T extends object>(
     .value() as CamelKeysToSnakeCase<T>;
 };
 
-export const playStream = (url: string) => `${PLAYER_URL}?url=${url}`;
+/**
+ * Build the player URL for a stream and open it in the browser, matching
+ * videodb-python's `play_stream`. Stays synchronous and returns the same
+ * string, so existing callers are unaffected. Set `VIDEODB_NO_BROWSER` to
+ * suppress the launch.
+ */
+export const playStream = (url: string) => {
+  const player = `${PLAYER_URL}?url=${url}`;
+  openBrowser(player);
+  return player;
+};
 
 /**
  * Sleep for the given number of milliseconds. Used by the client-side

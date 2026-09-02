@@ -96,5 +96,8 @@
     "tar": "^7.4.3",
     "uuid": "^9.0.1",
     "ws": "^8.19.0"
+  },
+  "browser": {
+    "./dist/utils/openBrowser.js": "./dist/utils/openBrowser.browser.js"
   }
 }
