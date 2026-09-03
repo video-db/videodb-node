@@ -74,6 +74,14 @@ const convertValueSnakeToCamel = (v: unknown): unknown => {
 export const fromSnakeToCamel = <T extends object>(
   data: T
 ): SnakeKeysToCamelCase<T> => {
+  // lodash `mapKeys` turns an array into an object keyed "0","1",…, so arrays
+  // must be mapped element-wise instead of run through the chain.
+  if (_.isArray(data)) {
+    return data.map((item: unknown) =>
+      _.isObject(item) && item !== null ? fromSnakeToCamel(item) : item
+    ) as SnakeKeysToCamelCase<T>;
+  }
+
   return _(data)
     .mapKeys((_v: unknown, k: string) => _.camelCase(k))
     .mapValues(convertValueSnakeToCamel)
