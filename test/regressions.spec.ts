@@ -7,7 +7,7 @@ import { SearchResult } from '@/core/search/searchResult';
 import { Video } from '@/core/video';
 import { Collection } from '@/core/collection';
 import { Understanding } from '@/core/understanding';
-import { playStream } from '@/utils';
+import { fromCamelToSnake, fromSnakeToCamel, playStream } from '@/utils';
 import type { HttpClient } from '@/utils/httpClient';
 
 /** Records every request the SDK makes so the wire body can be asserted. */
@@ -227,5 +227,61 @@ describe('ENG-1517 — analyzer output keeps the server snake_case keys', () => 
     expect(calls[0].opts).toEqual({ convert: false });
     expect(out.scenes[0]).toHaveProperty('scene_id');
     expect(out.scenes[0]).not.toHaveProperty('sceneId');
+  });
+});
+
+describe('fromSnakeToCamel — a top-level array stays an array', () => {
+  it('maps an array of snake_case objects element-wise', () => {
+    expect(fromSnakeToCamel([{ a_b: 1 }, { a_b: 2 }])).toEqual([
+      { aB: 1 },
+      { aB: 2 },
+    ]);
+  });
+
+  it('keeps a top-level array an array, not an index-keyed object', () => {
+    // `(res.data || []).map is not a function` in searchTitle/getThumbnails.
+    const out = fromSnakeToCamel([{ video_id: 'v1' }]);
+    expect(Array.isArray(out)).toBe(true);
+    expect(typeof (out as unknown as unknown[]).map).toBe('function');
+    expect(Object.keys(out)).toEqual(['0']);
+  });
+
+  it('still converts nested arrays', () => {
+    expect(fromSnakeToCamel({ search_results: [{ start_time: 1 }] })).toEqual({
+      searchResults: [{ startTime: 1 }],
+    });
+  });
+
+  it('leaves plain object conversion unchanged', () => {
+    expect(
+      fromSnakeToCamel({ video_id: 'v1', nested_obj: { max_len: 2 } })
+    ).toEqual({ videoId: 'v1', nestedObj: { maxLen: 2 } });
+  });
+
+  it('returns an empty array for an empty array', () => {
+    expect(fromSnakeToCamel([])).toEqual([]);
+  });
+
+  it('leaves an array of primitives untouched', () => {
+    expect(fromSnakeToCamel(['a_b', 1, null])).toEqual(['a_b', 1, null]);
+  });
+});
+
+describe('fromCamelToSnake — top-level arrays were already safe', () => {
+  it('maps an array of camelCase objects element-wise', () => {
+    expect(fromCamelToSnake([{ aB: 1 }, { aB: 2 }])).toEqual([
+      { a_b: 1 },
+      { a_b: 2 },
+    ]);
+  });
+
+  it('leaves plain object conversion unchanged', () => {
+    expect(
+      fromCamelToSnake({ videoId: 'v1', nestedObj: { maxLen: 2 } })
+    ).toEqual({ video_id: 'v1', nested_obj: { max_len: 2 } });
+  });
+
+  it('returns an empty array for an empty array', () => {
+    expect(fromCamelToSnake([])).toEqual([]);
   });
 });
