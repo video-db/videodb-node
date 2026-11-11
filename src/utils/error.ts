@@ -34,12 +34,19 @@ export class VideodbError<T = unknown> extends Error {
 export const VdbBaseError = VideodbError;
 
 export class AuthenticationError<T = unknown> extends VideodbError<T> {
+  // Also accepts the 0.3.x form `new AuthenticationError(cause)`; cause still defaults to the message.
   constructor(
-    message: string = 'Invalid API key',
+    messageOrCause?: string | T,
     details?: VideodbErrorDetails,
     cause?: T
   ) {
-    super(message, cause, details);
+    const isMessage = typeof messageOrCause === 'string';
+    const message = isMessage ? messageOrCause : 'Invalid API key';
+    super(
+      message,
+      (isMessage ? (cause ?? message) : (messageOrCause ?? message)) as T,
+      details
+    );
     this.name = 'AuthenticationError';
     this.setMessage('Authentication Error', message);
   }

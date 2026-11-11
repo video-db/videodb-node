@@ -330,13 +330,18 @@ export class HttpClient {
           data: errData,
         });
       }
-      return new InvalidRequestError(error.response, error);
+      // `cause` keeps its 0.3.x shape so existing `e.cause.cause` readers still work.
+      return new InvalidRequestError(error.response, {
+        cause: errData?.message || error.message || 'Unknown cause',
+      });
     } else if (error.request) {
-      return new VideodbError(`Request failed: ${error.message}`, error);
+      return new VideodbError(`Request failed: ${error.message}`, {
+        cause: error.message,
+      });
     } else {
       return new VideodbError(
         `Unidentified Error: ${(error as Error)?.message ?? String(error)}`,
-        error
+        { cause: error }
       );
     }
   };

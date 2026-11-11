@@ -25,6 +25,16 @@ Error messages, search feedback, and install reliability.
 - **Upload errors name the cause.** `uploadFile()` with a missing path now throws `File not found: <path>` instead of `Upload failed, reason: `.
 - **A failed Capture download no longer hangs.** The installers now drain non-200 responses so the process can exit.
 
+### Upgrade notes
+
+No public API was removed or renamed. `e.cause` keeps its 0.3.2 value, and `new AuthenticationError(cause)` still works. Behaviour you may notice:
+
+- Error message text changed (see above). Code that matches exact message strings should switch to `e.status` or `e.code`.
+- `instanceof VideodbError` is now also true for the other SDK errors. An `if` chain that tests `VideodbError` before `AuthenticationError` or `RequestTimeoutError` should test the specific class first.
+- `e.name` is now the class name (`VideodbError`, `AuthenticationError`) instead of `Error`.
+- A `filter` passed to `search()` is now applied, so results can be narrower than before.
+- Search warnings print once per process to stderr via `console.warn`.
+
 ## [0.3.2] (2026-09-02)
 
 A patch fixing snake_case-to-camelCase conversion of responses whose payload is a top-level array.

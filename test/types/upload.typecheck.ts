@@ -31,7 +31,7 @@ const checks = async () => {
     url: 'https://x',
     callbackUrl: 'https://cb',
   });
-  assert<Equals<typeof queued, undefined>>(true);
+  assert<Equals<typeof queued, Video | Audio | Image | undefined>>(true);
 
   const maybe = await coll.uploadURL({
     url: 'https://x',

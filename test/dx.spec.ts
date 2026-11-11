@@ -62,6 +62,16 @@ describe('errors carry the server message', () => {
     );
     expect(err.status).toBe(402);
     expect(err.code).toBe('llm_dollar_budget_reached');
+    // 0.3.x callers read the server message from e.cause.cause.
+    expect(err.cause.cause).toBe('You have reached the Hackathon budget');
+  });
+
+  it('keeps the 0.3.x AuthenticationError constructor and cause', () => {
+    expect(new AuthenticationError().cause).toBe('Invalid API key');
+    const legacy = new AuthenticationError({ reason: 'x' });
+    expect(legacy.message).toBe('Authentication Error: Invalid API key');
+    expect(legacy.cause).toEqual({ reason: 'x' });
+    expect(new AuthenticationError('No API key').cause).toBe('No API key');
   });
 
   it('keeps the 401 message and is a VideodbError', async () => {

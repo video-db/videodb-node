@@ -30,14 +30,12 @@ type UploadedMedia<C> = C extends { mediaType: 'video' }
       : Video | Audio | Image;
 
 /**
- * What an upload resolves to: narrowed by `mediaType`, and `undefined` when a
- * `callbackUrl` makes the upload asynchronous.
+ * What an upload resolves to: narrowed by `mediaType`. Passing a `callbackUrl`
+ * keeps `| undefined` (the 0.3.x type), since the upload then returns nothing.
  */
 export type UploadResult<C extends CommonUploadConfig> =
   'callbackUrl' extends keyof C
-    ? C['callbackUrl'] extends string
-      ? undefined
-      : [C['callbackUrl']] extends [undefined]
-        ? UploadedMedia<C>
-        : UploadedMedia<C> | undefined
+    ? [C['callbackUrl']] extends [undefined]
+      ? UploadedMedia<C>
+      : UploadedMedia<C> | undefined
     : UploadedMedia<C>;
