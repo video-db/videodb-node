@@ -1,8 +1,13 @@
 import type { Shot } from '@/core/shot';
 import type { SearchResponse as RawSearchResponse } from '@/types/response';
 import type { SnakeKeysToCamelCase } from '@/utils';
+import { VideodbError } from '@/utils/error';
 import { HttpClient } from '@/utils/httpClient';
-import { SearchResult } from './searchResult';
+import {
+  SearchResult,
+  takeServerWarnings,
+  type ServerWarning,
+} from './searchResult';
 
 type SearchResponseCamel = SnakeKeysToCamelCase<RawSearchResponse>;
 
@@ -33,9 +38,11 @@ export interface AskResponseData {
 export class AskResponse {
   public answer: string;
   public sources: Shot[];
+  public warnings: ServerWarning[];
 
   constructor(http: HttpClient, data: AskResponseData = {}) {
     this.answer = data.answer || '';
+    this.warnings = takeServerWarnings(data.warnings);
     this.sources = new SearchResult(http, {
       results: (data.sources || []) as SearchResponseCamel['results'],
     }).shots;
@@ -74,6 +81,8 @@ export class SearchResponse implements Iterable<unknown> {
   public trace?: unknown;
   public results: unknown;
   public shots: Shot[];
+  /** Server notes about how the search ran, e.g. a fallback to legacy indexes. */
+  public warnings: ServerWarning[];
 
   constructor(http: HttpClient, data: SearchResponseData = {}) {
     this.responseType = data.responseType;
@@ -82,6 +91,7 @@ export class SearchResponse implements Iterable<unknown> {
     this.clarification = data.clarification;
     this.trace = data.trace;
     const rawResults = data.results ?? [];
+    this.warnings = takeServerWarnings(data.warnings);
     if (this.responseType && SHOTS_TYPES.has(this.responseType)) {
       const result = new SearchResult(http, {
         results: rawResults as SearchResponseCamel['results'],
@@ -117,6 +127,30 @@ export class SearchResponse implements Iterable<unknown> {
   }
 
   public getShots = (): Shot[] => this.shots;
+
+  /**
+   * The shot results behind this response, so code written for the old
+   * `search()` can keep chaining `compile()` / `play()` / `getEmbedCode()`.
+   * Mirrors `videodb-python`'s `SearchResponse.get_shot_results()`.
+   */
+  public getShotResults = (): SearchResult => {
+    if (this.#isShots()) return this.results as SearchResult;
+    throw new VideodbError(
+      "This SearchResponse does not contain shot results. compile(), play(), and getEmbedCode() are only available when responseType is 'shots' or 'deepsearch'."
+    );
+  };
+
+  /** Compiles the matched shots into one stream URL. */
+  public compile = (): Promise<string | undefined> =>
+    this.getShotResults().compile();
+
+  /** Compiles if needed, then returns a player URL for the matched shots. */
+  public play = (): Promise<string> => this.getShotResults().play();
+
+  /** iframe embed code for the compiled shots; see SearchResult.getEmbedCode. */
+  public getEmbedCode = (
+    ...args: Parameters<SearchResult['getEmbedCode']>
+  ): Promise<string> => this.getShotResults().getEmbedCode(...args);
 
   public toString(): string {
     if (this.responseType === 'deepsearch') {

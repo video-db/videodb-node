@@ -168,6 +168,7 @@ export class RecorderInstaller {
           response.statusCode < 400 &&
           response.headers.location
         ) {
+          response.resume();
           file.close();
           fs.unlinkSync(destPath);
           this.downloadFile(response.headers.location, destPath)
@@ -177,6 +178,7 @@ export class RecorderInstaller {
         }
 
         if (response.statusCode !== 200) {
+          response.resume();
           file.close();
           fs.unlinkSync(destPath);
           reject(new Error(`Failed to download: HTTP ${response.statusCode}`));

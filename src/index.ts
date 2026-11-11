@@ -93,8 +93,9 @@ export {
   CaptureError,
   BinaryError,
   PermissionError,
+  type VideodbErrorDetails,
 } from './utils/error';
-export { SearchResult } from './core/search/searchResult';
+export { SearchResult, type ServerWarning } from './core/search/searchResult';
 export { Meeting } from './core/meeting';
 export {
   RTStream,

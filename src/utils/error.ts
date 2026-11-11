@@ -1,32 +1,81 @@
 import { AxiosResponse } from 'axios';
 
-export abstract class VdbBaseError extends Error {}
+/** HTTP details attached to errors raised from an API response. */
+export interface VideodbErrorDetails {
+  /** HTTP status code, when the error came from an API response. */
+  status?: number;
+  /** Machine-readable server error code, e.g. `llm_dollar_budget_reached`. */
+  code?: string;
+  /** Raw server response body. */
+  data?: unknown;
+}
 
-export class VideodbError<T = undefined> extends VdbBaseError {
-  constructor(message?: string, cause?: T) {
-    super(`VideoDB Error: ${message}`, { cause: cause });
+/** Base class for every error the SDK throws; catch this to handle all of them. */
+export class VideodbError<T = unknown> extends Error {
+  public status?: number;
+  public code?: string;
+  public data?: unknown;
+
+  constructor(message?: string, cause?: T, details: VideodbErrorDetails = {}) {
+    super(`VideoDB Error: ${message}`, { cause });
+    this.name = 'VideodbError';
+    this.status = details.status;
+    this.code = details.code;
+    this.data = details.data;
+  }
+
+  /** Swaps the default "VideoDB Error:" prefix for a subclass-specific one. */
+  protected setMessage(prefix: string, message?: string) {
+    this.message = message ? `${prefix}: ${message}` : prefix;
   }
 }
 
-export class AuthenticationError<T = unknown> extends VdbBaseError {
-  constructor(cause?: T) {
-    super('Authentication Error: ', { cause: cause || 'Invalid API Key' });
+/** @deprecated Use {@link VideodbError}, which every SDK error now extends. */
+export const VdbBaseError = VideodbError;
+
+export class AuthenticationError<T = unknown> extends VideodbError<T> {
+  constructor(
+    message: string = 'Invalid API key',
+    details?: VideodbErrorDetails,
+    cause?: T
+  ) {
+    super(message, cause, details);
+    this.name = 'AuthenticationError';
+    this.setMessage('Authentication Error', message);
   }
 }
 
-export class InvalidRequestError<C = unknown> extends VdbBaseError {
+export class InvalidRequestError<C = unknown> extends VideodbError<C> {
   public response?: AxiosResponse;
   constructor(responseOrMessage: AxiosResponse | string, cause?: C) {
-    if (typeof responseOrMessage === 'string') {
-      super(`Invalid Request Error: ${responseOrMessage}`, { cause });
-    } else {
-      super(
-        `Error ${responseOrMessage.status}: ${responseOrMessage.statusText}`,
-        { cause }
-      );
-      this.response = responseOrMessage;
-    }
+    const isResponse = typeof responseOrMessage !== 'string';
+    const body = isResponse
+      ? (responseOrMessage.data as
+          | { message?: string; error_code?: string | number }
+          | undefined)
+      : undefined;
+    const message = isResponse
+      ? `Error ${responseOrMessage.status}: ${body?.message || responseOrMessage.statusText}`
+      : responseOrMessage;
+    super(
+      message,
+      cause,
+      isResponse
+        ? {
+            status: responseOrMessage.status,
+            code:
+              body?.error_code != null ? String(body.error_code) : undefined,
+            data: body,
+          }
+        : {}
+    );
     this.name = 'InvalidRequestError';
+    if (isResponse) {
+      this.message = message;
+      this.response = responseOrMessage;
+    } else {
+      this.setMessage('Invalid Request Error', message);
+    }
   }
 }
 
@@ -34,23 +83,25 @@ export class InvalidRequestError<C = unknown> extends VdbBaseError {
  * Raised when a request or a client-side poll loop times out.
  * Mirrors `videodb.exceptions.RequestTimeoutError`.
  */
-export class RequestTimeoutError<T = undefined> extends VdbBaseError {
+export class RequestTimeoutError<T = unknown> extends VideodbError<T> {
   constructor(message?: string, cause?: T) {
-    super(`Request Timeout Error: ${message}`, { cause });
+    super(message, cause);
     this.name = 'RequestTimeoutError';
+    this.setMessage('Request Timeout Error', message);
   }
 }
 
 /**
  * Error thrown when a capture operation fails
  */
-export class CaptureError extends VdbBaseError {
+export class CaptureError extends VideodbError {
   public captureId?: string;
   public operation?: string;
 
   constructor(message: string, captureId?: string, operation?: string) {
-    super(`Capture Error: ${message}`);
+    super(message);
     this.name = 'CaptureError';
+    this.setMessage('Capture Error', message);
     this.captureId = captureId;
     this.operation = operation;
   }
@@ -59,13 +110,14 @@ export class CaptureError extends VdbBaseError {
 /**
  * Error thrown when a binary operation fails
  */
-export class BinaryError extends VdbBaseError {
+export class BinaryError extends VideodbError {
   public command?: string;
   public exitCode?: number;
 
   constructor(message: string, command?: string, exitCode?: number) {
-    super(`Binary Error: ${message}`);
+    super(message);
     this.name = 'BinaryError';
+    this.setMessage('Binary Error', message);
     this.command = command;
     this.exitCode = exitCode;
   }
@@ -74,12 +126,13 @@ export class BinaryError extends VdbBaseError {
 /**
  * Error thrown when a permission is denied
  */
-export class PermissionError extends VdbBaseError {
+export class PermissionError extends VideodbError {
   public permissionType?: string;
 
   constructor(message: string, permissionType?: string) {
-    super(`Permission Error: ${message}`);
+    super(message);
     this.name = 'PermissionError';
+    this.setMessage('Permission Error', message);
     this.permissionType = permissionType;
   }
 }

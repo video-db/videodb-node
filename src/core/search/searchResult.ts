@@ -15,6 +15,33 @@ const toFiniteNumber = (value: unknown): number | undefined => {
   return Number.isFinite(num) ? num : undefined;
 };
 
+/** A note the server attaches to a search or ask response. */
+export interface ServerWarning {
+  code?: string;
+  message?: string;
+  [key: string]: unknown;
+}
+
+const _emittedWarnings = new Set<string>();
+
+/**
+ * Returns the server `warnings` list and prints each one once per process,
+ * keyed by code, matching videodb-python's `warn_response_warnings_once`.
+ */
+export const takeServerWarnings = (raw: unknown): ServerWarning[] => {
+  const list = (Array.isArray(raw) ? raw : raw ? [raw] : []).filter(
+    (w): w is ServerWarning => typeof w === 'object' && w !== null
+  );
+  for (const warning of list) {
+    const key = String(warning.code || warning.message || 'response_warning');
+    if (_emittedWarnings.has(key)) continue;
+    _emittedWarnings.add(key);
+    // eslint-disable-next-line no-console
+    console.warn(`VideoDB warning: ${warning.message ?? key}`);
+  }
+  return list;
+};
+
 export class SearchResult implements Iterable<Shot> {
   #vhttp: HttpClient;
   #searchResponse: SearchResponseCamel;
@@ -22,11 +49,16 @@ export class SearchResult implements Iterable<Shot> {
   public streamUrl?: string;
   public playerUrl?: string;
   public collectionId: string = 'default';
+  /** Server notes about how the search ran, e.g. a fallback to legacy indexes. */
+  public warnings: ServerWarning[];
 
   constructor(http: HttpClient, searchResponse: SearchResponseCamel) {
     this.#vhttp = http;
     this.#searchResponse = searchResponse;
     this.shots = [];
+    this.warnings = takeServerWarnings(
+      (searchResponse as { warnings?: unknown }).warnings
+    );
     this.#formatResults();
   }
 
@@ -38,7 +70,11 @@ export class SearchResult implements Iterable<Shot> {
           new Shot(this.#vhttp, {
             end: doc.end,
             start: doc.start,
-            text: doc.text,
+            // Search V2 hits carry their text in metadata.embeddedText.
+            text:
+              doc.text ??
+              (doc.metadata as { embeddedText?: string } | undefined)
+                ?.embeddedText,
             searchScore: doc.score,
             videoId: result.videoId,
             videoTitle: result.title ?? undefined,

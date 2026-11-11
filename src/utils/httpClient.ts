@@ -23,6 +23,24 @@ import axios, {
 import FormData from 'form-data';
 
 const POLLING_INTERVAL = HttpClientDefaultValues.pollInterval;
+const MAX_POLL_RETRIES = 3;
+
+/** Network errors, 429 and 5xx are worth retrying; other failures are not. */
+const isTransient = (error: unknown): boolean => {
+  const status = (error as AxiosError)?.response?.status;
+  if (status === undefined) return (error as AxiosError)?.request !== undefined;
+  return status === 429 || status >= 500;
+};
+
+/** Builds an error from a `success: false` body, keeping its message and code. */
+const apiError = (body: {
+  message?: string;
+  error_code?: string | number;
+}): VideodbError =>
+  new VideodbError(body.message, undefined, {
+    code: body.error_code != null ? String(body.error_code) : undefined,
+    data: body,
+  });
 const MAX_POLLING_TIME = HttpClientDefaultValues.maxPollTime;
 
 /**
@@ -176,9 +194,21 @@ export class HttpClient {
   ): Promise<R> => {
     const startTime = Date.now();
 
+    let transientFailures = 0;
+
     while (Date.now() - startTime < maxPollTime) {
-      const response = await this.#db.get<ApiResponseOf<R>>(url);
-      const data = response.data;
+      let data: ApiResponseOf<R>;
+      try {
+        data = (await this.#db.get<ApiResponseOf<R>>(url)).data;
+        transientFailures = 0;
+      } catch (error) {
+        // A dropped connection or 5xx/429 mid-poll shouldn't kill a long job.
+        if (isTransient(error) && ++transientFailures <= MAX_POLL_RETRIES) {
+          await this.#sleep(pollInterval);
+          continue;
+        }
+        throw error;
+      }
 
       if (
         data.status === ResponseStatus.in_progress ||
@@ -189,12 +219,12 @@ export class HttpClient {
       }
 
       if (data.success === false) {
-        throw new VideodbError(data.message);
+        throw apiError(data);
       }
 
       if (data.response) {
         if (data.response.success === false) {
-          throw new VideodbError(data.response.message);
+          throw apiError(data.response);
         }
         return convert
           ? this.#convertResponseData(data.response.data)
@@ -203,9 +233,12 @@ export class HttpClient {
       return convert ? this.#convertResponseData(data.data) : data.data;
     }
 
-    throw new RequestTimeoutError(
-      'Polling timed out after ' + Math.round(maxPollTime / 1000) + 's'
+    const timeout = new RequestTimeoutError(
+      `Polling timed out after ${Math.round(maxPollTime / 1000)}s. ` +
+        `The job may still finish; its result will be at ${url}`
     );
+    timeout.data = { outputUrl: url };
+    throw timeout;
   };
 
   /**
@@ -273,7 +306,7 @@ export class HttpClient {
     convert: boolean = true
   ): ResponseOf<R> => {
     if (data.success === false) {
-      throw new VideodbError(data.message);
+      throw apiError(data);
     }
     return {
       ...data,
@@ -291,21 +324,20 @@ export class HttpClient {
   ) => {
     if (error.response) {
       const errData = error.response.data;
-      if (error.status === HttpStatusCode.Unauthorized) {
-        // For now, the only reason for getting a 401 is an invalid API Key
-        return new AuthenticationError();
+      if (error.response.status === (HttpStatusCode.Unauthorized as number)) {
+        return new AuthenticationError(errData?.message || 'Invalid API key', {
+          status: error.response.status,
+          data: errData,
+        });
       }
-      return new InvalidRequestError(error.response, {
-        cause: errData?.message || error.message || 'Unknown cause',
-      });
+      return new InvalidRequestError(error.response, error);
     } else if (error.request) {
-      return new VideodbError('Request failed', {
-        cause: error.message,
-      });
+      return new VideodbError(`Request failed: ${error.message}`, error);
     } else {
-      return new VideodbError('Unidentified Error', {
-        cause: error,
-      });
+      return new VideodbError(
+        `Unidentified Error: ${(error as Error)?.message ?? String(error)}`,
+        error
+      );
     }
   };
 
