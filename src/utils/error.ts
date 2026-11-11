@@ -1,16 +1,54 @@
 import { AxiosResponse } from 'axios';
 
-export abstract class VdbBaseError extends Error {}
+/** HTTP details attached to errors raised from an API response. */
+export interface VideodbErrorDetails {
+  /**
+   * HTTP status code. For a failure the server reports inside a 2xx body
+   * (`success: false`), the body's numeric `error_code`, e.g. 400.
+   */
+  status?: number;
+  /** Machine-readable server error code, e.g. `llm_dollar_budget_reached`. */
+  code?: string;
+  /** Raw server response body; `data.message` is the server's explanation. */
+  data?: unknown;
+}
+
+/** Common base of every SDK error; catch it to handle them all. */
+export abstract class VdbBaseError extends Error {
+  declare status?: number;
+  declare code?: string;
+  declare data?: unknown;
+
+  /** Sets only the details that are present, so other errors gain no new keys. */
+  protected setDetails(details: VideodbErrorDetails = {}) {
+    for (const key of ['status', 'code', 'data'] as const) {
+      if (details[key] !== undefined)
+        Object.assign(this, { [key]: details[key] });
+    }
+  }
+}
 
 export class VideodbError<T = undefined> extends VdbBaseError {
-  constructor(message?: string, cause?: T) {
+  constructor(message?: string, cause?: T, details?: VideodbErrorDetails) {
     super(`VideoDB Error: ${message}`, { cause: cause });
+    this.setDetails(details);
   }
 }
 
 export class AuthenticationError<T = unknown> extends VdbBaseError {
-  constructor(cause?: T) {
-    super('Authentication Error: ', { cause: cause || 'Invalid API Key' });
+  constructor(cause?: T, details?: VideodbErrorDetails) {
+    const serverMessage = (details?.data as { message?: unknown } | undefined)
+      ?.message;
+    const reason =
+      typeof serverMessage === 'string' && serverMessage
+        ? serverMessage
+        : typeof cause === 'string' && cause
+          ? cause
+          : 'Invalid API Key';
+    super(`Authentication Error: ${reason}`, {
+      cause: cause || 'Invalid API Key',
+    });
+    this.setDetails(details);
   }
 }
 
@@ -20,11 +58,19 @@ export class InvalidRequestError<C = unknown> extends VdbBaseError {
     if (typeof responseOrMessage === 'string') {
       super(`Invalid Request Error: ${responseOrMessage}`, { cause });
     } else {
+      const body = responseOrMessage.data as
+        | { message?: string; error_code?: string | number }
+        | undefined;
       super(
-        `Error ${responseOrMessage.status}: ${responseOrMessage.statusText}`,
+        `Error ${responseOrMessage.status}: ${body?.message || responseOrMessage.statusText}`,
         { cause }
       );
       this.response = responseOrMessage;
+      this.setDetails({
+        status: responseOrMessage.status,
+        code: body?.error_code != null ? String(body.error_code) : undefined,
+        data: body,
+      });
     }
     this.name = 'InvalidRequestError';
   }

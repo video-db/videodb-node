@@ -7,7 +7,7 @@ import { Audio } from '@/core/audio';
 import { Image } from '@/core/image';
 import type { AudioBase, ImageBase, VideoBase } from '@/interfaces/core';
 import FormData from 'form-data';
-import { createReadStream } from 'node:fs';
+import { createReadStream, existsSync } from 'node:fs';
 import { parse } from 'node:path';
 import { HttpClient } from './httpClient';
 
@@ -62,7 +62,10 @@ export const uploadBytes = async (
       headers: formData.getHeaders(),
     });
   } catch (err) {
-    throw new VideodbError('Error while uploading content', err);
+    throw new VideodbError(
+      `Error while uploading content: ${(err as Error)?.message ?? String(err)}`,
+      err
+    );
   }
 
   return uploadUrl;
@@ -83,6 +86,9 @@ export const uploadToServer = async (
 ): Promise<Video | Audio | Image | undefined> => {
   let urlToUpload = '';
   if ('filePath' in data) {
+    if (!existsSync(data.filePath)) {
+      throw new VideodbError(`File not found: ${data.filePath}`);
+    }
     const uploadUrl = await getUploadUrl(http, collectionId);
     try {
       const fileStream = createReadStream(data.filePath);
@@ -92,7 +98,10 @@ export const uploadToServer = async (
         headers: formData.getHeaders(),
       });
     } catch (err) {
-      throw new VideodbError('Upload failed, reason: ', err);
+      throw new VideodbError(
+        `Upload failed: ${(err as Error)?.message ?? String(err)}`,
+        err
+      );
     }
     urlToUpload = uploadUrl;
   } else {

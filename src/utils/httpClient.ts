@@ -8,6 +8,7 @@ import {
   AuthenticationError,
   InvalidRequestError,
   RequestTimeoutError,
+  VdbBaseError,
   VideodbError,
 } from '@/utils/error';
 import { fromSnakeToCamel } from '@/utils';
@@ -23,6 +24,28 @@ import axios, {
 import FormData from 'form-data';
 
 const POLLING_INTERVAL = HttpClientDefaultValues.pollInterval;
+const MAX_POLL_RETRIES = 3;
+
+/** Network errors, 429 and 5xx are worth retrying; other failures are not. */
+const isTransient = (error: unknown): boolean => {
+  const status = (error as AxiosError)?.response?.status;
+  if (status === undefined) return (error as AxiosError)?.request !== undefined;
+  return status === 429 || status >= 500;
+};
+
+/** Builds an error from a `success: false` body, keeping its message and code. */
+const apiError = (body: {
+  message?: string;
+  error_code?: string | number;
+}): VideodbError =>
+  new VideodbError(body.message, undefined, {
+    // A numeric error_code mirrors an HTTP status, so callers can rely on e.status.
+    status: /^\d{3}$/.test(String(body.error_code ?? ''))
+      ? Number(body.error_code)
+      : undefined,
+    code: body.error_code != null ? String(body.error_code) : undefined,
+    data: body,
+  });
 const MAX_POLLING_TIME = HttpClientDefaultValues.maxPollTime;
 
 /**
@@ -176,9 +199,24 @@ export class HttpClient {
   ): Promise<R> => {
     const startTime = Date.now();
 
+    // Counts consecutive transient failures only; a good poll resets it, so a
+    // flapping endpoint keeps polling until maxPollTime. Retries wait the normal
+    // pollInterval (no backoff, Retry-After ignored), which is fine for long jobs.
+    let transientFailures = 0;
+
     while (Date.now() - startTime < maxPollTime) {
-      const response = await this.#db.get<ApiResponseOf<R>>(url);
-      const data = response.data;
+      let data: ApiResponseOf<R>;
+      try {
+        data = (await this.#db.get<ApiResponseOf<R>>(url)).data;
+        transientFailures = 0;
+      } catch (error) {
+        // A dropped connection or 5xx/429 mid-poll shouldn't kill a long job.
+        if (isTransient(error) && ++transientFailures <= MAX_POLL_RETRIES) {
+          await this.#sleep(pollInterval);
+          continue;
+        }
+        throw error;
+      }
 
       if (
         data.status === ResponseStatus.in_progress ||
@@ -189,12 +227,12 @@ export class HttpClient {
       }
 
       if (data.success === false) {
-        throw new VideodbError(data.message);
+        throw apiError(data);
       }
 
       if (data.response) {
         if (data.response.success === false) {
-          throw new VideodbError(data.response.message);
+          throw apiError(data.response);
         }
         return convert
           ? this.#convertResponseData(data.response.data)
@@ -203,9 +241,12 @@ export class HttpClient {
       return convert ? this.#convertResponseData(data.data) : data.data;
     }
 
-    throw new RequestTimeoutError(
-      'Polling timed out after ' + Math.round(maxPollTime / 1000) + 's'
+    const timeout = new RequestTimeoutError(
+      `Polling timed out after ${Math.round(maxPollTime / 1000)}s. ` +
+        `The job may still finish; its result will be at ${url}`
     );
+    timeout.data = { outputUrl: url };
+    throw timeout;
   };
 
   /**
@@ -256,7 +297,8 @@ export class HttpClient {
 
       return this.#parseResponse(data, convert);
     } catch (error) {
-      if (error instanceof VideodbError) {
+      // Any SDK error (including a poll RequestTimeoutError) passes through as is.
+      if (error instanceof VdbBaseError) {
         throw error;
       }
       throw this.#getPlausibleError(
@@ -273,7 +315,7 @@ export class HttpClient {
     convert: boolean = true
   ): ResponseOf<R> => {
     if (data.success === false) {
-      throw new VideodbError(data.message);
+      throw apiError(data);
     }
     return {
       ...data,
@@ -293,19 +335,23 @@ export class HttpClient {
       const errData = error.response.data;
       if (error.status === HttpStatusCode.Unauthorized) {
         // For now, the only reason for getting a 401 is an invalid API Key
-        return new AuthenticationError();
+        return new AuthenticationError(undefined, {
+          status: error.response.status,
+          data: errData,
+        });
       }
       return new InvalidRequestError(error.response, {
         cause: errData?.message || error.message || 'Unknown cause',
       });
     } else if (error.request) {
-      return new VideodbError('Request failed', {
+      return new VideodbError(`Request failed: ${error.message}`, {
         cause: error.message,
       });
     } else {
-      return new VideodbError('Unidentified Error', {
-        cause: error,
-      });
+      return new VideodbError(
+        `Unidentified Error: ${(error as Error)?.message ?? String(error)}`,
+        { cause: error }
+      );
     }
   };
 

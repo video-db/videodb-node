@@ -15,6 +15,19 @@ const toFiniteNumber = (value: unknown): number | undefined => {
   return Number.isFinite(num) ? num : undefined;
 };
 
+/** A note the server attaches to a search or ask response. */
+export interface ServerWarning {
+  code?: string;
+  message?: string;
+  [key: string]: unknown;
+}
+
+/** Normalises the server `warnings` field to a list; nothing is printed. */
+export const readServerWarnings = (raw: unknown): ServerWarning[] =>
+  (Array.isArray(raw) ? raw : raw ? [raw] : []).filter(
+    (w): w is ServerWarning => typeof w === 'object' && w !== null
+  );
+
 export class SearchResult implements Iterable<Shot> {
   #vhttp: HttpClient;
   #searchResponse: SearchResponseCamel;
@@ -22,11 +35,16 @@ export class SearchResult implements Iterable<Shot> {
   public streamUrl?: string;
   public playerUrl?: string;
   public collectionId: string = 'default';
+  /** Server notes about how the search ran, e.g. a fallback to legacy indexes. */
+  public warnings: ServerWarning[];
 
   constructor(http: HttpClient, searchResponse: SearchResponseCamel) {
     this.#vhttp = http;
     this.#searchResponse = searchResponse;
     this.shots = [];
+    this.warnings = readServerWarnings(
+      (searchResponse as { warnings?: unknown }).warnings
+    );
     this.#formatResults();
   }
 
@@ -38,7 +56,11 @@ export class SearchResult implements Iterable<Shot> {
           new Shot(this.#vhttp, {
             end: doc.end,
             start: doc.start,
-            text: doc.text,
+            // Search V2 hits carry their text in metadata.embeddedText.
+            text:
+              doc.text ??
+              (doc.metadata as { embeddedText?: string } | undefined)
+                ?.embeddedText,
             searchScore: doc.score,
             videoId: result.videoId,
             videoTitle: result.title ?? undefined,

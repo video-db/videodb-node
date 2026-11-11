@@ -11,7 +11,11 @@ import type {
   CaptureSessionBase,
 } from '@/interfaces/core';
 import { IndexType, SearchType, type AskOptions } from '@/types/search';
-import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
+import type {
+  FileUploadConfig,
+  UploadResult,
+  URLUploadConfig,
+} from '@/types/collection';
 import type {
   CreateCaptureSessionConfig,
   CaptureSessionStatusType,
@@ -262,8 +266,12 @@ export class Collection implements ICollection {
    *   - description: (optional) Description of the file
    * @returns Video, Audio, or Image object. Returns undefined if callbackUrl is provided.
    */
-  public uploadFile = async (data: FileUploadConfig) => {
-    return uploadToServer(this.#vhttp, this.id, data);
+  public uploadFile = async <C extends FileUploadConfig>(
+    data: C
+  ): Promise<UploadResult<C>> => {
+    return uploadToServer(this.#vhttp, this.id, data) as Promise<
+      UploadResult<C>
+    >;
   };
 
   /**
@@ -275,8 +283,12 @@ export class Collection implements ICollection {
    *   - description: (optional) Description of the file
    * @returns Video, Audio, or Image object. Returns undefined if callbackUrl is provided.
    */
-  public uploadURL = async (data: URLUploadConfig) => {
-    return uploadToServer(this.#vhttp, this.id, data);
+  public uploadURL = async <C extends URLUploadConfig>(
+    data: C
+  ): Promise<UploadResult<C>> => {
+    return uploadToServer(this.#vhttp, this.id, data) as Promise<
+      UploadResult<C>
+    >;
   };
 
   /**
@@ -434,6 +446,7 @@ export class Collection implements ICollection {
     if (options.includeClip != null) payload.include_clip = options.includeClip;
     if (options.sessionId != null) payload.session_id = options.sessionId;
     if (options.config != null) payload.config = options.config;
+    if (options.filter != null) payload.filter = options.filter;
     const res = await this.#vhttp.post<Record<string, unknown>, typeof payload>(
       [collection, this.id, search, 'v2'],
       payload

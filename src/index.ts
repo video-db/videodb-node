@@ -87,14 +87,16 @@ export { SubtitleAlignment, SubtitleBorderStyle } from './core/config';
 export { Shot } from './core/shot';
 export { Scene, SceneCollection } from './core/scene';
 export {
+  VdbBaseError,
   VideodbError,
   AuthenticationError,
   InvalidRequestError,
   CaptureError,
   BinaryError,
   PermissionError,
+  type VideodbErrorDetails,
 } from './utils/error';
-export { SearchResult } from './core/search/searchResult';
+export { SearchResult, type ServerWarning } from './core/search/searchResult';
 export { Meeting } from './core/meeting';
 export {
   RTStream,

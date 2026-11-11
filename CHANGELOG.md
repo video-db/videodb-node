@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased (release as minor: 0.4.0)
+
+Clearer errors, search fixes, and install and polling reliability. Error messages, poll timeouts, `search({ filter })`, and `shot.text` behave differently from 0.3.2; see Upgrade notes.
+
+### Changed
+
+- **Error messages include the server's explanation.** `Error 400: Bad Request` is now `Error 400: Video not found`, and `Authentication Error: ` is now `Authentication Error: Invalid API key`. The `connect()` hint for a missing API key is in the message. Network and unexpected errors include their reason (`Request failed: <reason>`). Classes and `cause` are unchanged.
+- **A poll timeout throws `RequestTimeoutError`.** It used to surface as `VideodbError('Unidentified Error')` with the timeout buried in `cause.cause`. The message and `data.outputUrl` give the job's output URL, so the result can be fetched later.
+- **`search({ filter })` sends the filter.** `Video.search()` and `Collection.search()` used to drop it.
+- **Search V2 shots have `text`.** V2 hits put their text in `metadata.embeddedText` and left `shot.text` null. It now falls back to that.
+- **Upload errors name the reason.** A missing local file throws `File not found: <path>` before any network call, and other failures read `Upload failed: <reason>` instead of `Upload failed, reason: `.
+
+### Added
+
+- **Error details.** API errors carry `status` (HTTP status, or a numeric `error_code` from a `success: false` body), `code` (the server's `error_code`, such as `llm_dollar_budget_reached`), and `data` (the response body).
+- **`VdbBaseError` is exported.** Every SDK error extends it, so `instanceof VdbBaseError` catches them all.
+- **Search and ask warnings.** `SearchResponse`, `SearchResult`, and `AskResponse` expose the server's `warnings`, for example why `search()` on a video with no Search V2 index came back empty. Nothing is printed.
+- **`SearchResponse.compile()`, `play()`, `getEmbedCode()`, and `getShotResults()`.** Code that chained `.compile()` on `search()` threw `compile is not a function` after `search()` started returning a `SearchResponse`. These delegate to the shot results, matching `videodb-python`.
+- **Typed uploads.** `uploadURL()` and `uploadFile()` on `Collection` and `Connection` return `Video`, `Audio`, or `Image` when `mediaType` is given, and drop `| undefined` when there is no `callbackUrl`. Type-only; run with `npm run typecheck:tests`.
+- **`VIDEODB_SKIP_CAPTURE_INSTALL=1`** skips the Capture binary download during `npm install`.
+
+### Fixed
+
+- **Polling survives transient failures.** Up to 3 consecutive network errors, 429s, or 5xx responses while polling a long job are retried instead of failing it.
+- **`npm install` no longer fails, or hangs, when the Capture binary download fails.** It logs a warning instead. Capture already downloads the binary on first use.
+
+### Upgrade notes
+
+- Code that matches exact error message strings should switch to `err.status` or `err.code`.
+- Code that caught `VideodbError` to handle poll timeouts should catch `RequestTimeoutError` (or `VdbBaseError`).
+- A `filter` passed to `search()` is now applied, so results can be narrower than before. A filter on a field the index can't filter on now fails with the server's reason (e.g. `Field 'start' is not filterable on index 'transcript'`) instead of being ignored.
+- `shot.text` can now be a string where it used to be `null` for Search V2 hits.
+
 ## [0.3.2] (2026-09-02)
 
 A patch fixing snake_case-to-camelCase conversion of responses whose payload is a top-level array.

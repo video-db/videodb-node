@@ -12,7 +12,11 @@ import type {
   CaptureSessionBase,
   RTStreamBase,
 } from '@/interfaces/core';
-import type { FileUploadConfig, URLUploadConfig } from '@/types/collection';
+import type {
+  FileUploadConfig,
+  UploadResult,
+  URLUploadConfig,
+} from '@/types/collection';
 import type { CollectionResponse, GetCollections } from '@/types/response';
 import type {
   ListCaptureSessionsConfig,
@@ -226,11 +230,13 @@ export class Connection {
    * Providing a callbackUrl will return undefined and not providing one
    * will return a Job object (TODO: Implement proper type for this condition)
    */
-  public uploadFile = async (
+  public uploadFile = async <C extends FileUploadConfig>(
     collectionId: string = 'default',
-    data: FileUploadConfig
-  ) => {
-    return uploadToServer(this.vhttp, collectionId, data);
+    data: C
+  ): Promise<UploadResult<C>> => {
+    return uploadToServer(this.vhttp, collectionId, data) as Promise<
+      UploadResult<C>
+    >;
   };
 
   /**
@@ -243,11 +249,13 @@ export class Connection {
    * Providing a callbackUrl will return undefined and not providing one
    * will return a Job object (TODO: Implement proper type for this condition)
    */
-  public uploadURL = async (
+  public uploadURL = async <C extends URLUploadConfig>(
     collectionId: string = 'default',
-    data: URLUploadConfig
-  ) => {
-    return uploadToServer(this.vhttp, collectionId, data);
+    data: C
+  ): Promise<UploadResult<C>> => {
+    return uploadToServer(this.vhttp, collectionId, data) as Promise<
+      UploadResult<C>
+    >;
   };
 
   /**
