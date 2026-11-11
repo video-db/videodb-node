@@ -141,14 +141,15 @@ export class SearchResponse implements Iterable<unknown> {
   };
 
   /** Compiles the matched shots into one stream URL. */
-  public compile = (): Promise<string | undefined> =>
+  // async so a non-shots response rejects instead of throwing synchronously.
+  public compile = async (): Promise<string | undefined> =>
     this.getShotResults().compile();
 
   /** Compiles if needed, then returns a player URL for the matched shots. */
-  public play = (): Promise<string> => this.getShotResults().play();
+  public play = async (): Promise<string> => this.getShotResults().play();
 
   /** iframe embed code for the compiled shots; see SearchResult.getEmbedCode. */
-  public getEmbedCode = (
+  public getEmbedCode = async (
     ...args: Parameters<SearchResult['getEmbedCode']>
   ): Promise<string> => this.getShotResults().getEmbedCode(...args);
 

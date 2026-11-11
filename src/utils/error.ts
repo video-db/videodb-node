@@ -2,7 +2,10 @@ import { AxiosResponse } from 'axios';
 
 /** HTTP details attached to errors raised from an API response. */
 export interface VideodbErrorDetails {
-  /** HTTP status code, when the error came from an API response. */
+  /**
+   * HTTP status code. For a failure the server reports inside a 2xx body
+   * (`success: false`), the body's numeric `error_code`, e.g. 400.
+   */
   status?: number;
   /** Machine-readable server error code, e.g. `llm_dollar_budget_reached`. */
   code?: string;

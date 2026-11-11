@@ -38,6 +38,8 @@ const apiError = (body: {
   error_code?: string | number;
 }): VideodbError =>
   new VideodbError(body.message, undefined, {
+    // A numeric error_code mirrors an HTTP status, so callers can rely on e.status.
+    status: typeof body.error_code === 'number' ? body.error_code : undefined,
     code: body.error_code != null ? String(body.error_code) : undefined,
     data: body,
   });
@@ -194,6 +196,9 @@ export class HttpClient {
   ): Promise<R> => {
     const startTime = Date.now();
 
+    // Counts consecutive transient failures only; a good poll resets it, so a
+    // flapping endpoint keeps polling until maxPollTime. Retries wait the normal
+    // pollInterval (no backoff, Retry-After ignored), which is fine for long jobs.
     let transientFailures = 0;
 
     while (Date.now() - startTime < maxPollTime) {

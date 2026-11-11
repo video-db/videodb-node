@@ -32,6 +32,8 @@ type UploadedMedia<C> = C extends { mediaType: 'video' }
 /**
  * What an upload resolves to: narrowed by `mediaType`. Passing a `callbackUrl`
  * keeps `| undefined` (the 0.3.x type), since the upload then returns nothing.
+ * Narrowing needs literal values (an inline object or `as const`); a variable
+ * typed `FileUploadConfig` keeps the full union. It is a type, not a runtime check.
  */
 export type UploadResult<C extends CommonUploadConfig> =
   'callbackUrl' extends keyof C

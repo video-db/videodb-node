@@ -103,7 +103,7 @@ describe('errors keep their 0.3.2 shape and gain details', () => {
     }
   });
 
-  it('success:false: same message; adds code and data', async () => {
+  it('success:false: same message; adds status, code and data', async () => {
     fakeAxios([
       () => ({
         data: { success: false, message: 'Video not found', error_code: 400 },
@@ -115,6 +115,7 @@ describe('errors keep their 0.3.2 shape and gain details', () => {
     expect(err.message).toBe('VideoDB Error: Video not found');
     expect(err.name).toBe('Error');
     expect(err.code).toBe('400');
+    expect(err.status).toBe(400);
   });
 
   it('adds no keys to errors without details', () => {
@@ -227,11 +228,17 @@ describe('SearchResponse keeps the old search() chaining', () => {
     ]);
   });
 
-  it('refuses to compile an aggregate response', () => {
+  it('rejects compile/play/getEmbedCode on an aggregate response', async () => {
     const res = new SearchResponse({} as HttpClient, {
       responseType: 'aggregate',
       results: { count: 3 },
     });
-    expect(() => res.compile()).toThrow(/does not contain shot results/);
+    await expect(res.compile()).rejects.toThrow(
+      /does not contain shot results/
+    );
+    await expect(res.play()).rejects.toThrow(/does not contain shot results/);
+    await expect(res.getEmbedCode()).rejects.toThrow(
+      /does not contain shot results/
+    );
   });
 });
