@@ -329,6 +329,7 @@ export class Video implements IVideo {
     // `_new_search(**kwargs)` passthrough of a `score_threshold` kwarg.
     if (options.scoreThreshold != null)
       payload.score_threshold = options.scoreThreshold;
+    if (options.filter != null) payload.filter = options.filter;
     const res = await this.#vhttp.post<Record<string, unknown>, typeof payload>(
       [video, this.id, searchPath, 'v2'],
       payload

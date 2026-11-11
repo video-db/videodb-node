@@ -1,10 +1,11 @@
 /**
- * Additions on top of 0.3.2: error details, search warnings, SearchResponse
- * chaining and poll retries. Every 0.3.2 behaviour is pinned as unchanged.
+ * 0.4.0: server messages in errors, error details, search warnings and filter,
+ * V2 shot text, SearchResponse chaining, poll retries and timeouts, uploads.
  */
 import axios from 'axios';
 import { connect } from '@/index';
 import { Video } from '@/core/video';
+import { Collection } from '@/core/collection';
 import { SearchResponse } from '@/core/search/responses';
 import {
   AuthenticationError,
@@ -42,8 +43,8 @@ const httpError = (status: number, data: unknown) =>
 
 const ok = (data: unknown) => () => ({ data: { success: true, data } });
 
-describe('errors keep their 0.3.2 shape and gain details', () => {
-  it('4xx: same message, class and cause; adds status, code, data', async () => {
+describe('errors carry the server message and details', () => {
+  it('4xx: server message, status, code and data; class and cause as before', async () => {
     const body = {
       message: 'You have reached the budget',
       error_code: 'llm_dollar_budget_reached',
@@ -60,14 +61,14 @@ describe('errors keep their 0.3.2 shape and gain details', () => {
     expect(err).not.toBeInstanceOf(VideodbError);
     expect(err).toBeInstanceOf(VdbBaseError);
     expect(err.name).toBe('InvalidRequestError');
-    expect(err.message).toBe('Error 402: Bad Request');
+    expect(err.message).toBe('Error 402: You have reached the budget');
     expect(err.cause).toEqual({ cause: 'You have reached the budget' });
     expect(err.status).toBe(402);
     expect(err.code).toBe('llm_dollar_budget_reached');
     expect(err.data).toEqual(body);
   });
 
-  it('401: same message and cause; adds status and data', async () => {
+  it('401: server message, status and data; class and cause as before', async () => {
     fakeAxios([
       () => {
         throw httpError(401, { message: 'Invalid API key' });
@@ -79,13 +80,13 @@ describe('errors keep their 0.3.2 shape and gain details', () => {
     expect(err).toBeInstanceOf(AuthenticationError);
     expect(err).not.toBeInstanceOf(VideodbError);
     expect(err.name).toBe('Error');
-    expect(err.message).toBe('Authentication Error: ');
+    expect(err.message).toBe('Authentication Error: Invalid API key');
     expect(err.cause).toBe('Invalid API Key');
     expect(err.status).toBe(401);
     expect(err.data).toEqual({ message: 'Invalid API key' });
   });
 
-  it('missing key: same message, hint stays in cause', () => {
+  it('missing key: the hint is in the message and the cause', () => {
     const saved = process.env.VIDEO_DB_API_KEY;
     delete process.env.VIDEO_DB_API_KEY;
     try {
@@ -96,7 +97,9 @@ describe('errors keep their 0.3.2 shape and gain details', () => {
           return e as AuthenticationError;
         }
       })();
-      expect(err?.message).toBe('Authentication Error: ');
+      expect(err?.message).toMatch(
+        /^Authentication Error: No API key provided.*VIDEO_DB_API_KEY/
+      );
       expect(String(err?.cause)).toMatch(/VIDEO_DB_API_KEY/);
     } finally {
       process.env.VIDEO_DB_API_KEY = saved;
@@ -182,20 +185,18 @@ describe('polling', () => {
     const err = await connect('sk-test')
       .vhttp.get(['x'], undefined, { pollInterval: 1 })
       .catch(e => e);
-    expect(err.message).toBe('Error 404: Bad Request');
+    expect(err.message).toBe('Error 404: gone');
     expect(err.cause).toEqual({ cause: 'gone' });
   });
 
-  it('timeout: same wrapped error as 0.3.2; adds the output URL', async () => {
+  it('timeout: throws RequestTimeoutError with the output URL', async () => {
     fakeAxios([processing, () => ({ data: { status: 'processing' } })]);
     const err = await connect('sk-test')
       .vhttp.get(['x'], undefined, { maxPollTime: 1, pollInterval: 5 })
       .catch(e => e);
-    expect(err).toBeInstanceOf(VideodbError);
-    expect(err.message).toBe('VideoDB Error: Unidentified Error');
-    expect(err.cause.cause).toBeInstanceOf(RequestTimeoutError);
-    expect(err.cause.cause.message).toBe(
-      'Request Timeout Error: Polling timed out after 0s'
+    expect(err).toBeInstanceOf(RequestTimeoutError);
+    expect(err.message).toBe(
+      'Request Timeout Error: Polling timed out after 0s. The job may still finish; its result will be at https://out/1'
     );
     expect(err.data).toEqual({ outputUrl: 'https://out/1' });
   });
@@ -229,13 +230,52 @@ describe('Search V2', () => {
     warn.mockRestore();
   });
 
-  it('sends the same search body as 0.3.2', async () => {
+  it('forwards filter on Video and Collection search()', async () => {
+    const filter = [{ field: 'speaker', op: 'eq', value: 'A' }];
     const v = recorder({ responseType: 'shots', results: [] });
     await new Video(v.client, {
       id: 'm-1',
       collectionId: 'c-1',
-    } as never).search('q', { filter: [{ a: 1 }] } as never);
-    expect(v.bodies[0]).toEqual({ query: 'q' });
+    } as never).search('q', { filter } as never);
+    expect(v.bodies[0]).toEqual({ query: 'q', filter });
+
+    const c = recorder({ responseType: 'shots', results: [] });
+    await new Collection(c.client, { id: 'c-1' } as never).search('q', {
+      filter,
+    } as never);
+    expect(c.bodies[0]).toEqual({ query: 'q', filter });
+  });
+
+  it('fills shot.text from metadata.embeddedText for V2 hits', () => {
+    const res = new SearchResponse({} as HttpClient, {
+      responseType: 'shots',
+      results: [
+        {
+          videoId: 'm-1',
+          docs: [
+            {
+              start: 1,
+              end: 2,
+              text: null,
+              metadata: { embeddedText: 'attention' },
+            },
+          ],
+        },
+      ],
+    });
+    expect(res.shots[0].text).toBe('attention');
+  });
+});
+
+describe('uploads', () => {
+  it('names a missing local file', async () => {
+    const { client } = recorder({});
+    const err = await new Collection(client, { id: 'c-1' } as never)
+      .uploadFile({ filePath: '/nope/missing.mp4' })
+      .catch(e => e);
+    expect(err.message).toBe(
+      'VideoDB Error: File not found: /nope/missing.mp4'
+    );
   });
 });
 

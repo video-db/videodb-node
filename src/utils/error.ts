@@ -37,7 +37,17 @@ export class VideodbError<T = undefined> extends VdbBaseError {
 
 export class AuthenticationError<T = unknown> extends VdbBaseError {
   constructor(cause?: T, details?: VideodbErrorDetails) {
-    super('Authentication Error: ', { cause: cause || 'Invalid API Key' });
+    const serverMessage = (details?.data as { message?: unknown } | undefined)
+      ?.message;
+    const reason =
+      typeof serverMessage === 'string' && serverMessage
+        ? serverMessage
+        : typeof cause === 'string' && cause
+          ? cause
+          : 'Invalid API Key';
+    super(`Authentication Error: ${reason}`, {
+      cause: cause || 'Invalid API Key',
+    });
     this.setDetails(details);
   }
 }
@@ -48,14 +58,14 @@ export class InvalidRequestError<C = unknown> extends VdbBaseError {
     if (typeof responseOrMessage === 'string') {
       super(`Invalid Request Error: ${responseOrMessage}`, { cause });
     } else {
+      const body = responseOrMessage.data as
+        | { message?: string; error_code?: string | number }
+        | undefined;
       super(
-        `Error ${responseOrMessage.status}: ${responseOrMessage.statusText}`,
+        `Error ${responseOrMessage.status}: ${body?.message || responseOrMessage.statusText}`,
         { cause }
       );
       this.response = responseOrMessage;
-      const body = responseOrMessage.data as
-        | { error_code?: string | number }
-        | undefined;
       this.setDetails({
         status: responseOrMessage.status,
         code: body?.error_code != null ? String(body.error_code) : undefined,

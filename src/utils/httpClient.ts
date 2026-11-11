@@ -8,6 +8,7 @@ import {
   AuthenticationError,
   InvalidRequestError,
   RequestTimeoutError,
+  VdbBaseError,
   VideodbError,
 } from '@/utils/error';
 import { fromSnakeToCamel } from '@/utils';
@@ -241,9 +242,9 @@ export class HttpClient {
     }
 
     const timeout = new RequestTimeoutError(
-      'Polling timed out after ' + Math.round(maxPollTime / 1000) + 's'
+      `Polling timed out after ${Math.round(maxPollTime / 1000)}s. ` +
+        `The job may still finish; its result will be at ${url}`
     );
-    // The job may still finish; this is where its result will appear.
     timeout.data = { outputUrl: url };
     throw timeout;
   };
@@ -296,7 +297,8 @@ export class HttpClient {
 
       return this.#parseResponse(data, convert);
     } catch (error) {
-      if (error instanceof VideodbError) {
+      // Any SDK error (including a poll RequestTimeoutError) passes through as is.
+      if (error instanceof VdbBaseError) {
         throw error;
       }
       throw this.#getPlausibleError(
@@ -342,15 +344,13 @@ export class HttpClient {
         cause: errData?.message || error.message || 'Unknown cause',
       });
     } else if (error.request) {
-      return new VideodbError('Request failed', {
+      return new VideodbError(`Request failed: ${error.message}`, {
         cause: error.message,
       });
     } else {
-      // A poll timeout lands here; its output URL rides along in `data`.
       return new VideodbError(
-        'Unidentified Error',
-        { cause: error },
-        error instanceof RequestTimeoutError ? { data: error.data } : undefined
+        `Unidentified Error: ${(error as Error)?.message ?? String(error)}`,
+        { cause: error }
       );
     }
   };

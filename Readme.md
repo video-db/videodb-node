@@ -166,7 +166,7 @@ console.log(await video.addSubtitle());
 
 ## Handle errors
 
-Every error the SDK throws extends `VdbBaseError`. Errors from the API also carry the HTTP `status`, a machine-readable `code` when the server sends one, and the response body in `data`. The server's explanation is in `data.message`.
+Every error the SDK throws extends `VdbBaseError`. Errors from the API include the server's explanation in the message, and also carry the HTTP `status`, a machine-readable `code` when the server sends one, and the response body in `data`.
 
 ```ts
 import { VdbBaseError } from 'videodb';
@@ -175,8 +175,8 @@ try {
   await coll.getVideo('m-does-not-exist');
 } catch (err) {
   if (err instanceof VdbBaseError) {
-    console.error(err.message); // "Error 400: Bad Request"
-    console.error(err.status, err.code, err.data); // 400, ..., { message: 'Video not found', ... }
+    console.error(err.message); // "Error 400: Video not found"
+    console.error(err.status, err.code); // 400 "400"
   }
 }
 ```

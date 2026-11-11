@@ -56,7 +56,11 @@ export class SearchResult implements Iterable<Shot> {
           new Shot(this.#vhttp, {
             end: doc.end,
             start: doc.start,
-            text: doc.text,
+            // Search V2 hits carry their text in metadata.embeddedText.
+            text:
+              doc.text ??
+              (doc.metadata as { embeddedText?: string } | undefined)
+                ?.embeddedText,
             searchScore: doc.score,
             videoId: result.videoId,
             videoTitle: result.title ?? undefined,
