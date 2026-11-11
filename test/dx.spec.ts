@@ -118,6 +118,34 @@ describe('errors keep their 0.3.2 shape and gain details', () => {
     expect(err.status).toBe(400);
   });
 
+  it('success:false: a string HTTP-like error_code also sets status', async () => {
+    fakeAxios([
+      () => ({ data: { success: false, message: 'x', error_code: '403' } }),
+    ]);
+    const err = await connect('sk-test')
+      .getCollection()
+      .catch(e => e);
+    expect(err.status).toBe(403);
+    expect(err.code).toBe('403');
+  });
+
+  it('success:false: a non-numeric error_code leaves status unset', async () => {
+    fakeAxios([
+      () => ({
+        data: {
+          success: false,
+          message: 'x',
+          error_code: 'llm_dollar_budget_reached',
+        },
+      }),
+    ]);
+    const err = await connect('sk-test')
+      .getCollection()
+      .catch(e => e);
+    expect(err.status).toBeUndefined();
+    expect(err.code).toBe('llm_dollar_budget_reached');
+  });
+
   it('adds no keys to errors without details', () => {
     expect(Object.keys(new VideodbError('x'))).toEqual([]);
     expect(Object.keys(new AuthenticationError())).toEqual([]);

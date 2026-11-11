@@ -39,7 +39,9 @@ const apiError = (body: {
 }): VideodbError =>
   new VideodbError(body.message, undefined, {
     // A numeric error_code mirrors an HTTP status, so callers can rely on e.status.
-    status: typeof body.error_code === 'number' ? body.error_code : undefined,
+    status: /^\d{3}$/.test(String(body.error_code ?? ''))
+      ? Number(body.error_code)
+      : undefined,
     code: body.error_code != null ? String(body.error_code) : undefined,
     data: body,
   });
