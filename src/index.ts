@@ -87,6 +87,7 @@ export { SubtitleAlignment, SubtitleBorderStyle } from './core/config';
 export { Shot } from './core/shot';
 export { Scene, SceneCollection } from './core/scene';
 export {
+  VdbBaseError,
   VideodbError,
   AuthenticationError,
   InvalidRequestError,

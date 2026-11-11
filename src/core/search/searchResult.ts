@@ -22,25 +22,11 @@ export interface ServerWarning {
   [key: string]: unknown;
 }
 
-const _emittedWarnings = new Set<string>();
-
-/**
- * Returns the server `warnings` list and prints each one once per process,
- * keyed by code, matching videodb-python's `warn_response_warnings_once`.
- */
-export const takeServerWarnings = (raw: unknown): ServerWarning[] => {
-  const list = (Array.isArray(raw) ? raw : raw ? [raw] : []).filter(
+/** Normalises the server `warnings` field to a list; nothing is printed. */
+export const readServerWarnings = (raw: unknown): ServerWarning[] =>
+  (Array.isArray(raw) ? raw : raw ? [raw] : []).filter(
     (w): w is ServerWarning => typeof w === 'object' && w !== null
   );
-  for (const warning of list) {
-    const key = String(warning.code || warning.message || 'response_warning');
-    if (_emittedWarnings.has(key)) continue;
-    _emittedWarnings.add(key);
-    // eslint-disable-next-line no-console
-    console.warn(`VideoDB warning: ${warning.message ?? key}`);
-  }
-  return list;
-};
 
 export class SearchResult implements Iterable<Shot> {
   #vhttp: HttpClient;
@@ -56,7 +42,7 @@ export class SearchResult implements Iterable<Shot> {
     this.#vhttp = http;
     this.#searchResponse = searchResponse;
     this.shots = [];
-    this.warnings = takeServerWarnings(
+    this.warnings = readServerWarnings(
       (searchResponse as { warnings?: unknown }).warnings
     );
     this.#formatResults();
@@ -70,11 +56,7 @@ export class SearchResult implements Iterable<Shot> {
           new Shot(this.#vhttp, {
             end: doc.end,
             start: doc.start,
-            // Search V2 hits carry their text in metadata.embeddedText.
-            text:
-              doc.text ??
-              (doc.metadata as { embeddedText?: string } | undefined)
-                ?.embeddedText,
+            text: doc.text,
             searchScore: doc.score,
             videoId: result.videoId,
             videoTitle: result.title ?? undefined,

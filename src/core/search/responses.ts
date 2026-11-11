@@ -5,7 +5,7 @@ import { VideodbError } from '@/utils/error';
 import { HttpClient } from '@/utils/httpClient';
 import {
   SearchResult,
-  takeServerWarnings,
+  readServerWarnings,
   type ServerWarning,
 } from './searchResult';
 
@@ -42,7 +42,7 @@ export class AskResponse {
 
   constructor(http: HttpClient, data: AskResponseData = {}) {
     this.answer = data.answer || '';
-    this.warnings = takeServerWarnings(data.warnings);
+    this.warnings = readServerWarnings(data.warnings);
     this.sources = new SearchResult(http, {
       results: (data.sources || []) as SearchResponseCamel['results'],
     }).shots;
@@ -91,7 +91,7 @@ export class SearchResponse implements Iterable<unknown> {
     this.clarification = data.clarification;
     this.trace = data.trace;
     const rawResults = data.results ?? [];
-    this.warnings = takeServerWarnings(data.warnings);
+    this.warnings = readServerWarnings(data.warnings);
     if (this.responseType && SHOTS_TYPES.has(this.responseType)) {
       const result = new SearchResult(http, {
         results: rawResults as SearchResponseCamel['results'],

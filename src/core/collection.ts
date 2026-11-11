@@ -446,8 +446,6 @@ export class Collection implements ICollection {
     if (options.includeClip != null) payload.include_clip = options.includeClip;
     if (options.sessionId != null) payload.session_id = options.sessionId;
     if (options.config != null) payload.config = options.config;
-    // Search V2 takes field/op/value filters; legacy-shaped ones fall back server-side.
-    if (options.filter != null) payload.filter = options.filter;
     const res = await this.#vhttp.post<Record<string, unknown>, typeof payload>(
       [collection, this.id, search, 'v2'],
       payload

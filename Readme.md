@@ -122,7 +122,7 @@ console.log(await results.compile());
 
 Add a `vlm` analyzer, such as `{ type: 'vlm', name: 'scene', config: { prompt: 'Describe the visual content.' } }`, to search what is on screen as well.
 
-`video.search(query)` plans the search across all of the video's indexes. If the video has no index yet, the result is empty, and `results.warnings` (also printed once to the console) explains why.
+`video.search(query)` plans the search across all of the video's indexes. If the video has no index yet, the result is empty, and `results.warnings` explains why.
 
 ## Ask questions
 
@@ -166,17 +166,17 @@ console.log(await video.addSubtitle());
 
 ## Handle errors
 
-Every error the SDK throws extends `VideodbError`. Errors from the API carry the server's message, the HTTP `status`, and a machine-readable `code` when the server sends one.
+Every error the SDK throws extends `VdbBaseError`. Errors from the API also carry the HTTP `status`, a machine-readable `code` when the server sends one, and the response body in `data`. The server's explanation is in `data.message`.
 
 ```ts
-import { VideodbError } from 'videodb';
+import { VdbBaseError } from 'videodb';
 
 try {
   await coll.getVideo('m-does-not-exist');
 } catch (err) {
-  if (err instanceof VideodbError) {
-    console.error(err.message); // "Error 400: Video not found"
-    console.error(err.status, err.code);
+  if (err instanceof VdbBaseError) {
+    console.error(err.message); // "Error 400: Bad Request"
+    console.error(err.status, err.code, err.data); // 400, ..., { message: 'Video not found', ... }
   }
 }
 ```

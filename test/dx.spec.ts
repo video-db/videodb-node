@@ -1,16 +1,16 @@
 /**
- * Developer-experience fixes: server error messages, shared error base,
- * Search V2 warnings, filter passthrough, V2 shot text and poll retries.
+ * Additions on top of 0.3.2: error details, search warnings, SearchResponse
+ * chaining and poll retries. Every 0.3.2 behaviour is pinned as unchanged.
  */
 import axios from 'axios';
 import { connect } from '@/index';
 import { Video } from '@/core/video';
-import { Collection } from '@/core/collection';
 import { SearchResponse } from '@/core/search/responses';
 import {
   AuthenticationError,
   InvalidRequestError,
   RequestTimeoutError,
+  VdbBaseError,
   VideodbError,
 } from '@/utils/error';
 import type { HttpClient } from '@/utils/httpClient';
@@ -42,39 +42,32 @@ const httpError = (status: number, data: unknown) =>
 
 const ok = (data: unknown) => () => ({ data: { success: true, data } });
 
-describe('errors carry the server message', () => {
-  it('uses the API message, status and code for a 4xx', async () => {
+describe('errors keep their 0.3.2 shape and gain details', () => {
+  it('4xx: same message, class and cause; adds status, code, data', async () => {
+    const body = {
+      message: 'You have reached the budget',
+      error_code: 'llm_dollar_budget_reached',
+    };
     fakeAxios([
       () => {
-        throw httpError(402, {
-          message: 'You have reached the Hackathon budget',
-          error_code: 'llm_dollar_budget_reached',
-        });
+        throw httpError(402, body);
       },
     ]);
     const err = await connect('sk-test')
       .getCollection()
       .catch(e => e);
     expect(err).toBeInstanceOf(InvalidRequestError);
-    expect(err).toBeInstanceOf(VideodbError);
-    expect(err.message).toBe(
-      'Error 402: You have reached the Hackathon budget'
-    );
+    expect(err).not.toBeInstanceOf(VideodbError);
+    expect(err).toBeInstanceOf(VdbBaseError);
+    expect(err.name).toBe('InvalidRequestError');
+    expect(err.message).toBe('Error 402: Bad Request');
+    expect(err.cause).toEqual({ cause: 'You have reached the budget' });
     expect(err.status).toBe(402);
     expect(err.code).toBe('llm_dollar_budget_reached');
-    // 0.3.x callers read the server message from e.cause.cause.
-    expect(err.cause.cause).toBe('You have reached the Hackathon budget');
+    expect(err.data).toEqual(body);
   });
 
-  it('keeps the 0.3.x AuthenticationError constructor and cause', () => {
-    expect(new AuthenticationError().cause).toBe('Invalid API key');
-    const legacy = new AuthenticationError({ reason: 'x' });
-    expect(legacy.message).toBe('Authentication Error: Invalid API key');
-    expect(legacy.cause).toEqual({ reason: 'x' });
-    expect(new AuthenticationError('No API key').cause).toBe('No API key');
-  });
-
-  it('keeps the 401 message and is a VideodbError', async () => {
+  it('401: same message and cause; adds status and data', async () => {
     fakeAxios([
       () => {
         throw httpError(401, { message: 'Invalid API key' });
@@ -84,22 +77,33 @@ describe('errors carry the server message', () => {
       .getCollection()
       .catch(e => e);
     expect(err).toBeInstanceOf(AuthenticationError);
-    expect(err).toBeInstanceOf(VideodbError);
-    expect(err.message).toBe('Authentication Error: Invalid API key');
+    expect(err).not.toBeInstanceOf(VideodbError);
+    expect(err.name).toBe('Error');
+    expect(err.message).toBe('Authentication Error: ');
+    expect(err.cause).toBe('Invalid API Key');
     expect(err.status).toBe(401);
+    expect(err.data).toEqual({ message: 'Invalid API key' });
   });
 
-  it('puts the missing-key hint in the message, not only the cause', () => {
+  it('missing key: same message, hint stays in cause', () => {
     const saved = process.env.VIDEO_DB_API_KEY;
     delete process.env.VIDEO_DB_API_KEY;
     try {
-      expect(() => connect()).toThrow(/Set an API key/);
+      const err = (() => {
+        try {
+          connect();
+        } catch (e) {
+          return e as AuthenticationError;
+        }
+      })();
+      expect(err?.message).toBe('Authentication Error: ');
+      expect(String(err?.cause)).toMatch(/VIDEO_DB_API_KEY/);
     } finally {
       process.env.VIDEO_DB_API_KEY = saved;
     }
   });
 
-  it('keeps the code from a success:false body', async () => {
+  it('success:false: same message; adds code and data', async () => {
     fakeAxios([
       () => ({
         data: { success: false, message: 'Video not found', error_code: 400 },
@@ -109,7 +113,13 @@ describe('errors carry the server message', () => {
       .getCollection()
       .catch(e => e);
     expect(err.message).toBe('VideoDB Error: Video not found');
+    expect(err.name).toBe('Error');
     expect(err.code).toBe('400');
+  });
+
+  it('adds no keys to errors without details', () => {
+    expect(Object.keys(new VideodbError('x'))).toEqual([]);
+    expect(Object.keys(new AuthenticationError())).toEqual([]);
   });
 });
 
@@ -143,16 +153,21 @@ describe('polling', () => {
     const err = await connect('sk-test')
       .vhttp.get(['x'], undefined, { pollInterval: 1 })
       .catch(e => e);
-    expect(err.message).toBe('Error 404: gone');
+    expect(err.message).toBe('Error 404: Bad Request');
+    expect(err.cause).toEqual({ cause: 'gone' });
   });
 
-  it('throws RequestTimeoutError (not a wrapped VideodbError) with the poll URL', async () => {
+  it('timeout: same wrapped error as 0.3.2; adds the output URL', async () => {
     fakeAxios([processing, () => ({ data: { status: 'processing' } })]);
     const err = await connect('sk-test')
       .vhttp.get(['x'], undefined, { maxPollTime: 1, pollInterval: 5 })
       .catch(e => e);
-    expect(err).toBeInstanceOf(RequestTimeoutError);
     expect(err).toBeInstanceOf(VideodbError);
+    expect(err.message).toBe('VideoDB Error: Unidentified Error');
+    expect(err.cause.cause).toBeInstanceOf(RequestTimeoutError);
+    expect(err.cause.cause.message).toBe(
+      'Request Timeout Error: Polling timed out after 0s'
+    );
     expect(err.data).toEqual({ outputUrl: 'https://out/1' });
   });
 });
@@ -173,68 +188,25 @@ describe('Search V2', () => {
   const fallback =
     'No Search V2 indexes were found for this content, so search() used the available legacy indexes.';
 
-  it('forwards filter on Video and Collection search()', async () => {
-    const filter = [{ field: 'speaker', op: 'eq', value: 'A' }];
+  it('exposes server warnings without printing them', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const res = new SearchResponse({} as HttpClient, {
+      responseType: 'shots',
+      results: [],
+      warnings: [{ message: fallback }],
+    });
+    expect(res.warnings).toEqual([{ message: fallback }]);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('sends the same search body as 0.3.2', async () => {
     const v = recorder({ responseType: 'shots', results: [] });
     await new Video(v.client, {
       id: 'm-1',
       collectionId: 'c-1',
-    } as never).search('q', { filter });
-    expect(v.bodies[0]).toEqual({ query: 'q', filter });
-
-    const c = recorder({ responseType: 'shots', results: [] });
-    await new Collection(c.client, { id: 'c-1' } as never).search('q', {
-      filter,
-    });
-    expect(c.bodies[0]).toEqual({ query: 'q', filter });
-  });
-
-  it('exposes server warnings and prints each once', () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    const http = {} as HttpClient;
-    const data = {
-      responseType: 'shots',
-      results: [],
-      warnings: [{ message: fallback }],
-    };
-    const first = new SearchResponse(http, data);
-    new SearchResponse(http, data);
-    expect(first.warnings).toEqual([{ message: fallback }]);
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0][0]).toContain(fallback);
-    warn.mockRestore();
-  });
-
-  it('fills shot.text from metadata.embeddedText for V2 hits', () => {
-    const res = new SearchResponse({} as HttpClient, {
-      responseType: 'shots',
-      results: [
-        {
-          videoId: 'm-1',
-          docs: [
-            {
-              start: 1,
-              end: 2,
-              text: null,
-              metadata: { embeddedText: 'attention' },
-            },
-          ],
-        },
-      ],
-    });
-    expect(res.shots[0].text).toBe('attention');
-  });
-});
-
-describe('uploads', () => {
-  it('names a missing local file instead of an empty reason', async () => {
-    const { client } = recorder({});
-    const err = await new Collection(client, { id: 'c-1' } as never)
-      .uploadFile({ filePath: '/nope/missing.mp4' })
-      .catch(e => e);
-    expect(err.message).toBe(
-      'VideoDB Error: File not found: /nope/missing.mp4'
-    );
+    } as never).search('q', { filter: [{ a: 1 }] } as never);
+    expect(v.bodies[0]).toEqual({ query: 'q' });
   });
 });
 

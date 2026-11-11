@@ -2,38 +2,22 @@
 
 ## Unreleased
 
-Error messages, search feedback, and install reliability.
-
-### Changed
-
-- **Errors carry the server's message.** API errors used to read `Error 400: Bad Request` or `Authentication Error: `, and the server's explanation sat in `cause`. They now read, for example, `Error 400: Video not found` and `Authentication Error: Invalid API key`. Every error also has `status`, `code` (the server's `error_code`, such as `llm_dollar_budget_reached`), and `data` (the response body). The "No API key provided" hint from `connect()` is now in the message.
-- **One error base class.** `AuthenticationError`, `InvalidRequestError`, `RequestTimeoutError`, `CaptureError`, `BinaryError`, and `PermissionError` now extend `VideodbError`, so `instanceof VideodbError` catches everything the SDK throws.
-- **`npm install` never fails because of the Capture binary.** A failed download now logs a warning instead of exiting with code 1. Capture already downloads the binary on first use. Set `VIDEODB_SKIP_CAPTURE_INSTALL=1` to skip the download entirely.
+Fully backward compatible with 0.3.2: no error message, class, `name`, `cause`, request body or return value changes. Everything below is additive, or turns a failure into a success.
 
 ### Added
 
-- **`SearchResponse.compile()`, `play()`, `getEmbedCode()`, and `getShotResults()`.** Code written for the old `search()` that chained `.compile()` threw `compile is not a function` after `search()` started returning a `SearchResponse`. These delegate to the shot results, matching `videodb-python`, and throw a clear error for aggregate responses.
-- **Typed uploads.** `uploadURL()` and `uploadFile()` on `Collection` and `Connection` now return `Video`, `Audio`, or `Image` when `mediaType` is given, and drop `| undefined` when there is no `callbackUrl`. Without `mediaType` the result stays `Video | Audio | Image`, because the server infers the type from the file. Type assertions run with `npm run typecheck:tests`.
-- **Search and ask warnings.** `SearchResponse`, `SearchResult`, and `AskResponse` expose the server's `warnings` and print each one once per process, matching `videodb-python`. For example, `search()` on a video with no Search V2 index now says so instead of returning an empty result with no explanation.
+- **Error details.** Errors from the API now carry `status` (HTTP status), `code` (the server's `error_code`, such as `llm_dollar_budget_reached`), and `data` (the response body, whose `message` is the server's explanation). `console.error(err)` shows them. Messages are unchanged.
+- **`VdbBaseError` is exported.** Every SDK error already extended it, so `instanceof VdbBaseError` catches them all.
+- **Search and ask warnings.** `SearchResponse`, `SearchResult`, and `AskResponse` expose the server's `warnings` (for example, why `search()` on a video with no Search V2 index came back empty). Nothing is printed.
+- **`SearchResponse.compile()`, `play()`, `getEmbedCode()`, and `getShotResults()`.** Code that chained `.compile()` on `search()` threw `compile is not a function` after `search()` started returning a `SearchResponse`. These delegate to the shot results, matching `videodb-python`.
+- **Typed uploads.** `uploadURL()` and `uploadFile()` on `Collection` and `Connection` return `Video`, `Audio`, or `Image` when `mediaType` is given, and drop `| undefined` when there is no `callbackUrl`. Type-only; run with `npm run typecheck:tests`.
+- **Poll timeout URL.** A poll timeout is still thrown as before, and now also carries the job's output URL in `data.outputUrl`.
+- **`VIDEODB_SKIP_CAPTURE_INSTALL=1`** skips the Capture binary download during `npm install`.
 
 ### Fixed
 
-- **`search({ filter })` sends the filter.** `Video.search()` and `Collection.search()` dropped `filter` when routing to Search V2.
-- **Search V2 shots have `text`.** V2 hits put their text in `metadata.embeddedText` and left `shot.text` null. `text` now falls back to it.
-- **A poll timeout is a `RequestTimeoutError`.** It used to be rewrapped as `VideodbError('Unidentified Error')`. It now includes the output URL in its message and in `data.outputUrl`, so the result can be fetched later.
 - **Polling survives transient failures.** Up to 3 consecutive network errors, 429s, or 5xx responses while polling a long job are retried instead of failing it.
-- **Upload errors name the cause.** `uploadFile()` with a missing path now throws `File not found: <path>` instead of `Upload failed, reason: `.
-- **A failed Capture download no longer hangs.** The installers now drain non-200 responses so the process can exit.
-
-### Upgrade notes
-
-No public API was removed or renamed. `e.cause` keeps its 0.3.2 value, and `new AuthenticationError(cause)` still works. Behaviour you may notice:
-
-- Error message text changed (see above). Code that matches exact message strings should switch to `e.status` or `e.code`.
-- `instanceof VideodbError` is now also true for the other SDK errors. An `if` chain that tests `VideodbError` before `AuthenticationError` or `RequestTimeoutError` should test the specific class first.
-- `e.name` is now the class name (`VideodbError`, `AuthenticationError`) instead of `Error`.
-- A `filter` passed to `search()` is now applied, so results can be narrower than before.
-- Search warnings print once per process to stderr via `console.warn`.
+- **`npm install` no longer fails, or hangs, when the Capture binary download fails.** It logs a warning instead. Capture already downloads the binary on first use.
 
 ## [0.3.2] (2026-09-02)
 

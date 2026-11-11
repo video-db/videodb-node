@@ -234,9 +234,9 @@ export class HttpClient {
     }
 
     const timeout = new RequestTimeoutError(
-      `Polling timed out after ${Math.round(maxPollTime / 1000)}s. ` +
-        `The job may still finish; its result will be at ${url}`
+      'Polling timed out after ' + Math.round(maxPollTime / 1000) + 's'
     );
+    // The job may still finish; this is where its result will appear.
     timeout.data = { outputUrl: url };
     throw timeout;
   };
@@ -324,24 +324,26 @@ export class HttpClient {
   ) => {
     if (error.response) {
       const errData = error.response.data;
-      if (error.response.status === (HttpStatusCode.Unauthorized as number)) {
-        return new AuthenticationError(errData?.message || 'Invalid API key', {
+      if (error.status === HttpStatusCode.Unauthorized) {
+        // For now, the only reason for getting a 401 is an invalid API Key
+        return new AuthenticationError(undefined, {
           status: error.response.status,
           data: errData,
         });
       }
-      // `cause` keeps its 0.3.x shape so existing `e.cause.cause` readers still work.
       return new InvalidRequestError(error.response, {
         cause: errData?.message || error.message || 'Unknown cause',
       });
     } else if (error.request) {
-      return new VideodbError(`Request failed: ${error.message}`, {
+      return new VideodbError('Request failed', {
         cause: error.message,
       });
     } else {
+      // A poll timeout lands here; its output URL rides along in `data`.
       return new VideodbError(
-        `Unidentified Error: ${(error as Error)?.message ?? String(error)}`,
-        { cause: error }
+        'Unidentified Error',
+        { cause: error },
+        error instanceof RequestTimeoutError ? { data: error.data } : undefined
       );
     }
   };
