@@ -38,11 +38,15 @@ export class RecorderInstaller {
     this.binaryConfig = binaryConfig || {
       baseUrl: 'https://artifacts.videodb.io/capture',
       version: '0.3.1',
+      platformVersions: {
+        'darwin-arm64': '0.3.3',
+        'darwin-x64': '0.3.3',
+      },
       checksums: {
         'darwin-x64':
-          '8b456607ba3628092081d92c1a22fcf4e8156f4e83b2d3d119bf0244eaa870b2',
+          'd7c6e3c1dc406b382fdf22228a6567c7d22b4099c8af66df7389f3d68f95faad',
         'darwin-arm64':
-          'cefc35883acd53f63dc50f8deb186ea0a8e17c65e646af8e81a309251a220b9d',
+          'cc1726312abd4e9dc72db52742f4254c46526042eafeabb1deaf0202dc4936f9',
         'win32-x64':
           'e388639c15ab35ac32179d3fc05a363f0f71d4d90265c6b48fb1af56ecae7736',
       },
@@ -76,7 +80,9 @@ export class RecorderInstaller {
    */
   public getDownloadUrl(): string {
     const { platformKey } = this.getPlatformInfo();
-    const { baseUrl, version } = this.binaryConfig;
+    const { baseUrl, platformVersions } = this.binaryConfig;
+    const version =
+      platformVersions?.[platformKey] ?? this.binaryConfig.version;
     return `${baseUrl}/v${version}/capture-${platformKey}.tar.gz`;
   }
 
