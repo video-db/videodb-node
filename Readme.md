@@ -510,3 +510,5 @@ Contributions are what make the open source community such an amazing place to b
 ### Local capture lifecycle
 
 For macOS local recording, fresh recorder tokens, relay, and recovery, see the [CaptureClient integration guide](docs/capture-local-recording.md).
+
+For tokenless macOS capture without RTStreams, window pickers, and local MP4 files, see [standalone capture](docs/capture-offline.md).

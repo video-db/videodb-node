@@ -97,3 +97,5 @@ Alternatively, omit the listener and explicitly fetch a fresh token and call `re
 `npm test -- --runInBand` runs deterministic tests for token refresh, repeated-token rejection, retry limits, event ordering, recovery, shutdown waits, and command timeouts.
 
 For an opt-in live macOS test, set `VIDEO_DB_API_KEY` to a development API key and run `npm run test:capture:dev`. This captures five seconds of screen, microphone, and system audio and uploads that new recording to `https://api.dev.videodb.io`. It explicitly suspends after finalization, restarts, discovers only its own job, submits a one-second token after expiry, and requires a second token request followed by ingestion completion. A sanitized report is written to the OS temporary directory. Permissions must already be granted. It never relays another user's retained jobs.
+
+For standalone files without a server session or RTStreams, use the separate [offline capture API](capture-offline.md). Those files do not use the relay/processing methods described here.

@@ -28,6 +28,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     getRecorderToken: async () => null,
   });
   let recording;
+  let readyTimer;
   client.on('error', () => {});
   const failures = [];
   client.on('recording-token-error', () => failures.push('token-error'));
@@ -40,10 +41,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       system = channels.systemAudio.default;
     if (!display || !mic || !system) throw new Error('Missing channels');
     const ready = new Promise((resolve, reject) => {
-      const timer = setTimeout(
+      const timer = (readyTimer = setTimeout(
         () => reject(new Error('Finalization timeout')),
         180000
-      );
+      ));
       client.on('local-recording-ready', event => {
         if (event.sessionId === session.id) {
           clearTimeout(timer);
@@ -121,6 +122,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       'PASS recovered recording uploaded and processed before shutdown'
     );
   } finally {
+    clearTimeout(readyTimer);
     await client.shutdown({ waitForProcessing: false }).catch(() => {});
     await fetch(api + '/capture/session/' + session.id + '/stop', {
       method: 'POST',
@@ -135,9 +137,25 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   console.log(
     'FAIL live SDK check:',
     e.constructor.name,
-    e.message?.startsWith('Recorder command')
+    e.message?.startsWith('Recorder command') ||
+      [
+        'sessionId is required',
+        'A recording is already active',
+        'CaptureClient is shutting down',
+        'channels must include channelId for each channel',
+        'Missing channels',
+        'sessionToken is required for session-backed capture',
+      ].includes(e.message)
       ? e.message
       : 'See test stage; credentials suppressed'
+  );
+  console.log(
+    'FAIL location:',
+    e.stack
+      ?.split('\n')
+      .filter(line => line.trim().startsWith('at '))
+      .slice(0, 2)
+      .join(' | ')
   );
   process.exitCode = 1;
 });

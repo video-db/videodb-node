@@ -13,6 +13,24 @@ import {
 } from './types';
 import { RecorderInstaller } from './installer';
 
+/** Native rejection with a stable code (for example TARGET_NOT_FOUND). */
+export class CaptureCommandError extends Error {
+  public readonly code: string;
+  constructor(result: unknown) {
+    const detail =
+      result && typeof result === 'object'
+        ? (result as Record<string, unknown>)
+        : {};
+    super(
+      typeof detail.message === 'string'
+        ? detail.message
+        : 'Recorder command failed'
+    );
+    this.name = 'CaptureCommandError';
+    this.code = typeof detail.code === 'string' ? detail.code : 'UNKNOWN_ERROR';
+  }
+}
+
 interface PendingCommand {
   timer: NodeJS.Timeout;
   resolve: (value: unknown) => void;
@@ -97,7 +115,7 @@ export class BinaryManager extends EventEmitter {
         if (status === 'success') {
           promise.resolve(result);
         } else {
-          promise.reject(new Error(JSON.stringify(result)));
+          promise.reject(new CaptureCommandError(result));
         }
         this.pendingCommands.delete(commandId);
       }

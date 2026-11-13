@@ -6,8 +6,8 @@ const { binaryConfig } = require('../package.json');
 
 describe('capture binary version selection', () => {
   it.each([
-    ['darwin', 'arm64', '0.3.3'],
-    ['darwin', 'x64', '0.3.3'],
+    ['darwin', 'arm64', '0.3.3-window.1'],
+    ['darwin', 'x64', '0.3.3-window.1'],
     ['win32', 'x64', '0.3.1'],
   ] as const)(
     'selects %s-%s version %s in both installers',
@@ -56,4 +56,48 @@ describe('capture binary version selection', () => {
       expect(installTime.getDownloadUrl()).toBe(expected);
     }
   );
+});
+
+it('both installers reject stale/missing artifact markers and agree on current archives', () => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'capture-marker-'));
+  const runtime = new RecorderInstaller();
+  (runtime as unknown as { binDir: string }).binDir = directory;
+  const installTime = new InstallTimeInstaller(binaryConfig);
+  installTime.binDir = directory;
+  try {
+    fs.mkdirSync(path.dirname(runtime.getBinaryPath()), { recursive: true });
+    fs.writeFileSync(runtime.getBinaryPath(), 'fixture');
+    expect(runtime.isInstalled()).toBe(false);
+    expect(installTime.isInstalled()).toBe(false);
+    const marker = path.join(directory, '.artifact.json');
+    fs.writeFileSync(
+      marker,
+      JSON.stringify({
+        url: 'old-release',
+        checksum: runtime.getExpectedChecksum(),
+      })
+    );
+    expect(runtime.isInstalled()).toBe(false);
+    expect(installTime.isInstalled()).toBe(false);
+    fs.writeFileSync(
+      marker,
+      JSON.stringify({
+        url: runtime.getDownloadUrl(),
+        checksum: runtime.getExpectedChecksum(),
+      })
+    );
+    expect(runtime.isInstalled()).toBe(true);
+    expect(installTime.isInstalled()).toBe(true);
+    fs.writeFileSync(
+      marker,
+      JSON.stringify({ url: runtime.getDownloadUrl(), checksum: 'wrong' })
+    );
+    expect(runtime.isInstalled()).toBe(false);
+    expect(installTime.isInstalled()).toBe(false);
+  } finally {
+    fs.rmSync(directory, { recursive: true });
+  }
 });

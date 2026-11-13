@@ -105,3 +105,18 @@ export type {
   WaitForProcessingOptions,
   CaptureShutdownOptions,
 } from './types';
+
+export type {
+  CaptureWindow,
+  AvailableWindows,
+  WindowEvent,
+  SwitchWindowOptions,
+  SetWindowEnabledOptions,
+  WindowEnabledResult,
+  StartLocalRecordingOptions,
+  LocalRecordingStarted,
+  LocalRecordingResult,
+  LocalRecordingFailure,
+  SessionRecordingReady,
+} from './types';
+export { CaptureCommandError } from './binaryManager';

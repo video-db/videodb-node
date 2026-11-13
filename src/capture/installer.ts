@@ -39,14 +39,14 @@ export class RecorderInstaller {
       baseUrl: 'https://artifacts.videodb.io/capture',
       version: '0.3.1',
       platformVersions: {
-        'darwin-arm64': '0.3.3',
-        'darwin-x64': '0.3.3',
+        'darwin-arm64': '0.3.3-window.1',
+        'darwin-x64': '0.3.3-window.1',
       },
       checksums: {
         'darwin-x64':
-          'd7c6e3c1dc406b382fdf22228a6567c7d22b4099c8af66df7389f3d68f95faad',
+          '9dcab6a66757105fc8684e70fe7e44401e50c3c9ee524ab9288fc471c706b1e5',
         'darwin-arm64':
-          'cc1726312abd4e9dc72db52742f4254c46526042eafeabb1deaf0202dc4936f9',
+          'aa96efcbf6cc12811f88d7a5c54aa868d49a0f68be3d10549e108264c6c16827',
         'win32-x64':
           'e388639c15ab35ac32179d3fc05a363f0f71d4d90265c6b48fb1af56ecae7736',
       },
@@ -128,7 +128,25 @@ export class RecorderInstaller {
    */
   public isInstalled(): boolean {
     const binaryPath = this.getBinaryPath();
-    return fs.existsSync(binaryPath);
+    if (!fs.existsSync(binaryPath)) return false;
+    try {
+      const marker = JSON.parse(
+        fs.readFileSync(this.getArtifactMarkerPath(), 'utf8')
+      ) as { url?: string; checksum?: string };
+      return (
+        marker.url === this.getDownloadUrl() &&
+        marker.checksum === this.getExpectedChecksum()
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  private getArtifactMarkerPath(): string {
+    const dir = this.getBinaryPath().includes('app.asar.unpacked')
+      ? this.binDir.replace('app.asar', 'app.asar.unpacked')
+      : this.binDir;
+    return path.join(dir, '.artifact.json');
   }
 
   /**
@@ -319,6 +337,17 @@ export class RecorderInstaller {
             );
           }
         }
+      }
+
+      // Mark only a checksum-verified artifact as current; mere file existence can be stale.
+      if (!skipChecksum && this.getExpectedChecksum()) {
+        fs.writeFileSync(
+          this.getArtifactMarkerPath(),
+          JSON.stringify({
+            url: this.getDownloadUrl(),
+            checksum: this.getExpectedChecksum(),
+          })
+        );
       }
 
       // Clean up archive

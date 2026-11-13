@@ -4,6 +4,9 @@
 
 ### Changed
 
+- Add tokenless macOS standalone recording, window discovery, switch/off/on controls, native window events, and structured command error codes. See [offline capture](docs/capture-offline.md).
+- Select immutable macOS artifact revision `0.3.3-window.1` (native version `0.3.3`); preserve prior archive URLs and Windows selection. Installers detect stale artifact markers.
+
 - Update the macOS capture test binaries and archive checksums to 0.3.3 for Apple Silicon and Intel.
 - Support per-platform binary versions in both installers, preserving the existing Windows 0.3.1 artifact. Linux support is unchanged.
 - Expose local recording discovery, relay acceptance, processing completion waits, and native lifecycle events through `CaptureClient`.
