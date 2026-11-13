@@ -127,14 +127,16 @@ export type BinaryMessage = BinaryResponse | BinaryEvent;
  * CaptureClient event types
  */
 export interface CaptureClientEvents {
-  'local-recording-ready': RecordingIdentity & {
-    path: string;
-    metadata: Record<string, unknown>;
-    source?: string;
-  };
+  'local-recording-ready': SessionRecordingReady | LocalRecordingResult;
   'recording-token-needed': RecordingIdentity & { stage?: LocalRecordingStage };
   'recording-token-error': RecordingFailure;
-  'local-recording-failed': RecordingFailure;
+  'local-recording-failed': RecordingFailure | LocalRecordingFailure;
+  'local-recording-started': Pick<LocalRecordingStarted, 'recordingId'>;
+  'windows-available': AvailableWindows;
+  'window-suspended': WindowEvent & { reason: string };
+  'window-resumed': WindowEvent;
+  'window-closed': WindowEvent & { reason: string };
+  'window-switched': WindowEvent;
   'recording-relay-failed': RecordingFailure;
   'processing-complete': ProcessingComplete;
   'recording-started': { sessionId: string };
@@ -178,7 +180,7 @@ export interface CaptureClientOptions {
   /** Maximum automatic token requests per recording (default 3). */
   maxTokenRefreshAttempts?: number;
   /** Session token for authentication */
-  sessionToken: string;
+  sessionToken?: string;
   /** API URL for the VideoDB API (defaults to https://api.videodb.io) */
   apiUrl?: string;
   /** Whether to run in dev mode (uses mock binary) */
@@ -262,4 +264,72 @@ export interface CaptureShutdownOptions {
   waitForProcessing?: boolean;
   /** Processing wait budget, default 15 minutes. On timeout the binary stays running. */
   timeoutMs?: number;
+}
+
+/** Local UI metadata. Tokens are valid only for this recorder process. */
+export interface CaptureWindow {
+  channelId: string;
+  token: string;
+  title: string;
+  appName: string;
+  bundleId: string;
+  width: number;
+  height: number;
+  isOnScreen: boolean;
+}
+export interface AvailableWindows {
+  supported: boolean;
+  supportsSwitchWindow: boolean;
+  supportsDeferredWindow: boolean;
+  supportsPlaceholder: boolean;
+  supportsSetWindowEnabled: boolean;
+  supportsAddWindowMidRecording: boolean;
+  windows: CaptureWindow[];
+}
+export interface WindowEvent {
+  sourceId: number;
+  channel: string;
+  channelId: string;
+}
+export interface SwitchWindowOptions {
+  channelId: string;
+  sourceChannelId?: string;
+}
+export interface SetWindowEnabledOptions {
+  enabled: boolean;
+  channelId?: string;
+  sourceChannelId?: string;
+}
+export interface WindowEnabledResult {
+  channelId: string;
+  enabled: boolean;
+  suspended: boolean;
+}
+export interface StartLocalRecordingOptions {
+  /** Exactly one screen/display/window target, plus optional selected audio. No server storage. */
+  channels: Array<Pick<RecordingChannelConfig, 'channelId' | 'type'>>;
+}
+export interface LocalRecordingStarted {
+  recordingId: string;
+  mode: 'deferred';
+}
+/** Standalone finalization is local success, not server ingestion. */
+export interface LocalRecordingResult extends LocalRecordingStarted {
+  status: 'ready';
+  path: string;
+  files: string[];
+  durationSeconds: number;
+  metadata: Record<string, unknown>;
+  finalizedOnShutdown: boolean;
+}
+export interface LocalRecordingFailure {
+  recordingId: string;
+  error?: string;
+  retained: boolean;
+}
+export interface SessionRecordingReady extends RecordingIdentity {
+  path: string;
+  metadata: Record<string, unknown>;
+  source?: string;
+  mode?: never;
 }
