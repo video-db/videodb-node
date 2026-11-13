@@ -37,7 +37,8 @@
     "docs:html": "rm -rf ./docs-html && typedoc --tsconfig tsconfig.build.json --out docs-html --entryPoints ./src/ --entryPointStrategy expand --excludePrivate",
     "docs:serve": "npm run docs:html && npx serve docs-html",
     "prepublishOnly": "npm run build",
-    "typecheck:tests": "tsc -p tsconfig.typetests.json"
+    "typecheck:tests": "tsc -p tsconfig.typetests.json",
+    "test:capture:dev": "npm run build && node test/capture-dev.cjs --record"
   },
   "binaryConfig": {
     "baseUrl": "https://artifacts.videodb.io/capture",
