@@ -506,3 +506,7 @@ Contributions are what make the open source community such an amazing place to b
 [issues-url]: https://github.com/video-db/videodb-node/issues
 [website-shield]: https://img.shields.io/website?url=https%3A%2F%2Fvideodb.io%2F&style=for-the-badge&label=videodb.io
 [website-url]: https://videodb.io/
+
+### Local capture lifecycle
+
+For macOS local recording, fresh recorder tokens, relay, and recovery, see the [CaptureClient integration guide](docs/capture-local-recording.md).

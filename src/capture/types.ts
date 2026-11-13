@@ -127,6 +127,19 @@ export type BinaryMessage = BinaryResponse | BinaryEvent;
  * CaptureClient event types
  */
 export interface CaptureClientEvents {
+  'local-recording-ready': RecordingIdentity & {
+    path: string;
+    metadata: Record<string, unknown>;
+    source?: string;
+  };
+  'recording-token-needed': RecordingIdentity & { stage?: LocalRecordingStage };
+  'recording-token-error': RecordingFailure;
+  'local-recording-failed': RecordingFailure;
+  'recording-relay-failed': RecordingFailure;
+  'processing-complete': ProcessingComplete;
+  'recording-started': { sessionId: string };
+  'recording-complete': { sessionId: string };
+
   /** Recording started */
   'recording:started': { sessionId: string };
   /** Recording stopped */
@@ -160,6 +173,10 @@ export interface StartCaptureSessionClientConfig {
  * CaptureClient constructor options
  */
 export interface CaptureClientOptions {
+  /** Request fresh tokens automatically for native recording-token-needed events. */
+  getRecorderToken?: RecorderTokenProvider;
+  /** Maximum automatic token requests per recording (default 3). */
+  maxTokenRefreshAttempts?: number;
   /** Session token for authentication */
   sessionToken: string;
   /** API URL for the VideoDB API (defaults to https://api.videodb.io) */
@@ -180,3 +197,69 @@ export const TrackType = {
 } as const;
 
 export type TrackTypeValue = (typeof TrackType)[keyof typeof TrackType];
+
+/** Identity supplied by the recorder; use sessionId to authorize the owning user. */
+export interface RecordingIdentity {
+  recordingId: string;
+  sessionId: string;
+}
+export type LocalRecordingStage =
+  | 'recording'
+  | 'finalizing'
+  | 'awaiting_token'
+  | 'uploading'
+  | 'uploaded'
+  | 'processing'
+  | 'complete'
+  | 'failed';
+export interface ProcessingResult {
+  videoId: string;
+  playerUrl?: string | null;
+  streamUrl?: string | null;
+  indexStatus?: string | null;
+}
+export interface LocalRecording extends RecordingIdentity {
+  stage: LocalRecordingStage;
+  path: string;
+  metadata: Record<string, unknown> | null;
+  error: string | null;
+  result: ProcessingResult | null;
+}
+export interface ProcessingComplete extends RecordingIdentity {
+  result: ProcessingResult;
+  fileRetained: boolean;
+}
+export interface RecordingFailure extends RecordingIdentity {
+  error: string;
+  retryable?: boolean;
+  fileRetained?: boolean;
+  retained?: boolean;
+}
+export interface RecorderTokenRequest extends RecordingIdentity {
+  stage?: LocalRecordingStage;
+  /** Always true: bypass host token caches and issue a new same-user token. */
+  forceRefresh: true;
+}
+/** Return null to leave an unrelated retained recording untouched. */
+export type RecorderTokenProvider = (
+  request: RecorderTokenRequest
+) => Promise<string | null>;
+export interface RelayRecordingOptions {
+  recordingId: string;
+  /** Fresh token issued for the user who owns this recording's session. */
+  uploadToken: string;
+}
+export interface RelayRecordingResult {
+  recordingId: string;
+  status: 'accepted';
+}
+export type WaitForProcessingOptions = (
+  | { recordingId: string; sessionId?: never }
+  | { sessionId: string; recordingId?: never }
+) & { timeoutMs?: number };
+export interface CaptureShutdownOptions {
+  /** Default true. False suspends pending work for explicit recovery later. */
+  waitForProcessing?: boolean;
+  /** Processing wait budget, default 15 minutes. On timeout the binary stays running. */
+  timeoutMs?: number;
+}

@@ -6,8 +6,11 @@
 
 - Update the macOS capture test binaries and archive checksums to 0.3.3 for Apple Silicon and Intel.
 - Support per-platform binary versions in both installers, preserving the existing Windows 0.3.1 artifact. Linux support is unchanged.
+- Expose local recording discovery, relay acceptance, processing completion waits, and native lifecycle events through `CaptureClient`.
+- Add fresh recorder-token providers with repeated-token protection and same-user token issuance via `generateClientToken(expiresIn, userId)`.
+- Wait for local processing before shutdown by default, with explicit suspension for recovery and bounded native command timeouts.
 
-This branch is for developer testing. The macOS binaries are ad-hoc signed and not notarized. This update covers binary delivery; the new recording token and finalization lifecycle still requires host integration before end-to-end SDK recording validation.
+This branch is for developer testing. The macOS binaries are ad-hoc signed and not notarized. See [local recording integration](docs/capture-local-recording.md) for the public API and Bloom integration examples.
 
 ## [0.3.2] (2026-09-02)
 

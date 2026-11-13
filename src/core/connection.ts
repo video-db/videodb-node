@@ -568,17 +568,20 @@ export class Connection {
    *
    * // Generate a token valid for 1 hour
    * const token = await conn.generateClientToken(3600);
+   * // For recorder relay, match the capture session's endUserId:
+   * const recorderToken = await conn.generateClientToken(3600, 'user_abc');
    *
    * // Use with CaptureClient
    * const client = new CaptureClient({ sessionToken: token });
    * ```
    */
   public generateClientToken = async (
-    expiresIn: number = 86400
+    expiresIn: number = 86400,
+    userId?: string
   ): Promise<string> => {
     const res = await this.vhttp.post<{ token: string }, object>(
       [capture, session, ApiPath.token],
-      { expires_in: expiresIn }
+      { expires_in: expiresIn, ...(userId ? { user_id: userId } : {}) }
     );
     return res.data.token;
   };

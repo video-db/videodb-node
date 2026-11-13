@@ -1,5 +1,18 @@
+import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { BinaryManager } from './binaryManager';
+import type {
+  CaptureClientEvents,
+  RecordingIdentity,
+  LocalRecording,
+  ProcessingComplete,
+  RecordingFailure,
+  RecorderTokenProvider,
+  RelayRecordingOptions,
+  RelayRecordingResult,
+  WaitForProcessingOptions,
+  CaptureShutdownOptions,
+} from './types';
 import {
   PermissionType,
   PermissionStatus,
@@ -9,15 +22,7 @@ import {
   type CaptureClientOptions,
   type TrackTypeValue,
 } from './types';
-import {
-  Channel,
-  AudioChannel,
-  VideoChannel,
-  Channels,
-  ChannelList,
-  groupChannels,
-  type ChannelClient,
-} from './channel';
+import { Channels, groupChannels, type ChannelClient } from './channel';
 
 /**
  * CaptureClient provides client-side recording capabilities using the native binary
@@ -58,14 +63,107 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   private isInitialized: boolean = false;
   private currentSessionId: string | null = null;
 
+  private initialization?: Promise<void>;
+  private tokenProvider?: RecorderTokenProvider;
+  private maxTokenRefreshAttempts: number;
+  private tokenHashes = new Map<string, Set<string>>();
+  private tokenTasks = new Map<string, Promise<void>>();
+  private recordingSessions = new Map<string, string>();
+  private processing = new EventEmitter();
+  private outcomes = new Map<string, ProcessingComplete | Error>();
+  private pendingSessions = new Set<string>();
+  private pendingRecordings = new Set<string>();
+  private shuttingDown = false;
+  private suspending = false;
+  private lifecycleGeneration = 0;
+
+  public on<K extends keyof CaptureClientEvents>(
+    event: K,
+    listener: (payload: CaptureClientEvents[K]) => void
+  ): this;
+  // Preserve EventEmitter compatibility for application-defined events.
+  public on(
+    event: string | symbol,
+    listener: Parameters<EventEmitter['on']>[1]
+  ): this;
+  public on(
+    event: string | symbol,
+    listener: Parameters<EventEmitter['on']>[1]
+  ): this {
+    return super.on(event, listener);
+  }
+
   constructor(options: CaptureClientOptions) {
     super();
     this.sessionToken = options.sessionToken;
+    this.tokenProvider = options.getRecorderToken;
+    this.maxTokenRefreshAttempts = options.maxTokenRefreshAttempts ?? 3;
+    if (
+      !Number.isInteger(this.maxTokenRefreshAttempts) ||
+      this.maxTokenRefreshAttempts < 1
+    ) {
+      throw new Error('maxTokenRefreshAttempts must be a positive integer');
+    }
+    this.processing.setMaxListeners(0);
     this.apiUrl = options.apiUrl || 'https://api.videodb.io';
     this.binaryManager = new BinaryManager({
       dev: options.dev,
       restartOnError: options.restartOnError,
     });
+
+    for (const name of [
+      'local-recording-ready',
+      'recording-token-needed',
+      'local-recording-failed',
+      'recording-relay-failed',
+      'processing-complete',
+    ] as const) {
+      this.binaryManager.on(name, (payload: RecordingIdentity) => {
+        this.recordingSessions.set(payload.recordingId, payload.sessionId);
+        if (name === 'processing-complete') {
+          this.setOutcome(payload, payload as ProcessingComplete);
+          this.tokenHashes.delete(payload.recordingId);
+        } else if (
+          name === 'local-recording-failed' ||
+          name === 'recording-relay-failed'
+        ) {
+          this.setOutcome(
+            payload,
+            new Error(`${name}: recording retained for recovery`)
+          );
+        } else {
+          this.pendingRecordings.add(payload.recordingId);
+        }
+        this.emit(name, payload);
+        if (name === 'recording-token-needed' && this.tokenProvider) {
+          // Serialize requests: an authorization rejection may arrive before relay acceptance.
+          const previous =
+            this.tokenTasks.get(payload.recordingId) ?? Promise.resolve();
+          const generation = this.lifecycleGeneration;
+          const task = previous.then(() =>
+            this.supplyRecorderToken(payload, generation)
+          );
+          this.tokenTasks.set(payload.recordingId, task);
+          void task.finally(() => {
+            if (this.tokenTasks.get(payload.recordingId) === task)
+              this.tokenTasks.delete(payload.recordingId);
+          });
+        }
+      });
+    }
+    this.binaryManager.on('recording-started', payload => {
+      this.emit('recording-started', payload);
+      this.emit('recording:started', payload);
+    });
+    this.binaryManager.on(
+      'recording-complete',
+      (payload: { sessionId: string }) => {
+        if (payload.sessionId === this.currentSessionId)
+          this.currentSessionId = null;
+        this.emit('recording-complete', payload);
+        this.emit('recording:stopped', payload);
+      }
+    );
 
     // Forward events from BinaryManager
     this.binaryManager.on('error', payload => {
@@ -73,6 +171,9 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     });
 
     this.binaryManager.on('shutdown', payload => {
+      this.lifecycleGeneration++;
+      this.isInitialized = false;
+      this.processing.emit('exit');
       this.emit('shutdown', payload);
     });
 
@@ -106,16 +207,165 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
    * Initialize the capture client (starts the binary)
    */
   private async ensureInitialized(): Promise<void> {
+    if (this.suspending) throw new Error('CaptureClient is suspending');
     if (this.isInitialized) {
       return;
     }
 
-    await this.binaryManager.start({
-      sessionToken: this.sessionToken,
-      apiUrl: this.apiUrl,
-    });
+    if (!this.initialization) {
+      this.initialization = this.binaryManager
+        .start({
+          sessionToken: this.sessionToken,
+          apiUrl: this.apiUrl,
+        })
+        .then(() => {
+          this.isInitialized = true;
+        })
+        .finally(() => {
+          this.initialization = undefined;
+        });
+    }
+    await this.initialization;
+  }
 
-    this.isInitialized = true;
+  private setOutcome(
+    identity: RecordingIdentity,
+    outcome: ProcessingComplete | Error
+  ): void {
+    this.outcomes.set(`recording:${identity.recordingId}`, outcome);
+    this.outcomes.set(`session:${identity.sessionId}`, outcome);
+    if (!(outcome instanceof Error)) {
+      this.pendingRecordings.delete(identity.recordingId);
+      this.pendingSessions.delete(identity.sessionId);
+    }
+    this.processing.emit('change');
+  }
+
+  private async supplyRecorderToken(
+    identity: RecordingIdentity,
+    generation: number
+  ): Promise<void> {
+    try {
+      if (generation !== this.lifecycleGeneration) return;
+      const hashes =
+        this.tokenHashes.get(identity.recordingId) ?? new Set<string>();
+      if (hashes.size >= this.maxTokenRefreshAttempts)
+        throw new Error('Refresh limit');
+      const token = await this.tokenProvider!({
+        ...identity,
+        forceRefresh: true,
+      });
+      if (generation !== this.lifecycleGeneration) return;
+      if (token === null) {
+        this.pendingRecordings.delete(identity.recordingId);
+        return; // Host did not authorize this retained recording.
+      }
+      if (!token?.trim()) throw new Error('Empty token');
+      const hash = createHash('sha256').update(token).digest('hex');
+      if (hashes.has(hash)) throw new Error('Cached token');
+      hashes.add(hash);
+      this.tokenHashes.set(identity.recordingId, hashes);
+      await this.relayRecording({
+        recordingId: identity.recordingId,
+        uploadToken: token,
+      });
+    } catch {
+      if (generation !== this.lifecycleGeneration) return;
+      // Do not propagate provider/HTTP exceptions, which may contain credentials.
+      const error =
+        'Could not obtain or submit a fresh recorder token; bypass token caches and retry explicitly';
+      this.setOutcome(identity, new Error(error));
+      this.emit('recording-token-error', {
+        ...identity,
+        error,
+      } satisfies RecordingFailure);
+    }
+  }
+
+  /** Lists durable jobs for this API environment; does not relay them. */
+  public async listLocalRecordings(): Promise<LocalRecording[]> {
+    await this.ensureInitialized();
+    const result = await this.binaryManager.sendCommand<{
+      recordings: LocalRecording[];
+    }>('listLocalRecordings');
+    for (const job of result.recordings)
+      this.recordingSessions.set(job.recordingId, job.sessionId);
+    return result.recordings;
+  }
+
+  /** Resolves on acceptance. Await waitForProcessing separately for ingestion. */
+  public async relayRecording(
+    options: RelayRecordingOptions
+  ): Promise<RelayRecordingResult> {
+    if (!options.recordingId || !options.uploadToken?.trim())
+      throw new Error('recordingId and fresh uploadToken are required');
+    await this.ensureInitialized();
+    this.pendingRecordings.add(options.recordingId);
+    this.outcomes.delete(`recording:${options.recordingId}`);
+    const sessionId = this.recordingSessions.get(options.recordingId);
+    if (sessionId) this.outcomes.delete(`session:${sessionId}`);
+    try {
+      return await this.binaryManager.sendCommand<RelayRecordingResult>(
+        'relayRecording',
+        { ...options }
+      );
+    } catch {
+      const error = new Error(
+        'Relay request rejected; recording retained for recovery'
+      );
+      this.outcomes.set(`recording:${options.recordingId}`, error);
+      if (sessionId) this.outcomes.set(`session:${sessionId}`, error);
+      this.processing.emit('change');
+      throw error;
+    }
+  }
+
+  /** Handles completion events that arrive before or after this call. */
+  public async waitForProcessing(
+    options: WaitForProcessingOptions
+  ): Promise<ProcessingComplete> {
+    const timeoutMs = options.timeoutMs ?? 900_000;
+    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
+      throw new Error('timeoutMs must be positive');
+    const key = options.recordingId
+      ? `recording:${options.recordingId}`
+      : `session:${options.sessionId}`;
+    if (!options.recordingId && !options.sessionId)
+      throw new Error('recordingId or sessionId is required');
+    await this.ensureInitialized();
+    return new Promise((resolve, reject) => {
+      const cleanup = () => {
+        clearTimeout(timer);
+        this.processing.off('change', check);
+        this.processing.off('exit', exited);
+      };
+      const check = () => {
+        const outcome = this.outcomes.get(key);
+        if (!outcome) return;
+        cleanup();
+        if (outcome instanceof Error) reject(outcome);
+        else resolve(outcome);
+      };
+      const exited = () => {
+        cleanup();
+        reject(
+          new Error(
+            'Recorder exited before processing completed; recover retained jobs'
+          )
+        );
+      };
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(
+          new Error(
+            'Processing timed out; recorder remains running and jobs can be recovered'
+          )
+        );
+      }, timeoutMs);
+      this.processing.on('change', check);
+      this.processing.on('exit', exited);
+      check();
+    });
   }
 
   /**
@@ -230,7 +480,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       throw new Error('channels array cannot be empty');
     }
 
-    this.currentSessionId = config.sessionId;
+    if (this.shuttingDown) throw new Error('CaptureClient is shutting down');
 
     const channels = config.channels.map(channel => ({
       channel_id:
@@ -244,18 +494,38 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       throw new Error('channels must include channelId for each channel');
     }
 
+    this.currentSessionId = config.sessionId;
+    // macOS video capture creates a local recording; Windows/audio-only retain legacy behavior.
+    if (
+      process.platform === 'darwin' &&
+      config.channels.some(ch => ch.type === 'video')
+    ) {
+      this.pendingSessions.add(config.sessionId);
+      this.outcomes.delete(`session:${config.sessionId}`);
+    }
+
     const primaryVideo =
       channels.find(ch => ch.is_primary && ch.type === 'video') ||
       channels.find(ch => ch.type === 'video');
 
-    await this.binaryManager.sendCommand('startRecording', {
-      uploadToken: this.sessionToken,
-      sessionId: config.sessionId,
-      channels,
-      ...(primaryVideo
-        ? { primary_video_channel_id: primaryVideo.channel_id }
-        : {}),
-    });
+    try {
+      await this.binaryManager.sendCommand(
+        'startRecording',
+        {
+          uploadToken: this.sessionToken,
+          sessionId: config.sessionId,
+          channels,
+          ...(primaryVideo
+            ? { primary_video_channel_id: primaryVideo.channel_id }
+            : {}),
+        },
+        310_000
+      );
+    } catch (error) {
+      this.currentSessionId = null;
+      this.pendingSessions.delete(config.sessionId);
+      throw error;
+    }
   }
 
   /**
@@ -274,9 +544,13 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       return;
     }
 
-    await this.binaryManager.sendCommand('stopRecording', {
-      sessionId: this.currentSessionId,
-    });
+    await this.binaryManager.sendCommand(
+      'stopRecording',
+      {
+        sessionId: this.currentSessionId,
+      },
+      155_000
+    );
 
     this.currentSessionId = null;
   }
@@ -344,14 +618,41 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   /**
    * Gracefully shutdown the capture client
    */
-  public async shutdown(): Promise<void> {
+  public async shutdown(options: CaptureShutdownOptions = {}): Promise<void> {
+    if (this.initialization) await this.initialization;
     if (!this.isInitialized) {
+      await this.binaryManager.stop();
       return;
     }
-
-    await this.binaryManager.stop();
-    this.isInitialized = false;
-    this.currentSessionId = null;
+    if (this.shuttingDown) throw new Error('Shutdown already in progress');
+    this.shuttingDown = true;
+    try {
+      if (options.waitForProcessing !== false) {
+        if (this.currentSessionId) await this.stopSession();
+        for (const sessionId of this.pendingSessions) {
+          await this.waitForProcessing({
+            sessionId,
+            timeoutMs: options.timeoutMs,
+          });
+        }
+        for (const recordingId of this.pendingRecordings) {
+          await this.waitForProcessing({
+            recordingId,
+            timeoutMs: options.timeoutMs,
+          });
+        }
+      }
+      this.suspending = true;
+      this.lifecycleGeneration++;
+      await this.binaryManager.stop();
+      this.isInitialized = false;
+      this.currentSessionId = null;
+      this.pendingSessions.clear();
+      this.pendingRecordings.clear();
+    } finally {
+      this.shuttingDown = false;
+      this.suspending = false;
+    }
   }
 
   /**

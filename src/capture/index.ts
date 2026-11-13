@@ -90,3 +90,18 @@ export {
   type CaptureClientOptions,
   type TrackTypeValue,
 } from './types';
+
+export type {
+  RecordingIdentity,
+  LocalRecordingStage,
+  ProcessingResult,
+  LocalRecording,
+  ProcessingComplete,
+  RecordingFailure,
+  RecorderTokenRequest,
+  RecorderTokenProvider,
+  RelayRecordingOptions,
+  RelayRecordingResult,
+  WaitForProcessingOptions,
+  CaptureShutdownOptions,
+} from './types';
