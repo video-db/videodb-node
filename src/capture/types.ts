@@ -23,6 +23,8 @@ export const HEALTH_CHECK_TIMEOUT = 60000;
 export interface BinaryConfig {
   baseUrl: string;
   version: string;
+  /** Per-platform overrides; other platforms continue to use version. */
+  platformVersions?: Record<string, string>;
   checksums: Record<string, string>;
 }
 

@@ -33,6 +33,15 @@ Clearer errors, search fixes, and install and polling reliability. Error message
 - A `filter` passed to `search()` is now applied, so results can be narrower than before. A filter on a field the index can't filter on now fails with the server's reason (e.g. `Field 'start' is not filterable on index 'transcript'`) instead of being ignored.
 - `shot.text` can now be a string where it used to be `null` for Search V2 hits.
 
+## [0.3.3] (Unreleased)
+
+### Changed
+
+- Update the macOS capture test binaries and archive checksums to 0.3.3 for Apple Silicon and Intel.
+- Support per-platform binary versions in both installers, preserving the existing Windows 0.3.1 artifact. Linux support is unchanged.
+
+This branch is for developer testing. The macOS binaries are ad-hoc signed and not notarized. This update covers binary delivery; the new recording token and finalization lifecycle still requires host integration before end-to-end SDK recording validation.
+
 ## [0.3.2] (2026-09-02)
 
 A patch fixing snake_case-to-camelCase conversion of responses whose payload is a top-level array.
