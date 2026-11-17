@@ -46,12 +46,12 @@
     "baseUrl": "https://artifacts.videodb.io/capture",
     "version": "0.3.1",
     "platformVersions": {
-      "darwin-x64": "0.3.3-managed.1",
-      "darwin-arm64": "0.3.3-managed.1"
+      "darwin-x64": "0.3.3-managed.2",
+      "darwin-arm64": "0.3.3-managed.2"
     },
     "checksums": {
-      "darwin-arm64": "2eb7b9f7dc02bd57d925dd1e7365c84f1343073a9d830fd4349141eb2d16310b",
-      "darwin-x64": "1ab1d9899aaf6377408f01f88f8ace5aa4c706d76c6a0b066e1eecdbf19f8a85",
+      "darwin-arm64": "18e807c66b3ec253a76592cec3ee87cdf44969cf86dbd5e418b7a2bb74740afb",
+      "darwin-x64": "1c60e2e809ff10599d2527be58bee2745a8a7318930c068f84cbdd351d6c8fba",
       "win32-x64": "e388639c15ab35ac32179d3fc05a363f0f71d4d90265c6b48fb1af56ecae7736"
     }
   },
