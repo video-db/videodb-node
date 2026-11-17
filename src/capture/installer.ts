@@ -39,14 +39,14 @@ export class RecorderInstaller {
       baseUrl: 'https://artifacts.videodb.io/capture',
       version: '0.3.1',
       platformVersions: {
-        'darwin-arm64': '0.3.3-window.1',
-        'darwin-x64': '0.3.3-window.1',
+        'darwin-arm64': '0.3.3-managed.1',
+        'darwin-x64': '0.3.3-managed.1',
       },
       checksums: {
         'darwin-x64':
-          '9dcab6a66757105fc8684e70fe7e44401e50c3c9ee524ab9288fc471c706b1e5',
+          '1ab1d9899aaf6377408f01f88f8ace5aa4c706d76c6a0b066e1eecdbf19f8a85',
         'darwin-arm64':
-          'aa96efcbf6cc12811f88d7a5c54aa868d49a0f68be3d10549e108264c6c16827',
+          '2eb7b9f7dc02bd57d925dd1e7365c84f1343073a9d830fd4349141eb2d16310b',
         'win32-x64':
           'e388639c15ab35ac32179d3fc05a363f0f71d4d90265c6b48fb1af56ecae7736',
       },

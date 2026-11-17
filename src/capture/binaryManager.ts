@@ -53,6 +53,7 @@ export class BinaryManager extends EventEmitter {
   private lastHealthCheck: number | null = null;
   private installer: RecorderInstaller;
   private stopping = false;
+  public capabilities: { managedDeferredRecording?: boolean } = {};
   private initConfig: Record<string, unknown> = {};
 
   constructor(options: { dev?: boolean; restartOnError?: boolean } = {}) {
@@ -306,7 +307,11 @@ export class BinaryManager extends EventEmitter {
       this.startHealthCheck();
 
       // Send init command
-      await this.sendCommand('init', config);
+      this.capabilities = {};
+      const initialized = await this.sendCommand<{
+        capabilities?: { managedDeferredRecording?: boolean };
+      }>('init', config);
+      this.capabilities = initialized?.capabilities ?? {};
     } catch (error) {
       console.error('VideoDB Capture: Failed to initialize:', error);
       throw error;
