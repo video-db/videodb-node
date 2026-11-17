@@ -128,8 +128,12 @@ export type BinaryMessage = BinaryResponse | BinaryEvent;
  */
 export interface CaptureClientEvents {
   'local-recording-ready': SessionRecordingReady | LocalRecordingResult;
-  'recording-token-needed': RecordingIdentity & { stage?: LocalRecordingStage };
-  'recording-token-error': RecordingFailure;
+  'recording-token-needed':
+    | (RecordingIdentity & { stage?: LocalRecordingStage })
+    | ManagedTokenRequest;
+  'recording-token-error':
+    | RecordingFailure
+    | { recordingId: string; owner: string; error: string };
   'local-recording-failed': RecordingFailure | LocalRecordingFailure;
   'local-recording-started': Pick<LocalRecordingStarted, 'recordingId'>;
   'windows-available': AvailableWindows;
@@ -138,8 +142,11 @@ export interface CaptureClientEvents {
   'window-closed': WindowEvent & { reason: string };
   'window-switched': WindowEvent;
   'recording-relay-failed': RecordingFailure;
-  'processing-complete': ProcessingComplete;
-  'recording-started': { sessionId: string };
+  'processing-complete': ProcessingComplete | ManagedProcessingComplete;
+  'recording-ready': ManagedRecordingReady;
+  'recording-failed': ManagedRecordingFailure;
+  'processing-failed': ManagedRecordingFailure;
+  'recording-started': { sessionId: string } | { recordingId: string };
   'recording-complete': { sessionId: string };
 
   /** Recording started */
@@ -244,16 +251,19 @@ export interface RecorderTokenRequest extends RecordingIdentity {
 }
 /** Return null to leave an unrelated retained recording untouched. */
 export type RecorderTokenProvider = (
-  request: RecorderTokenRequest
+  request: RecorderTokenRequest | (ManagedTokenRequest & { forceRefresh: true })
 ) => Promise<string | null>;
 export interface RelayRecordingOptions {
+  /** Required for managed deferred recordings. */
+  owner?: string;
   recordingId: string;
   /** Fresh token issued for the user who owns this recording's session. */
   uploadToken: string;
 }
 export interface RelayRecordingResult {
   recordingId: string;
-  status: 'accepted';
+  status: 'accepted' | 'complete';
+  result?: ProcessingResult | null;
 }
 export type WaitForProcessingOptions = (
   | { recordingId: string; sessionId?: never }
@@ -332,4 +342,71 @@ export interface SessionRecordingReady extends RecordingIdentity {
   metadata: Record<string, unknown>;
   source?: string;
   mode?: never;
+}
+
+/** Managed capture authorizes before capture and delivers automatically on stop. */
+export interface StartRecordingOptions extends StartLocalRecordingOptions {
+  owner: string;
+  collectionId: string;
+  uploadToken: string;
+  name?: string;
+  /** Resume an authorizing receipt after a lost reply; never resumes capture implicitly. */
+  recordingId?: string;
+}
+export interface ManagedTokenRequest {
+  recordingId: string;
+  owner: string;
+  collectionId: string;
+  sessionId?: string | null;
+  purpose: 'recording-delivery';
+}
+export interface ManagedProcessingComplete {
+  recordingId: string;
+  owner: string;
+  result: ProcessingResult;
+}
+export interface ManagedRecordingReady {
+  recordingId: string;
+  owner: string;
+  status: 'ready';
+  durationSeconds: number;
+  mode: 'deferred';
+  finalizedOnShutdown: boolean;
+}
+export interface ManagedRecordingFailure {
+  recordingId: string;
+  owner?: string;
+  errorCode: string;
+  retryable?: boolean;
+}
+export interface ManagedRecording {
+  recordingId: string;
+  owner: string;
+  name: string | null;
+  stage:
+    | 'authorizing'
+    | 'recording'
+    | 'finalizing'
+    | 'ready'
+    | 'uploaded'
+    | 'processing'
+    | 'needs_recovery'
+    | 'reconciliation_required'
+    | 'discarding'
+    | 'complete'
+    | 'failed'
+    | 'discarded';
+  createdAt: number;
+  durationSeconds: number | null;
+  result: ProcessingResult | null;
+  errorCode: string | null;
+  retryable: boolean;
+}
+export interface RecordingStopResult {
+  recordingId: string;
+  status: 'ready';
+  durationSeconds: number;
+}
+export interface RecorderCapabilities {
+  managedDeferredRecording: boolean;
 }

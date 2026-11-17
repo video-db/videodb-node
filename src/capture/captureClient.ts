@@ -3,6 +3,13 @@ import { EventEmitter } from 'node:events';
 import { BinaryManager, CaptureCommandError } from './binaryManager';
 import type {
   AvailableWindows,
+  StartRecordingOptions,
+  ManagedRecording,
+  ManagedProcessingComplete,
+  ManagedTokenRequest,
+  ManagedRecordingFailure,
+  RecordingStopResult,
+  RecorderCapabilities,
   SwitchWindowOptions,
   SetWindowEnabledOptions,
   WindowEnabledResult,
@@ -78,13 +85,18 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   private tokenTasks = new Map<string, Promise<void>>();
   private recordingSessions = new Map<string, string>();
   private processing = new EventEmitter();
-  private outcomes = new Map<string, ProcessingComplete | Error>();
+  private outcomes = new Map<
+    string,
+    ProcessingComplete | ManagedProcessingComplete | Error
+  >();
   private pendingSessions = new Set<string>();
   private pendingRecordings = new Set<string>();
   private shuttingDown = false;
   private suspending = false;
   private lifecycleGeneration = 0;
   private captureOperations: Promise<unknown> = Promise.resolve();
+  private managedRecordingId: string | null = null;
+  private managedOwners = new Map<string, string>();
   private localRecordingId: string | null = null;
   private localOutcomes = new Map<string, LocalRecordingResult | Error>();
 
@@ -128,7 +140,14 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       restartOnError: options.restartOnError,
     });
 
+    for (const name of ['recording-failed', 'processing-failed']) {
+      this.binaryManager.on(name, (payload: ManagedRecordingFailure) => {
+        this.managedFailure(payload);
+        this.emit(name, payload);
+      });
+    }
     for (const name of [
+      'recording-ready',
       'windows-available',
       'window-suspended',
       'window-resumed',
@@ -154,6 +173,14 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
             | LocalRecordingResult
             | LocalRecordingFailure
         ) => {
+          if ('owner' in payload) {
+            this.handleManagedEvent(
+              name,
+              payload as unknown as ManagedTokenRequest &
+                ManagedProcessingComplete
+            );
+            return;
+          }
           // Standalone events have no server session. Never add them to relay/processing state.
           if (!('sessionId' in payload)) {
             if (name === 'local-recording-ready') {
@@ -235,6 +262,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       this.lifecycleGeneration++;
       this.isInitialized = false;
       this.localRecordingId = null;
+      this.managedRecordingId = null;
       this.currentSessionId = null;
       this.processing.emit('exit');
       this.emit('shutdown', payload);
@@ -293,7 +321,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
 
   private setOutcome(
     identity: RecordingIdentity,
-    outcome: ProcessingComplete | Error
+    outcome: ProcessingComplete | ManagedProcessingComplete | Error
   ): void {
     this.outcomes.set(`recording:${identity.recordingId}`, outcome);
     this.outcomes.set(`session:${identity.sessionId}`, outcome);
@@ -345,6 +373,218 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
   }
 
+  private managedFailure(event: ManagedRecordingFailure): void {
+    if (!this.managedOwners.has(event.recordingId)) return;
+    this.outcomes.set(
+      `recording:${event.recordingId}`,
+      new CaptureCommandError({
+        code: event.errorCode,
+        message:
+          'Recording could not complete; inspect recording status before retrying',
+      })
+    );
+    this.processing.emit('change');
+  }
+
+  private handleManagedEvent(
+    name: string,
+    event: ManagedTokenRequest & ManagedProcessingComplete
+  ): void {
+    // Only explicitly started, listed or relayed jobs belong to this client.
+    if (this.managedOwners.get(event.recordingId) === event.owner) {
+      if (name === 'processing-complete') {
+        this.outcomes.set(`recording:${event.recordingId}`, event);
+        this.pendingRecordings.delete(event.recordingId);
+        this.tokenHashes.delete(event.recordingId);
+        this.processing.emit('change');
+      } else if (name === 'recording-token-needed' && this.tokenProvider) {
+        const generation = this.lifecycleGeneration;
+        const previous =
+          this.tokenTasks.get(event.recordingId) ?? Promise.resolve();
+        const task = previous.then(() =>
+          this.supplyManagedToken(event, generation)
+        );
+        this.tokenTasks.set(event.recordingId, task);
+        void task.finally(() => {
+          if (this.tokenTasks.get(event.recordingId) === task)
+            this.tokenTasks.delete(event.recordingId);
+        });
+      }
+    }
+    this.emit(name, event);
+  }
+
+  private async supplyManagedToken(
+    event: ManagedTokenRequest,
+    generation: number
+  ): Promise<void> {
+    try {
+      if (generation !== this.lifecycleGeneration) return;
+      const hashes =
+        this.tokenHashes.get(event.recordingId) ?? new Set<string>();
+      if (hashes.size >= this.maxTokenRefreshAttempts)
+        throw new Error('Refresh limit');
+      const token = await this.tokenProvider!({ ...event, forceRefresh: true });
+      if (generation !== this.lifecycleGeneration) return;
+      if (token === null) {
+        this.pendingRecordings.delete(event.recordingId);
+        return;
+      }
+      if (!token?.trim()) throw new Error('Empty token');
+      const hash = createHash('sha256').update(token).digest('hex');
+      if (hashes.has(hash)) throw new Error('Cached token');
+      hashes.add(hash);
+      this.tokenHashes.set(event.recordingId, hashes);
+      await this.relayRecording({
+        recordingId: event.recordingId,
+        owner: event.owner,
+        uploadToken: token,
+      });
+    } catch {
+      if (generation !== this.lifecycleGeneration) return;
+      this.managedFailure({ ...event, errorCode: 'TOKEN_REFRESH_FAILED' });
+      this.emit('recording-token-error', {
+        recordingId: event.recordingId,
+        owner: event.owner,
+        error: 'Could not obtain or submit a fresh recorder token',
+      });
+    }
+  }
+
+  public async getCapabilities(): Promise<RecorderCapabilities> {
+    await this.ensureInitialized();
+    return {
+      managedDeferredRecording:
+        this.binaryManager.capabilities?.managedDeferredRecording === true,
+    };
+  }
+
+  /** Authorized deferred capture without RTStreams. Stop queues automatic delivery. */
+  public startRecording(
+    options: StartRecordingOptions
+  ): Promise<LocalRecordingStarted> {
+    return this.serializeCapture(async () => {
+      if (this.shuttingDown) throw new Error('CaptureClient is shutting down');
+      if (
+        this.currentSessionId ||
+        this.localRecordingId ||
+        this.managedRecordingId
+      )
+        throw new Error('A recording is already active');
+      if (process.platform !== 'darwin')
+        throw new Error('Managed deferred capture is supported on macOS only');
+      if (
+        !options.owner?.trim() ||
+        !options.collectionId?.trim() ||
+        !options.uploadToken?.trim()
+      )
+        throw new Error('owner, collectionId and uploadToken are required');
+      if (
+        !Array.isArray(options.channels) ||
+        options.channels.filter(c => c.type === 'video').length !== 1 ||
+        options.channels.some(c =>
+          c.type === 'video'
+            ? !/^(screen|display:[0-9]+|window:[^:]+)$/.test(c.channelId)
+            : c.type !== 'audio' ||
+              !['mic:default', 'system_audio:default'].includes(c.channelId)
+        )
+      )
+        throw new Error(
+          'Select one display/window and optional default audio sources'
+        );
+      if (!(await this.getCapabilities()).managedDeferredRecording)
+        throw new Error(
+          'The installed recorder does not support managed deferred recording'
+        );
+      const started =
+        await this.binaryManager.sendCommand<LocalRecordingStarted>(
+          'startRecording',
+          {
+            mode: 'deferred',
+            owner: options.owner,
+            collectionId: options.collectionId,
+            uploadToken: options.uploadToken,
+            ...(options.name === undefined ? {} : { name: options.name }),
+            ...(options.recordingId === undefined
+              ? {}
+              : { recordingId: options.recordingId }),
+            channels: options.channels.map(c => ({
+              channel_id: c.channelId,
+              type: c.type,
+            })),
+          },
+          310_000
+        );
+      this.managedRecordingId = started.recordingId;
+      this.managedOwners.set(started.recordingId, options.owner);
+      this.pendingRecordings.add(started.recordingId);
+      this.outcomes.delete(`recording:${started.recordingId}`);
+      return started;
+    });
+  }
+
+  /** Resolves on readiness; use waitForProcessing for the video result. */
+  public stopRecording(
+    options: { uploadToken?: string } = {}
+  ): Promise<RecordingStopResult> {
+    return this.serializeCapture(async () => {
+      if (!this.managedRecordingId)
+        throw new Error('No managed recording is active');
+      try {
+        const ready = await this.binaryManager.sendCommand<RecordingStopResult>(
+          'stopRecording',
+          { ...options },
+          155_000
+        );
+        this.managedRecordingId = null;
+        return ready;
+      } catch (error) {
+        if (
+          error instanceof CaptureCommandError &&
+          error.code === 'FINALIZE_FAILED'
+        )
+          this.managedRecordingId = null;
+        throw error;
+      }
+    });
+  }
+
+  /** Owner-scoped history; listing never starts capture or automatically relays jobs. */
+  public async listRecordings(options: {
+    owner: string;
+  }): Promise<ManagedRecording[]> {
+    if (!options.owner?.trim()) throw new Error('owner is required');
+    if (!(await this.getCapabilities()).managedDeferredRecording)
+      throw new Error('Managed deferred recording is unsupported');
+    const { recordings } = await this.binaryManager.sendCommand<{
+      recordings: ManagedRecording[];
+    }>('listRecordings', { ...options });
+    for (const job of recordings) {
+      this.managedOwners.set(job.recordingId, job.owner);
+      if (job.stage === 'complete' && job.result) {
+        this.outcomes.set(`recording:${job.recordingId}`, {
+          recordingId: job.recordingId,
+          owner: job.owner,
+          result: job.result,
+        });
+        this.pendingRecordings.delete(job.recordingId);
+      }
+    }
+    this.processing.emit('change');
+    return recordings;
+  }
+
+  public async discardRecording(options: {
+    recordingId: string;
+    owner: string;
+  }): Promise<{ recordingId: string; status: 'discarded' }> {
+    if (!options.owner?.trim() || !options.recordingId)
+      throw new Error('recordingId and owner are required');
+    if (!(await this.getCapabilities()).managedDeferredRecording)
+      throw new Error('Managed deferred recording is unsupported');
+    return this.binaryManager.sendCommand('discardRecording', { ...options });
+  }
+
   /** Lists durable jobs for this API environment; does not relay them. */
   public async listLocalRecordings(): Promise<LocalRecording[]> {
     await this.ensureInitialized();
@@ -370,6 +610,11 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     if (!options.recordingId || !options.uploadToken?.trim())
       throw new Error('recordingId and fresh uploadToken are required');
     await this.ensureInitialized();
+    const managedOwner = this.managedOwners.get(options.recordingId);
+    if (managedOwner && options.owner !== managedOwner)
+      throw new Error('Matching owner is required for managed relay');
+    if (options.owner)
+      this.managedOwners.set(options.recordingId, options.owner);
     this.pendingRecordings.add(options.recordingId);
     this.outcomes.delete(`recording:${options.recordingId}`);
     const sessionId = this.recordingSessions.get(options.recordingId);
@@ -393,7 +638,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   /** Handles completion events that arrive before or after this call. */
   public async waitForProcessing(
     options: WaitForProcessingOptions
-  ): Promise<ProcessingComplete> {
+  ): Promise<ProcessingComplete | ManagedProcessingComplete> {
     if (
       options.recordingId &&
       (options.recordingId === this.localRecordingId ||
@@ -488,13 +733,17 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     });
   }
 
-  /** Start macOS standalone capture. No token, API session, RTStreams, or automatic upload. */
+  /** Legacy tokenless capture; rejected by managed artifacts. Use startRecording instead. */
   public startLocalRecording(
     options: StartLocalRecordingOptions
   ): Promise<LocalRecordingStarted> {
     return this.serializeCapture(async () => {
       if (this.shuttingDown) throw new Error('CaptureClient is shutting down');
-      if (this.currentSessionId || this.localRecordingId)
+      if (
+        this.currentSessionId ||
+        this.localRecordingId ||
+        this.managedRecordingId
+      )
         throw new Error('A recording is already active');
       if (process.platform !== 'darwin')
         throw new Error('Standalone capture is supported on macOS only');
@@ -517,6 +766,10 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
           'Unsupported local capture channel; select a display/window and default audio sources'
         );
       }
+      if ((await this.getCapabilities()).managedDeferredRecording)
+        throw new Error(
+          'Tokenless local capture is unavailable in this build; use startRecording with owner, collectionId and uploadToken'
+        );
       const capabilities = await this.getWindows();
       if (!capabilities.supportsDeferredWindow)
         throw new CaptureCommandError({
@@ -694,7 +947,11 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   private async startSessionInternal(
     config: StartCaptureSessionClientConfig
   ): Promise<void> {
-    if (this.currentSessionId || this.localRecordingId)
+    if (
+      this.currentSessionId ||
+      this.localRecordingId ||
+      this.managedRecordingId
+    )
       throw new Error('A recording is already active');
     if (!this.sessionToken)
       throw new Error('sessionToken is required for session-backed capture');
@@ -769,6 +1026,8 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   }
 
   private async stopSessionInternal(): Promise<void> {
+    if (this.managedRecordingId)
+      throw new Error('Use stopRecording for managed capture');
     if (this.localRecordingId)
       throw new Error('Use stopLocalRecording for standalone capture');
     if (!this.isInitialized) {
@@ -878,6 +1137,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
         return;
       }
       if (this.localRecordingId) await this.stopLocalRecording();
+      if (this.managedRecordingId) await this.stopRecording();
       if (options.waitForProcessing !== false) {
         if (this.currentSessionId) await this.stopSession();
         for (const sessionId of this.pendingSessions) {
@@ -917,6 +1177,10 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
    * Check if a capture is currently active
    */
   public get isCapturing(): boolean {
-    return this.currentSessionId !== null || this.localRecordingId !== null;
+    return (
+      this.currentSessionId !== null ||
+      this.localRecordingId !== null ||
+      this.managedRecordingId !== null
+    );
   }
 }

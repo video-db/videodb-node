@@ -594,6 +594,29 @@ export class Connection {
     return res.data.token;
   };
 
+  /** Issue a fresh collection-bound recorder token on the trusted backend. */
+  public generateRecorderToken = async (options: {
+    collectionId: string;
+    userId: string;
+    expiresIn?: number;
+  }): Promise<{ token: string; collectionId: string }> => {
+    if (!options.collectionId?.trim() || !options.userId?.trim())
+      throw new Error('collectionId and userId are required');
+    const res = await this.vhttp.post<
+      { token: string; collectionId: string },
+      object
+    >([capture, session, ApiPath.token], {
+      collection_id: options.collectionId,
+      user_id: options.userId,
+      expires_in: options.expiresIn ?? 3600,
+    });
+    if (!res.data.token || !res.data.collectionId)
+      throw new Error(
+        'Recorder authorization did not return a resolved collection'
+      );
+    return { token: res.data.token, collectionId: res.data.collectionId };
+  };
+
   /**
    * Fetch the normalized status of a generation job.
    * @param jobId - ID of the generation job

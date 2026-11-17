@@ -120,3 +120,14 @@ export type {
   SessionRecordingReady,
 } from './types';
 export { CaptureCommandError } from './binaryManager';
+
+export type {
+  StartRecordingOptions,
+  ManagedRecording,
+  ManagedProcessingComplete,
+  ManagedRecordingReady,
+  ManagedRecordingFailure,
+  ManagedTokenRequest,
+  RecordingStopResult,
+  RecorderCapabilities,
+} from './types';
