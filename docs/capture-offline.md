@@ -1,6 +1,6 @@
 # Deferred recording migration
 
-The `release-0.3.3` branch now selects macOS artifact `0.3.3-managed.1` (embedded native version `0.3.3`). This is a breaking change from `0.3.3-window.1`.
+The `release-0.3.3` branch now selects macOS artifact `0.3.3-managed.2` (embedded native version `0.3.3`). This is a breaking change from `0.3.3-window.1`.
 
 `startLocalRecording()` is rejected by the new artifact. Tokenless local-only recording and local file paths are no longer its supported contract. Use `startRecording({owner, collectionId, uploadToken, channels})`; it authorizes a deferred server session before capture, without creating RTStreams. Connectivity is required at start. Stop automatically queues delivery.
 
@@ -43,6 +43,8 @@ Managed events are `recording-started`, `recording-ready`, `recording-failed`, `
 
 Shutdown defaults to stopping active capture and waiting for delivery. `shutdown({waitForProcessing:false})` finalizes capture and suspends waiting for explicit recovery. Timeouts reject without claiming successful delivery.
 
-**Release limitations:** a native microphone-stop hang remains unresolved, so use system-audio-only for this candidate. The macOS binaries are ad-hoc signed, not notarized. Physical Intel and oldest-supported macOS capture remain unverified; x64 checks use Rosetta. Windows remains on its existing artifact and does not support these managed deferred APIs. Updating this SDK does not update Bloom's installed dependency automatically.
+The reproduced microphone-stop deadlock is fixed in this artifact. Microphone plus system-audio capture is covered by the opt-in acceptance test.
 
-The opt-in dev acceptance test is `npm run test:capture:managed` with a backend-only `VIDEO_DB_API_KEY`. It uses explicit `baseUrl`/`apiUrl`, captures five seconds of system audio, tests an expired token, restart recovery, fresh authorization, ingestion, repeated relay and payload privacy. The older `test:capture:offline` belongs to the previous tokenless artifact and is not an acceptance test for this release.
+**Release limitations:** USB/Bluetooth device switching and sleep/wake remain separate validation gates. The macOS binaries are ad-hoc signed, not notarized. Physical Intel and oldest-supported macOS capture remain unverified; x64 checks use Rosetta. Windows remains on its existing artifact and does not support these managed deferred APIs. Updating this SDK does not update Bloom's installed dependency automatically.
+
+The opt-in dev acceptance test is `npm run test:capture:managed` with a backend-only `VIDEO_DB_API_KEY`. Pass `-- --with-mic` to include the microphone. It uses explicit `baseUrl`/`apiUrl`, captures five seconds of selected audio, checks stop/finalization against a 30-second limit, tests an expired token, restart recovery, fresh authorization, ingestion, repeated relay and payload privacy. The older `test:capture:offline` belongs to the previous tokenless artifact and is not an acceptance test for this release.

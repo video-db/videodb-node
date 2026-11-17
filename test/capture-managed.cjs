@@ -8,6 +8,7 @@ const { connect } = require('../dist');
 const { CaptureClient } = require('../dist/capture');
 if (!process.argv.includes('--record') || !process.env.VIDEO_DB_API_KEY)
   throw new Error('Requires --record and VIDEO_DB_API_KEY');
+const withMic = process.argv.includes('--with-mic');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const api = 'https://api.dev.videodb.io';
 const owner = 'sdk-managed-' + randomUUID();
@@ -58,18 +59,27 @@ function privacy(value) {
     channels: [
       { channelId: 'window:none', type: 'video' },
       { channelId: 'system_audio:default', type: 'audio' },
+      ...(withMic ? [{ channelId: 'mic:default', type: 'audio' }] : []),
     ],
   });
   recordingId = started.recordingId;
   privacy(started);
-  console.log('STEP recording system audio for 5 seconds');
+  console.log(
+    'STEP recording ' +
+      (withMic ? 'microphone + system audio' : 'system audio') +
+      ' for 5 seconds'
+  );
   await sleep(5000);
   const tokenNeeded = new Promise(resolve =>
     client.on('recording-token-needed', e => {
       if (e.recordingId === recordingId) resolve(e);
     })
   );
+  const stopStarted = performance.now();
   const ready = await client.stopRecording({ uploadToken: expired.token });
+  const stopMs = performance.now() - stopStarted;
+  assert.ok(stopMs < 30000, 'Short capture finalization exceeded 30 seconds');
+  console.log('PASS stop/finalization in ' + Math.round(stopMs) + ' ms');
   privacy(ready);
   let timer;
   try {
@@ -145,6 +155,8 @@ function privacy(value) {
     apiUrl: api,
     recordingId,
     tokenRequests: requests,
+    audio: withMic ? 'both' : 'system',
+    stopMs,
     processingComplete: done,
     passed: true,
   };

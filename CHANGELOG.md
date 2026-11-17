@@ -4,8 +4,10 @@
 
 ### Changed
 
+- Select macOS artifact `0.3.3-managed.2`, fixing microphone-stop deadlock and mixed-audio temporary-file cleanup without changing the managed API contract. Add opt-in microphone coverage to the dev acceptance test.
+
 - Select macOS artifact `0.3.3-managed.1` with matching checksums. Deferred capture now requires owner, resolved collection ID and authorization before capture, and automatically delivers on stop. Tokenless local-only calls fail clearly.
-- Add managed recording start/stop, owner-scoped history/discard, capability checks, fresh collection-bound backend tokens, processing events, recovery and completion-aware shutdown. Native microphone-stop hang remains a limitation; system audio is the verified candidate path.
+- Add managed recording start/stop, owner-scoped history/discard, capability checks, fresh collection-bound backend tokens, processing events, recovery and completion-aware shutdown. The microphone-stop limitation in that artifact is fixed by `0.3.3-managed.2`.
 
 - Add tokenless macOS standalone recording, window discovery, switch/off/on controls, native window events, and structured command error codes. See [offline capture](docs/capture-offline.md).
 - Select immutable macOS artifact revision `0.3.3-window.1` (native version `0.3.3`); preserve prior archive URLs and Windows selection. Installers detect stale artifact markers.
