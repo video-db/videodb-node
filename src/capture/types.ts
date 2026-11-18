@@ -185,7 +185,8 @@ export interface StartCaptureSessionClientConfig {
 export interface CaptureClientOptions {
   /** Request fresh tokens automatically for native recording-token-needed events. */
   getRecorderToken?: RecorderTokenProvider;
-  /** Maximum automatic token requests per recording (default 3). */
+  /** Maximum automatic token requests before delivery progress (default 3 for managed jobs).
+   * Legacy session jobs retain a per-recording limit. Cached tokens are always rejected. */
   maxTokenRefreshAttempts?: number;
   /** Session token for authentication */
   sessionToken?: string;
@@ -242,6 +243,8 @@ export interface ProcessingComplete extends RecordingIdentity {
 export interface RecordingFailure extends RecordingIdentity {
   error: string;
   retryable?: boolean;
+  /** True while the native worker is still retrying; failure is not final. */
+  retrying?: boolean;
   fileRetained?: boolean;
   retained?: boolean;
 }
@@ -271,7 +274,8 @@ export type WaitForProcessingOptions = (
   | { sessionId: string; recordingId?: never }
 ) & { timeoutMs?: number };
 export interface CaptureShutdownOptions {
-  /** Default true. False suspends pending work for explicit recovery later. */
+  /** Default true. Delayed native retries are retained for recovery instead of blocking shutdown.
+   * False suspends all pending work for recovery later. */
   waitForProcessing?: boolean;
   /** Processing wait budget, default 15 minutes. On timeout the binary stays running. */
   timeoutMs?: number;
@@ -392,6 +396,8 @@ export interface ManagedRecordingFailure {
   owner?: string;
   errorCode: string;
   retryable?: boolean;
+  /** True while the native worker is still retrying; failure is not final. */
+  retrying?: boolean;
 }
 export interface ManagedRecording {
   partial: boolean;

@@ -1,4 +1,4 @@
-// Compile-time coverage of the public managed.4 contract.
+// Compile-time coverage of the public managed.5 contract.
 import type {
   CaptureClient,
   ManagedProcessingProgress,
@@ -27,3 +27,13 @@ async function listing() {
 // @ts-expect-error The native command was withdrawn; apps must not offer discard.
 client.discardRecording({ recordingId: 'fixture', owner: 'fixture' });
 void listing;
+
+client.on('processing-failed', event => {
+  const retrying: boolean | undefined = event.retrying;
+  void retrying;
+});
+client.on('recording-relay-failed', event => {
+  const retrying: boolean | undefined = event.retrying;
+  void retrying;
+});
+void client.stopRecording({ timeoutMs: 600000 });

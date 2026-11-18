@@ -308,3 +308,29 @@ test('concurrent public operations share binary initialization', async () => {
   ]);
   expect(manager.start).toHaveBeenCalledTimes(1);
 });
+
+test('retrying live relay failure preserves waiter until completion', async () => {
+  const { client, manager } = setup();
+  await client.relayRecording({
+    recordingId: identity.recordingId,
+    uploadToken: 'fresh',
+  });
+  let finished = false;
+  const waiting = client
+    .waitForProcessing({ recordingId: identity.recordingId, timeoutMs: 1000 })
+    .then(value => {
+      finished = true;
+      return value;
+    });
+  manager.emit('recording-relay-failed', {
+    ...identity,
+    error: 'temporary',
+    retryable: true,
+    retrying: true,
+  });
+  await tick();
+  expect(finished).toBe(false);
+  manager.emit('processing-complete', complete);
+  expect(await waiting).toEqual(complete);
+  await client.shutdown();
+});

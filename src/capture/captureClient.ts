@@ -39,6 +39,8 @@ import {
 } from './types';
 import { Channels, groupChannels, type ChannelClient } from './channel';
 
+class DeliveryRetryingError extends Error {}
+
 /**
  * CaptureClient provides client-side recording capabilities using the native binary
  *
@@ -96,6 +98,15 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   private lifecycleGeneration = 0;
   private captureOperations: Promise<unknown> = Promise.resolve();
   private managedRecordingId: string | null = null;
+  private managedStartedAt = 0;
+  private managedRefreshAttempts = new Map<string, number>();
+  private managedTokenRequests = new Map<string, { submitted: boolean }>();
+  private retryingRecordings = new Set<string>();
+  private listingOperations: Promise<unknown> = Promise.resolve();
+  private listingEvents = new Map<
+    string,
+    Array<{ recordingId: string; apply: () => void }>
+  >();
   private managedOwners = new Map<string, string>();
   private localRecordingId: string | null = null;
   private localOutcomes = new Map<string, LocalRecordingResult | Error>();
@@ -147,8 +158,6 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       });
     }
     for (const name of [
-      'recording-ready',
-      'processing-progress',
       'windows-available',
       'window-suspended',
       'window-resumed',
@@ -158,6 +167,31 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     ]) {
       this.binaryManager.on(name, payload => this.emit(name, payload));
     }
+
+    this.binaryManager.on(
+      'recording-ready',
+      (event: CaptureClientEvents['recording-ready']) => {
+        this.withManagedOwner(event, () => {
+          if (this.managedRecordingId === event.recordingId)
+            this.managedRecordingId = null;
+        });
+        this.emit('recording-ready', event);
+      }
+    );
+    this.binaryManager.on(
+      'processing-progress',
+      (event: CaptureClientEvents['processing-progress']) => {
+        this.withManagedOwner(event, () => {
+          // A measured ETA means sending/server processing has begun with valid authorization.
+          // Relay acceptance and an initial progress event with no ETA do not prove that.
+          if (event.etaSeconds !== null && Number.isFinite(event.etaSeconds)) {
+            this.managedRefreshAttempts.delete(event.recordingId);
+            this.retryingRecordings.delete(event.recordingId);
+          }
+        });
+        this.emit('processing-progress', event);
+      }
+    );
 
     for (const name of [
       'local-recording-ready',
@@ -215,10 +249,15 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
             name === 'local-recording-failed' ||
             name === 'recording-relay-failed'
           ) {
-            this.setOutcome(
-              payload,
-              new Error(`${name}: recording retained for recovery`)
-            );
+            if ('retrying' in payload && payload.retrying === true) {
+              this.retryingRecordings.add(payload.recordingId);
+              this.processing.emit('change');
+            } else {
+              this.setOutcome(
+                payload,
+                new Error(`${name}: recording retained for recovery`)
+              );
+            }
           } else {
             this.pendingRecordings.add(payload.recordingId);
           }
@@ -374,17 +413,38 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
   }
 
+  private withManagedOwner(
+    event: { recordingId: string; owner?: string },
+    apply: () => void
+  ): void {
+    if (
+      event.owner &&
+      this.managedOwners.get(event.recordingId) === event.owner
+    )
+      apply();
+    else if (event.owner)
+      this.listingEvents
+        .get(event.owner)
+        ?.push({ recordingId: event.recordingId, apply });
+  }
+
   private managedFailure(event: ManagedRecordingFailure): void {
-    if (!this.managedOwners.has(event.recordingId)) return;
-    this.outcomes.set(
-      `recording:${event.recordingId}`,
-      new CaptureCommandError({
-        code: event.errorCode,
-        message:
-          'Recording could not complete; inspect recording status before retrying',
-      })
-    );
-    this.processing.emit('change');
+    this.withManagedOwner(event, () => {
+      if (event.retrying === true) {
+        this.retryingRecordings.add(event.recordingId);
+      } else {
+        this.retryingRecordings.delete(event.recordingId);
+        this.outcomes.set(
+          `recording:${event.recordingId}`,
+          new CaptureCommandError({
+            code: event.errorCode,
+            message:
+              'Recording could not complete; inspect recording status before retrying',
+          })
+        );
+      }
+      this.processing.emit('change');
+    });
   }
 
   private handleManagedEvent(
@@ -392,18 +452,26 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     event: ManagedTokenRequest & ManagedProcessingComplete
   ): void {
     // Only explicitly started, listed or relayed jobs belong to this client.
-    if (this.managedOwners.get(event.recordingId) === event.owner) {
+    this.withManagedOwner(event, () => {
       if (name === 'processing-complete') {
+        this.retryingRecordings.delete(event.recordingId);
+        this.managedRefreshAttempts.delete(event.recordingId);
         this.outcomes.set(`recording:${event.recordingId}`, event);
         this.pendingRecordings.delete(event.recordingId);
         this.tokenHashes.delete(event.recordingId);
         this.processing.emit('change');
       } else if (name === 'recording-token-needed' && this.tokenProvider) {
+        // Startup recovery and listing can request the same token concurrently.
+        // Coalesce until submission; a rejection after submission must still refresh.
+        const current = this.managedTokenRequests.get(event.recordingId);
+        if (current && !current.submitted) return;
+        const request = { submitted: false };
+        this.managedTokenRequests.set(event.recordingId, request);
         const generation = this.lifecycleGeneration;
         const previous =
           this.tokenTasks.get(event.recordingId) ?? Promise.resolve();
         const task = previous.then(() =>
-          this.supplyManagedToken(event, generation)
+          this.supplyManagedToken(event, generation, request)
         );
         this.tokenTasks.set(event.recordingId, task);
         void task.finally(() => {
@@ -411,31 +479,38 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
             this.tokenTasks.delete(event.recordingId);
         });
       }
-    }
+    });
     this.emit(name, event);
   }
 
   private async supplyManagedToken(
     event: ManagedTokenRequest,
-    generation: number
+    generation: number,
+    request: { submitted: boolean }
   ): Promise<void> {
     try {
       if (generation !== this.lifecycleGeneration) return;
+      const outcome = this.outcomes.get(`recording:${event.recordingId}`);
+      if (outcome && !(outcome instanceof Error)) return;
       const hashes =
         this.tokenHashes.get(event.recordingId) ?? new Set<string>();
-      if (hashes.size >= this.maxTokenRefreshAttempts)
+      const attempts = this.managedRefreshAttempts.get(event.recordingId) ?? 0;
+      if (attempts >= this.maxTokenRefreshAttempts)
         throw new Error('Refresh limit');
       const token = await this.tokenProvider!({ ...event, forceRefresh: true });
       if (generation !== this.lifecycleGeneration) return;
       if (token === null) {
         this.pendingRecordings.delete(event.recordingId);
+        this.processing.emit('change');
         return;
       }
       if (!token?.trim()) throw new Error('Empty token');
       const hash = createHash('sha256').update(token).digest('hex');
       if (hashes.has(hash)) throw new Error('Cached token');
+      this.managedRefreshAttempts.set(event.recordingId, attempts + 1);
       hashes.add(hash);
       this.tokenHashes.set(event.recordingId, hashes);
+      request.submitted = true;
       await this.relayRecording({
         recordingId: event.recordingId,
         owner: event.owner,
@@ -449,6 +524,9 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
         owner: event.owner,
         error: 'Could not obtain or submit a fresh recorder token',
       });
+    } finally {
+      if (this.managedTokenRequests.get(event.recordingId) === request)
+        this.managedTokenRequests.delete(event.recordingId);
     }
   }
 
@@ -517,6 +595,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
           310_000
         );
       this.managedRecordingId = started.recordingId;
+      this.managedStartedAt = performance.now();
       this.managedOwners.set(started.recordingId, options.owner);
       this.pendingRecordings.add(started.recordingId);
       this.outcomes.delete(`recording:${started.recordingId}`);
@@ -526,16 +605,26 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
 
   /** Resolves on readiness; use waitForProcessing for the video result. */
   public stopRecording(
-    options: { uploadToken?: string } = {}
+    options: { uploadToken?: string; timeoutMs?: number } = {}
   ): Promise<RecordingStopResult> {
     return this.serializeCapture(async () => {
       if (!this.managedRecordingId)
         throw new Error('No managed recording is active');
+      const timeoutMs =
+        options.timeoutMs ??
+        Math.max(
+          155_000,
+          Math.ceil((performance.now() - this.managedStartedAt) / 4) + 30_000
+        );
+      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
+        throw new Error('timeoutMs must be positive');
       try {
         const ready = await this.binaryManager.sendCommand<RecordingStopResult>(
           'stopRecording',
-          { ...options },
-          155_000
+          options.uploadToken === undefined
+            ? {}
+            : { uploadToken: options.uploadToken },
+          timeoutMs
         );
         this.managedRecordingId = null;
         return ready;
@@ -550,29 +639,51 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     });
   }
 
-  /** Owner-scoped history; listing never starts capture or automatically relays jobs. */
-  public async listRecordings(options: {
+  /** Owner-scoped history; listing adopts retained jobs and requests tokens to resume delivery. */
+  public listRecordings(options: {
     owner: string;
   }): Promise<ManagedRecording[]> {
-    if (!options.owner?.trim()) throw new Error('owner is required');
-    if (!(await this.getCapabilities()).managedDeferredRecording)
-      throw new Error('Managed deferred recording is unsupported');
-    const { recordings } = await this.binaryManager.sendCommand<{
-      recordings: ManagedRecording[];
-    }>('listRecordings', { ...options });
-    for (const job of recordings) {
-      this.managedOwners.set(job.recordingId, job.owner);
-      if (job.stage === 'complete' && job.result) {
-        this.outcomes.set(`recording:${job.recordingId}`, {
-          recordingId: job.recordingId,
-          owner: job.owner,
-          result: job.result,
-        });
-        this.pendingRecordings.delete(job.recordingId);
+    const operation = this.listingOperations.then(async () => {
+      if (this.shuttingDown) throw new Error('CaptureClient is shutting down');
+      if (!options.owner?.trim()) throw new Error('owner is required');
+      if (!(await this.getCapabilities()).managedDeferredRecording)
+        throw new Error('Managed deferred recording is unsupported');
+      const buffered: Array<{ recordingId: string; apply: () => void }> = [];
+      this.listingEvents.set(options.owner, buffered);
+      try {
+        const { recordings } = await this.binaryManager.sendCommand<{
+          recordings: ManagedRecording[];
+        }>('listRecordings', { ...options });
+        const adopted = new Set<string>();
+        for (const job of recordings) {
+          if (job.owner !== options.owner) continue;
+          this.managedOwners.set(job.recordingId, job.owner);
+          adopted.add(job.recordingId);
+          if (job.stage === 'complete' && job.result) {
+            this.outcomes.set(`recording:${job.recordingId}`, {
+              recordingId: job.recordingId,
+              owner: job.owner,
+              result: job.result,
+            });
+            this.pendingRecordings.delete(job.recordingId);
+          } else if (
+            ['ready', 'uploaded', 'processing'].includes(job.stage) &&
+            !this.outcomes.has(`recording:${job.recordingId}`)
+          ) {
+            this.pendingRecordings.add(job.recordingId);
+          }
+        }
+        // Native replies and events can share one stdout chunk. Adopt before acting on events.
+        for (const event of buffered)
+          if (adopted.has(event.recordingId)) event.apply();
+        this.processing.emit('change');
+        return recordings;
+      } finally {
+        this.listingEvents.delete(options.owner);
       }
-    }
-    this.processing.emit('change');
-    return recordings;
+    });
+    this.listingOperations = operation.catch(() => {});
+    return operation;
   }
 
   /** Lists durable jobs for this API environment; does not relay them. */
@@ -606,6 +717,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     if (options.owner)
       this.managedOwners.set(options.recordingId, options.owner);
     this.pendingRecordings.add(options.recordingId);
+    this.retryingRecordings.delete(options.recordingId);
     this.outcomes.delete(`recording:${options.recordingId}`);
     const sessionId = this.recordingSessions.get(options.recordingId);
     if (sessionId) this.outcomes.delete(`session:${sessionId}`);
@@ -626,8 +738,15 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   }
 
   /** Handles completion events that arrive before or after this call. */
-  public async waitForProcessing(
+  public waitForProcessing(
     options: WaitForProcessingOptions
+  ): Promise<ProcessingComplete | ManagedProcessingComplete> {
+    return this.waitForProcessingResult(options);
+  }
+
+  private async waitForProcessingResult(
+    options: WaitForProcessingOptions,
+    releaseOnRetry = false
   ): Promise<ProcessingComplete | ManagedProcessingComplete> {
     if (
       options.recordingId &&
@@ -654,7 +773,23 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       };
       const check = () => {
         const outcome = this.outcomes.get(key);
-        if (!outcome) return;
+        if (!outcome) {
+          if (
+            releaseOnRetry &&
+            (options.recordingId
+              ? this.retryingRecordings.has(options.recordingId) ||
+                !this.pendingRecordings.has(options.recordingId)
+              : [...this.recordingSessions].some(
+                  ([id, session]) =>
+                    session === options.sessionId &&
+                    this.retryingRecordings.has(id)
+                ))
+          ) {
+            cleanup();
+            reject(new DeliveryRetryingError());
+          }
+          return;
+        }
         cleanup();
         if (outcome instanceof Error) reject(outcome);
         else resolve(outcome);
@@ -1121,6 +1256,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     this.shuttingDown = true;
     try {
       await this.captureOperations;
+      await this.listingOperations;
       if (this.initialization) await this.initialization;
       if (!this.isInitialized) {
         await this.binaryManager.stop();
@@ -1131,16 +1267,25 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       if (options.waitForProcessing !== false) {
         if (this.currentSessionId) await this.stopSession();
         for (const sessionId of this.pendingSessions) {
-          await this.waitForProcessing({
-            sessionId,
-            timeoutMs: options.timeoutMs,
-          });
+          try {
+            await this.waitForProcessingResult(
+              { sessionId, timeoutMs: options.timeoutMs },
+              true
+            );
+          } catch (error) {
+            if (!(error instanceof DeliveryRetryingError)) throw error;
+          }
         }
         for (const recordingId of this.pendingRecordings) {
-          await this.waitForProcessing({
-            recordingId,
-            timeoutMs: options.timeoutMs,
-          });
+          try {
+            await this.waitForProcessingResult(
+              { recordingId, timeoutMs: options.timeoutMs },
+              true
+            );
+          } catch (error) {
+            // Retained delayed jobs resume on the next owner-scoped listing.
+            if (!(error instanceof DeliveryRetryingError)) throw error;
+          }
         }
       }
       this.suspending = true;

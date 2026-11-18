@@ -308,5 +308,239 @@ test('partial ready events and listing snapshots retain public metadata, includi
   manager.sendCommand.mockResolvedValue({ recordings: jobs });
   expect(await client.listRecordings({ owner: 'alice' })).toEqual(jobs);
   expect(manager.sendCommand).toHaveBeenCalledTimes(1);
+  await client.shutdown({ waitForProcessing: false });
+});
+
+test('retrying managed failures keep processing waits open and let shutdown retain delayed jobs', async () => {
+  const { client, manager } = setup();
+  await client.startRecording(start);
+  await client.stopRecording();
+  let finished = false;
+  const waiting = client
+    .waitForProcessing({ recordingId: 'rec-one', timeoutMs: 1000 })
+    .then(value => {
+      finished = true;
+      return value;
+    });
+  manager.emit('processing-failed', {
+    ...complete,
+    errorCode: 'DELIVERY_INTERRUPTED',
+    retryable: true,
+    retrying: true,
+  });
+  await tick();
+  expect(finished).toBe(false);
+  manager.emit('processing-complete', complete);
+  expect(await waiting).toEqual(complete);
   await client.shutdown();
+
+  const other = setup();
+  await other.client.startRecording(start);
+  const closing = other.client.shutdown();
+  await tick();
+  expect(other.manager.stop).not.toHaveBeenCalled();
+  other.manager.emit('processing-failed', {
+    ...complete,
+    errorCode: 'PROCESSING_STALLED',
+    retrying: true,
+  });
+  await closing;
+  expect(other.manager.stop).toHaveBeenCalledTimes(1);
+});
+
+test('listing adopts early token events once, isolates owners, and waits for resumed delivery on shutdown', async () => {
+  const provider = jest.fn().mockResolvedValue('fresh');
+  const { client, manager } = setup({ getRecorderToken: provider });
+  manager.sendCommand.mockImplementation(async command => {
+    if (command === 'listRecordings') {
+      manager.emit('recording-token-needed', needed);
+      manager.emit('recording-token-needed', {
+        ...needed,
+        recordingId: 'unlisted',
+      });
+      manager.emit('recording-token-needed', { ...needed, owner: 'bob' });
+      return { recordings: [{ ...complete, stage: 'ready' }] };
+    }
+    return { recordingId: 'rec-one', status: 'accepted' };
+  });
+  await client.listRecordings({ owner: 'alice' });
+  await tick();
+  expect(provider).toHaveBeenCalledTimes(1);
+  const closing = client.shutdown();
+  await tick();
+  expect(manager.stop).not.toHaveBeenCalled();
+  manager.emit('processing-complete', complete);
+  await closing;
+});
+
+test('failed listing never adopts a token request and leaves no shutdown wait', async () => {
+  const provider = jest.fn();
+  const { client, manager } = setup({ getRecorderToken: provider });
+  manager.sendCommand.mockImplementation(async () => {
+    manager.emit('recording-token-needed', needed);
+    throw new Error('listing failed');
+  });
+  await expect(client.listRecordings({ owner: 'alice' })).rejects.toThrow(
+    'listing failed'
+  );
+  await tick();
+  expect(provider).not.toHaveBeenCalled();
+  await client.shutdown();
+});
+
+test('measured delivery resets consecutive refresh limit but never allows cached tokens', async () => {
+  let issued = 0;
+  const provider = jest
+    .fn()
+    .mockImplementation(async () => `fresh-${++issued}`);
+  const { client, manager } = setup({
+    getRecorderToken: provider,
+    maxTokenRefreshAttempts: 2,
+  });
+  await client.startRecording(start);
+  await client.stopRecording();
+  for (let n = 0; n < 5; n++) {
+    manager.emit('recording-token-needed', needed);
+    await tick();
+    manager.emit('processing-progress', {
+      ...complete,
+      percent: 50,
+      etaSeconds: 10,
+    });
+  }
+  expect(provider).toHaveBeenCalledTimes(5);
+  provider.mockResolvedValue('fresh-1');
+  manager.emit('recording-token-needed', needed);
+  await tick();
+  await expect(
+    client.waitForProcessing({ recordingId: 'rec-one' })
+  ).rejects.toMatchObject({ code: 'TOKEN_REFRESH_FAILED' });
+  await client.shutdown({ waitForProcessing: false });
+});
+
+test('relay acceptance and unknown ETA do not reset rejected-token limit', async () => {
+  let issued = 0;
+  const provider = jest
+    .fn()
+    .mockImplementation(async () => `rejected-${++issued}`);
+  const { client, manager } = setup({
+    getRecorderToken: provider,
+    maxTokenRefreshAttempts: 2,
+  });
+  await client.startRecording(start);
+  await client.stopRecording();
+  for (let n = 0; n < 3; n++) {
+    manager.emit('recording-token-needed', needed);
+    await tick();
+    manager.emit('processing-progress', {
+      ...complete,
+      percent: 0,
+      etaSeconds: null,
+    });
+  }
+  expect(provider).toHaveBeenCalledTimes(2);
+  await expect(
+    client.waitForProcessing({ recordingId: 'rec-one' })
+  ).rejects.toMatchObject({ code: 'TOKEN_REFRESH_FAILED' });
+  await client.shutdown({ waitForProcessing: false });
+});
+
+test('late readiness clears capture after a stop timeout and ignores another owner', async () => {
+  const { client, manager } = setup();
+  await client.startRecording(start);
+  manager.sendCommand.mockRejectedValueOnce(new Error('Command timed out'));
+  await expect(client.stopRecording({ timeoutMs: 200 })).rejects.toThrow(
+    'timed out'
+  );
+  expect(manager.sendCommand).toHaveBeenLastCalledWith(
+    'stopRecording',
+    {},
+    200
+  );
+  expect(client.isCapturing).toBe(true);
+  manager.emit('recording-ready', { ...complete, owner: 'bob' });
+  expect(client.isCapturing).toBe(true);
+  manager.emit('recording-ready', complete);
+  expect(client.isCapturing).toBe(false);
+  await client.startRecording(start);
+  await client.shutdown({ waitForProcessing: false });
+});
+
+test('long recordings scale the finalization timeout and reject invalid overrides', async () => {
+  jest.useFakeTimers();
+  try {
+    const { client, manager } = setup();
+    await client.startRecording(start);
+    jest.advanceTimersByTime(4 * 60 * 60 * 1000);
+    await expect(client.stopRecording({ timeoutMs: 0 })).rejects.toThrow(
+      'positive'
+    );
+    await client.stopRecording();
+    expect(manager.sendCommand).toHaveBeenLastCalledWith(
+      'stopRecording',
+      {},
+      3630000
+    );
+    await client.shutdown({ waitForProcessing: false });
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('startup and listing token requests coalesce before submission but rejection after submission refreshes', async () => {
+  let releaseToken!: (value: string) => void;
+  let releaseRelay!: () => void;
+  const provider = jest
+    .fn()
+    .mockImplementationOnce(
+      () =>
+        new Promise<string>(resolve => {
+          releaseToken = resolve;
+        })
+    )
+    .mockResolvedValue('second-token');
+  const { client, manager } = setup({ getRecorderToken: provider });
+  await client.startRecording(start);
+  await client.stopRecording();
+  manager.sendCommand.mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        releaseRelay = () => resolve({ status: 'accepted' });
+      })
+  );
+  manager.emit('recording-token-needed', needed);
+  manager.emit('recording-token-needed', needed);
+  await tick();
+  expect(provider).toHaveBeenCalledTimes(1);
+  releaseToken('first-token');
+  await tick();
+  manager.emit('recording-token-needed', needed); // Auth rejected before relay acknowledgement.
+  manager.emit('recording-token-needed', needed);
+  releaseRelay();
+  await tick();
+  expect(provider).toHaveBeenCalledTimes(2);
+  manager.emit('processing-complete', complete);
+  await client.shutdown();
+});
+
+test('a host declining a listed token request releases an ongoing shutdown wait', async () => {
+  let decline!: (value: null) => void;
+  const { client, manager } = setup({
+    getRecorderToken: () =>
+      new Promise(resolve => {
+        decline = resolve;
+      }),
+  });
+  manager.sendCommand.mockImplementation(async () => {
+    manager.emit('recording-token-needed', needed);
+    return { recordings: [{ ...complete, stage: 'ready' }] };
+  });
+  await client.listRecordings({ owner: 'alice' });
+  await tick();
+  const closing = client.shutdown();
+  await tick();
+  expect(manager.stop).not.toHaveBeenCalled();
+  decline(null);
+  await closing;
+  expect(manager.stop).toHaveBeenCalledTimes(1);
 });

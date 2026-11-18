@@ -159,17 +159,14 @@ function privacy(value) {
   assert.ok(job);
   assert.equal(job.partial, false);
   assert.equal(job.partialReason, null);
-  await client.relayRecording({
-    recordingId,
-    owner,
-    uploadToken: expired.token,
-  });
+  // Listing alone adopts the retained job and triggers a fresh-token request.
   const done = await client.waitForProcessing({
     recordingId,
     timeoutMs: 240000,
   });
   privacy(done);
   assert.ok(done.result.videoId);
+  console.log('STEP fresh-token requests after recovery:', requests);
   assert.equal(requests, 1);
   const seen = progress.filter(
     sample => sample.event.recordingId === recordingId
@@ -233,6 +230,13 @@ function privacy(value) {
 })()
   .catch(e => {
     console.log('FAIL managed SDK acceptance:', e.code || e.constructor.name);
+    console.log(
+      'FAIL location:',
+      String(e.stack)
+        .split('\n')
+        .filter(line => line.includes('capture-managed.cjs:'))
+        .join(' ')
+    );
     process.exitCode = 1;
   })
   .finally(async () => {
