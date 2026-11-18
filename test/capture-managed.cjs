@@ -9,6 +9,20 @@ const { CaptureClient } = require('../dist/capture');
 if (!process.argv.includes('--record') || !process.env.VIDEO_DB_API_KEY)
   throw new Error('Requires --record and VIDEO_DB_API_KEY');
 const withMic = process.argv.includes('--with-mic');
+const screenOnly = process.argv.includes('--screen-only');
+assert.ok(!(withMic && screenOnly), 'Choose --with-mic or --screen-only');
+const progress = [];
+const readyEvents = [];
+let completionSeen = false;
+function observe(c) {
+  c.on('processing-progress', event => {
+    progress.push({ event, afterCompletion: completionSeen });
+  });
+  c.on('recording-ready', event => readyEvents.push(event));
+  c.on('processing-complete', event => {
+    if (event.recordingId === recordingId) completionSeen = true;
+  });
+}
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const api = 'https://api.dev.videodb.io';
 const owner = 'sdk-managed-' + randomUUID();
@@ -45,6 +59,7 @@ function privacy(value) {
   });
   client = new CaptureClient({ apiUrl: api, restartOnError: false });
   client.on('error', () => {});
+  observe(client);
   assert.equal((await client.getCapabilities()).managedDeferredRecording, true);
   await assert.rejects(
     client.startLocalRecording({
@@ -58,7 +73,9 @@ function privacy(value) {
     uploadToken: initial.token,
     channels: [
       { channelId: 'window:none', type: 'video' },
-      { channelId: 'system_audio:default', type: 'audio' },
+      ...(screenOnly
+        ? []
+        : [{ channelId: 'system_audio:default', type: 'audio' }]),
       ...(withMic ? [{ channelId: 'mic:default', type: 'audio' }] : []),
     ],
   });
@@ -66,7 +83,11 @@ function privacy(value) {
   privacy(started);
   console.log(
     'STEP recording ' +
-      (withMic ? 'microphone + system audio' : 'system audio') +
+      (screenOnly
+        ? 'screen only'
+        : withMic
+          ? 'microphone + system audio'
+          : 'system audio') +
       ' for 5 seconds'
   );
   await sleep(5000);
@@ -81,6 +102,13 @@ function privacy(value) {
   assert.ok(stopMs < 30000, 'Short capture finalization exceeded 30 seconds');
   console.log('PASS stop/finalization in ' + Math.round(stopMs) + ' ms');
   privacy(ready);
+  const readyEvent = readyEvents.find(
+    event => event.recordingId === recordingId
+  );
+  assert.ok(readyEvent);
+  privacy(readyEvent);
+  assert.equal(readyEvent.partial, false);
+  assert.equal(readyEvent.partialReason, null);
   let timer;
   try {
     privacy(
@@ -124,9 +152,13 @@ function privacy(value) {
     },
   });
   client.on('error', () => {});
+  observe(client);
   const jobs = await client.listRecordings({ owner });
   privacy(jobs);
-  assert.ok(jobs.some(r => r.recordingId === recordingId));
+  const job = jobs.find(r => r.recordingId === recordingId);
+  assert.ok(job);
+  assert.equal(job.partial, false);
+  assert.equal(job.partialReason, null);
   await client.relayRecording({
     recordingId,
     owner,
@@ -139,6 +171,34 @@ function privacy(value) {
   privacy(done);
   assert.ok(done.result.videoId);
   assert.equal(requests, 1);
+  const seen = progress.filter(
+    sample => sample.event.recordingId === recordingId
+  );
+  assert.ok(seen.length > 0, 'No SDK processing-progress events received');
+  for (let i = 0; i < seen.length; i++) {
+    const { event, afterCompletion } = seen[i];
+    privacy(event);
+    assert.deepEqual(Object.keys(event).sort(), [
+      'etaSeconds',
+      'owner',
+      'percent',
+      'recordingId',
+    ]);
+    assert.equal(event.owner, owner);
+    assert.equal(afterCompletion, false);
+    assert.ok(
+      Number.isInteger(event.percent) &&
+        event.percent >= 0 &&
+        event.percent <= 99
+    );
+    assert.ok(
+      event.etaSeconds === null ||
+        (Number.isInteger(event.etaSeconds) && event.etaSeconds >= 0)
+    );
+  }
+  console.log(
+    'PASS SDK progress events, nullable ETA, partial fields and completion ordering'
+  );
   const fresh = await conn.generateRecorderToken({
     collectionId: initial.collectionId,
     userId: owner,
@@ -155,7 +215,8 @@ function privacy(value) {
     apiUrl: api,
     recordingId,
     tokenRequests: requests,
-    audio: withMic ? 'both' : 'system',
+    audio: screenOnly ? 'none' : withMic ? 'both' : 'system',
+    progressEvents: seen.length,
     stopMs,
     processingComplete: done,
     passed: true,

@@ -148,6 +148,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
     for (const name of [
       'recording-ready',
+      'processing-progress',
       'windows-available',
       'window-suspended',
       'window-resumed',
@@ -572,17 +573,6 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
     this.processing.emit('change');
     return recordings;
-  }
-
-  public async discardRecording(options: {
-    recordingId: string;
-    owner: string;
-  }): Promise<{ recordingId: string; status: 'discarded' }> {
-    if (!options.owner?.trim() || !options.recordingId)
-      throw new Error('recordingId and owner are required');
-    if (!(await this.getCapabilities()).managedDeferredRecording)
-      throw new Error('Managed deferred recording is unsupported');
-    return this.binaryManager.sendCommand('discardRecording', { ...options });
   }
 
   /** Lists durable jobs for this API environment; does not relay them. */

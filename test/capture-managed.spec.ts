@@ -208,19 +208,14 @@ test('finalization failure permits explicit suspension and exposes error', async
   });
   await client.shutdown({ waitForProcessing: false });
 });
-test('live and managed starts cannot overlap; native discard refusal is preserved', async () => {
+test('live and managed starts cannot overlap; withdrawn discard is absent', async () => {
   const { client, manager } = setup({ sessionToken: 'live' });
   await client.startRecording(start);
   await expect(
     client.startSession({ sessionId: 'live', channels: start.channels })
   ).rejects.toThrow('already active');
   await expect(client.stopSession()).rejects.toThrow('stopRecording');
-  manager.sendCommand.mockRejectedValue(
-    new CaptureCommandError({ code: 'DISCARD_REJECTED' })
-  );
-  await expect(
-    client.discardRecording({ recordingId: 'rec-one', owner: 'alice' })
-  ).rejects.toMatchObject({ code: 'DISCARD_REJECTED' });
+  expect('discardRecording' in client).toBe(false);
 });
 
 test('backend recorder token request binds collection and returns resolved identity', async () => {
@@ -230,11 +225,9 @@ test('backend recorder token request binds collection and returns resolved ident
     baseUrl: 'https://api.dev.videodb.io',
   });
   const http = (conn as unknown as { vhttp: { post: jest.Mock } }).vhttp;
-  const post = jest
-    .spyOn(http, 'post')
-    .mockResolvedValue({
-      data: { token: 'bound-token', collectionId: 'resolved' },
-    });
+  const post = jest.spyOn(http, 'post').mockResolvedValue({
+    data: { token: 'bound-token', collectionId: 'resolved' },
+  });
   expect(
     await conn.generateRecorderToken({
       collectionId: 'default',
@@ -252,4 +245,68 @@ test('backend recorder token request binds collection and returns resolved ident
     conn.generateRecorderToken({ collectionId: 'default', userId: 'alice' })
   ).rejects.toThrow('resolved collection');
   post.mockRestore();
+});
+
+test('progress forwards native estimates unchanged and never resolves processing waits', async () => {
+  const { client, manager } = setup();
+  const listener = jest.fn();
+  client.on('processing-progress', listener);
+  await client.startRecording(start);
+  await client.stopRecording();
+  let finished = false;
+  const waiting = client
+    .waitForProcessing({ recordingId: 'rec-one', timeoutMs: 1000 })
+    .then(result => {
+      finished = true;
+      return result;
+    });
+  const samples = [
+    { recordingId: 'rec-one', owner: 'alice', percent: 0, etaSeconds: null },
+    { recordingId: 'rec-one', owner: 'alice', percent: 49, etaSeconds: 12 },
+    { recordingId: 'rec-one', owner: 'alice', percent: 99, etaSeconds: null },
+  ];
+  for (const progress of samples) manager.emit('processing-progress', progress);
+  await tick();
+  expect(finished).toBe(false);
+  expect(listener.mock.calls.map(([value]) => value)).toEqual(samples);
+  manager.emit('processing-complete', complete);
+  expect(await waiting).toEqual(complete);
+  await client.shutdown();
+});
+test('partial ready events and listing snapshots retain public metadata, including absent progress', async () => {
+  const { client, manager } = setup();
+  const listener = jest.fn();
+  client.on('recording-ready', listener);
+  const ready = {
+    recordingId: 'rec-one',
+    owner: 'alice',
+    status: 'ready',
+    mode: 'deferred',
+    durationSeconds: 5,
+    finalizedOnShutdown: false,
+    partial: true,
+    partialReason: 'interrupted',
+  };
+  manager.emit('recording-ready', ready);
+  expect(listener).toHaveBeenCalledWith(ready);
+  const jobs = [
+    {
+      ...complete,
+      stage: 'processing',
+      partial: true,
+      partialReason: 'interrupted',
+      progress: { percent: 34, etaSeconds: null },
+    },
+    {
+      recordingId: 'rec-two',
+      owner: 'alice',
+      stage: 'ready',
+      partial: false,
+      partialReason: null,
+    },
+  ];
+  manager.sendCommand.mockResolvedValue({ recordings: jobs });
+  expect(await client.listRecordings({ owner: 'alice' })).toEqual(jobs);
+  expect(manager.sendCommand).toHaveBeenCalledTimes(1);
+  await client.shutdown();
 });

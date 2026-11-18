@@ -142,6 +142,7 @@ export interface CaptureClientEvents {
   'window-closed': WindowEvent & { reason: string };
   'window-switched': WindowEvent;
   'recording-relay-failed': RecordingFailure;
+  'processing-progress': ManagedProcessingProgress;
   'processing-complete': ProcessingComplete | ManagedProcessingComplete;
   'recording-ready': ManagedRecordingReady;
   'recording-failed': ManagedRecordingFailure;
@@ -365,7 +366,20 @@ export interface ManagedProcessingComplete {
   owner: string;
   result: ProcessingResult;
 }
+/** Delivery estimate; completion is signalled only by processing-complete. */
+export interface ManagedProgress {
+  /** Native estimate from 0 to 99 while processing. */
+  percent: number;
+  /** Null when no reliable estimate is available. */
+  etaSeconds: number | null;
+}
+export interface ManagedProcessingProgress extends ManagedProgress {
+  recordingId: string;
+  owner: string;
+}
 export interface ManagedRecordingReady {
+  partial: boolean;
+  partialReason: string | null;
   recordingId: string;
   owner: string;
   status: 'ready';
@@ -380,6 +394,10 @@ export interface ManagedRecordingFailure {
   retryable?: boolean;
 }
 export interface ManagedRecording {
+  partial: boolean;
+  partialReason: string | null;
+  /** Present while this recorder process has a delivery estimate. */
+  progress?: ManagedProgress;
   recordingId: string;
   owner: string;
   name: string | null;

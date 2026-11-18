@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.3] (Unreleased)
+
+- Base the capture release on latest main, retaining its SDK error, search, upload, and installer improvements.
+- Select immutable macOS artifact `0.3.3-managed.4` (native version `0.3.3`); SDK and binary versions are independent.
+- Forward typed `processing-progress` events with nullable ETA; expose partial-recording metadata and optional history progress snapshots. Completion still requires `processing-complete`.
+- Remove `CaptureClient.discardRecording`, matching the withdrawn native command. See [migration guidance](docs/capture-offline.md).
+- Include the native resume, screen-only ingestion, partial recovery and microphone fixes. Managed recording is verified against dev; Bloom validation and production server deployment are separate.
+
 ## Unreleased (release as minor: 0.4.0)
 
 Clearer errors, search fixes, and install and polling reliability. Error messages, poll timeouts, `search({ filter })`, and `shot.text` behave differently from 0.3.2; see Upgrade notes.

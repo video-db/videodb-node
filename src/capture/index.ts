@@ -125,6 +125,8 @@ export type {
   StartRecordingOptions,
   ManagedRecording,
   ManagedProcessingComplete,
+  ManagedProcessingProgress,
+  ManagedProgress,
   ManagedRecordingReady,
   ManagedRecordingFailure,
   ManagedTokenRequest,
