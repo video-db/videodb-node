@@ -10,6 +10,7 @@ Clearer errors, search fixes, and install and polling reliability. Error message
 - **A poll timeout throws `RequestTimeoutError`.** It used to surface as `VideodbError('Unidentified Error')` with the timeout buried in `cause.cause`. The message and `data.outputUrl` give the job's output URL, so the result can be fetched later.
 - **`search({ filter })` sends the filter.** `Video.search()` and `Collection.search()` used to drop it.
 - **Search V2 shots have `text`.** V2 hits put their text in `metadata.embeddedText` and left `shot.text` null. It now falls back to that.
+- **`SandboxModel` lists the models sandboxes run today.** It now holds `QWEN_4B`, `QWEN_9B`, `WHISPER_LARGE_V3_TURBO`, `INDIC_CONFORMER`, `OMNIVOICE`, and `RTDETR_V2`. The retired `FLUX`, `FLUX_CANONICAL`, `GEMMA_4_E2B`, `GEMMA_4_26B`, `GEMMA_4_31B`, `QWEN_27B`, `STABLE_AUDIO_OPEN`, and the duplicate `OMNIVOICE_CANONICAL` are removed.
 - **Upload errors name the reason.** A missing local file throws `File not found: <path>` before any network call, and other failures read `Upload failed: <reason>` instead of `Upload failed, reason: `.
 
 ### Added
@@ -32,6 +33,7 @@ Clearer errors, search fixes, and install and polling reliability. Error message
 - Code that caught `VideodbError` to handle poll timeouts should catch `RequestTimeoutError` (or `VdbBaseError`).
 - A `filter` passed to `search()` is now applied, so results can be narrower than before. A filter on a field the index can't filter on now fails with the server's reason (e.g. `Field 'start' is not filterable on index 'transcript'`) instead of being ignored.
 - `shot.text` can now be a string where it used to be `null` for Search V2 hits.
+- Code that reads a removed `SandboxModel` key gets `undefined` at runtime and a type error in TypeScript. The server already rejects those models. Use `SandboxModel.OMNIVOICE` in place of `OMNIVOICE_CANONICAL`.
 
 ## [0.3.2] (2026-09-02)
 

@@ -61,7 +61,7 @@ export interface GenerationJobConfig {
  * A self-inference generation job.
  * Mirrors `videodb.job.GenerationJob`.
  *
- * OmniVoice TTS and FLUX image generation return a VideoDB job after the
+ * Sandbox generation such as OmniVoice TTS returns a VideoDB job after the
  * initial server-side async task dispatches work to inference-core. Use
  * {@link wait} to poll until the final asset is ready.
  */

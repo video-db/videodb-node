@@ -1,26 +1,14 @@
 /**
- * Model identifiers runnable on VideoDB sandbox compute.
- * Mirrors `videodb.sandbox_models.SandboxModel`.
- *
- * Note: in the Python `str, Enum`, `OMNIVOICE_CANONICAL`/`FLUX_CANONICAL`
- * are aliases of `OMNIVOICE`/`FLUX` (duplicate values). Here they are kept as
- * distinct keys sharing the same string value.
+ * Model identifiers a VideoDB sandbox can run.
+ * `QWEN_9B` needs a `medium` sandbox; the rest run on `small`.
  */
 export const SandboxModel = {
-  // GenAI
-  FLUX: 'black-forest-labs/FLUX.1-dev',
-  OMNIVOICE: 'k2-fsa/OmniVoice',
-  // Small tier
-  GEMMA_4_E2B: 'google/gemma-4-E2B-it',
+  QWEN_4B: 'Qwen/Qwen3-4B',
   QWEN_9B: 'Qwen/Qwen3.5-9B',
   WHISPER_LARGE_V3_TURBO: 'openai/whisper-large-v3-turbo',
-  OMNIVOICE_CANONICAL: 'k2-fsa/OmniVoice',
-  STABLE_AUDIO_OPEN: 'stabilityai/stable-audio-open-1.0',
-  // Medium tier
-  GEMMA_4_26B: 'google/gemma-4-26B-A4B-it',
-  QWEN_27B: 'Qwen/Qwen3.5-27B',
-  FLUX_CANONICAL: 'black-forest-labs/FLUX.1-dev',
-  GEMMA_4_31B: 'google/gemma-4-31B-it',
+  INDIC_CONFORMER: 'ai4bharat/indic-conformer-600m-multilingual',
+  OMNIVOICE: 'k2-fsa/OmniVoice',
+  RTDETR_V2: 'rtdetr-v2-r50vd',
 } as const;
 
 export type SandboxModelValue =
