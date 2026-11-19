@@ -441,6 +441,24 @@ describe('HeyGen config', () => {
     expect(await sentConfig({ model: 'heygen', config })).toEqual(config);
   });
 
+  it('maps a plain config whatever the casing of the model name', async () => {
+    const config = { audioId: 'a-1' };
+    expect(await sentConfig({ model: ' HeyGen ', config })).toEqual({
+      audio_id: 'a-1',
+    });
+  });
+
+  it('rejects both spellings of one option', () => {
+    for (const options of [
+      { audioId: 'a-1', audio_id: 'a-2' },
+      { audio_id: 'a-2', audioId: 'a-1' },
+    ]) {
+      expect(() => new HeyGenConfig(options as never).toDict()).toThrow(
+        /audioId or audio_id, not both/
+      );
+    }
+  });
+
   it("leaves another model's config alone", async () => {
     const config = { audioId: 'a-1' };
     expect(await sentConfig({ model: 'seedance', config })).toEqual(config);

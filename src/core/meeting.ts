@@ -88,11 +88,11 @@ export class Meeting {
     timeout: number = DEFAULT_MEETING_TIMEOUT,
     interval: number = DEFAULT_POLLING_INTERVAL
   ): Promise<boolean> => {
-    const startTime = Date.now();
+    const startTime = performance.now();
     const timeoutMs = timeout * 1000;
     const intervalMs = interval * 1000;
 
-    while (Date.now() - startTime < timeoutMs) {
+    while (performance.now() - startTime < timeoutMs) {
       await this.refresh();
       if (this.status === targetStatus) {
         return true;

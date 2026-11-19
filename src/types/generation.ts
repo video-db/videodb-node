@@ -5,6 +5,8 @@
  * works for options the service adds before the SDK lists them.
  */
 
+import { VideodbError } from '@/utils/error';
+
 /** camelCase option names and the snake_case keys the API expects. */
 const HEYGEN_WIRE_KEYS: Record<string, string> = {
   audioId: 'audio_id',
@@ -75,7 +77,15 @@ export class HeyGenConfig {
   toDict(): Record<string, unknown> {
     const out: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(this.options)) {
-      if (value != null) out[HEYGEN_WIRE_KEYS[key] ?? key] = value;
+      if (value == null) continue;
+      const wireKey = HEYGEN_WIRE_KEYS[key] ?? key;
+      if (wireKey in out) {
+        const camelKey = Object.keys(HEYGEN_WIRE_KEYS).find(
+          k => HEYGEN_WIRE_KEYS[k] === wireKey
+        );
+        throw new VideodbError(`Pass ${camelKey} or ${wireKey}, not both`);
+      }
+      out[wireKey] = value;
     }
     return out;
   }

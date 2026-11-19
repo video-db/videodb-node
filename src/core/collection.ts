@@ -940,7 +940,7 @@ export class Collection implements ICollection {
     const heygenConfig =
       options.config instanceof HeyGenConfig
         ? options.config
-        : options.model === 'heygen' && options.config
+        : options.model?.trim().toLowerCase() === 'heygen' && options.config
           ? new HeyGenConfig(options.config as HeyGenConfigOptions)
           : undefined;
     const optional: Record<string, unknown> = {
