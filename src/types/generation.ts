@@ -6,7 +6,7 @@
  */
 
 export interface HeyGenConfigOptions {
-  /** Voice name, exact spelling (default `Warm Pro Narrator`). `HeyGenConfig.voices` has a starter set */
+  /** Voice name, exact spelling (default `Warm Pro Narrator`). Starter set in `HeyGenConfig.voices`; every voice at https://docs.videodb.io/api-reference/generation/models/heygen */
   voice?: string;
   /** Your audio ID to lip-sync instead of speaking the prompt; not combinable with `voice` */
   audio_id?: string;
