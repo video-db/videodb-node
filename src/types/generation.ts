@@ -5,13 +5,19 @@
  * works for options the service adds before the SDK lists them.
  */
 
+/** camelCase option names and the snake_case keys the API expects. */
+const HEYGEN_WIRE_KEYS: Record<string, string> = {
+  audioId: 'audio_id',
+  talkingStyle: 'talking_style',
+};
+
 export interface HeyGenConfigOptions {
   /** Voice name, exact spelling (default `Warm Pro Narrator`). Starter set in `HeyGenConfig.voices`; every voice at https://docs.videodb.io/api-reference/generation/models/heygen */
   voice?: string;
   /** Your audio ID to lip-sync instead of speaking the prompt; not combinable with `voice` */
-  audio_id?: string;
+  audioId?: string;
   /** One of `HeyGenConfig.talkingStyles` (default `stable`) */
-  talking_style?: 'stable' | 'expressive';
+  talkingStyle?: 'stable' | 'expressive';
   /** One of `HeyGenConfig.expressions` */
   expression?: 'happy';
   /** Burn in subtitles */
@@ -62,10 +68,14 @@ export class HeyGenConfig {
 
   constructor(readonly options: HeyGenConfigOptions = {}) {}
 
+  /**
+   * The request `config`: set options only, with `audioId` and `talkingStyle`
+   * sent as `audio_id` and `talking_style`. Other keys pass through unchanged.
+   */
   toDict(): Record<string, unknown> {
     const out: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(this.options)) {
-      if (value != null) out[key] = value;
+      if (value != null) out[HEYGEN_WIRE_KEYS[key] ?? key] = value;
     }
     return out;
   }

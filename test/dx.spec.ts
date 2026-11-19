@@ -10,6 +10,8 @@ import { Collection } from '@/core/collection';
 import { SearchResponse } from '@/core/search/responses';
 import { GenerationJob } from '@/core/job';
 import { Understanding } from '@/core/understanding';
+import { HeyGenConfig } from '@/types/generation';
+import { PollSchedule } from '@/utils/poll';
 import {
   AuthenticationError,
   InvalidRequestError,
@@ -208,12 +210,12 @@ describe('polling', () => {
 });
 
 describe('server-paced polling', () => {
-  /** Fake clock: each sleep advances Date.now by its delay and resolves at once. */
+  /** Fake clock: each sleep advances performance.now by its delay and resolves at once. */
   let delays: number[];
   beforeEach(() => {
     delays = [];
     let now = 1_000_000;
-    jest.spyOn(Date, 'now').mockImplementation(() => now);
+    jest.spyOn(performance, 'now').mockImplementation(() => now);
     jest.spyOn(global, 'setTimeout').mockImplementation(((
       fn: () => void,
       ms: number
@@ -410,5 +412,49 @@ describe('SearchResponse keeps the old search() chaining', () => {
     await expect(res.getEmbedCode()).rejects.toThrow(
       /does not contain shot results/
     );
+  });
+});
+
+describe('HeyGen config', () => {
+  const sentConfig = async (options: object) => {
+    const { bodies, client } = recorder({ id: 'm-1' });
+    await new Collection(client, { id: 'c-1' } as never).generateVideo(
+      'Hi',
+      5,
+      undefined,
+      options
+    );
+    return (bodies[0] as { config: unknown }).config;
+  };
+
+  it('sends camelCase options under the keys the API expects', async () => {
+    const config = { audioId: 'a-1', talkingStyle: 'expressive' as const };
+    const wire = { audio_id: 'a-1', talking_style: 'expressive' };
+    expect(
+      await sentConfig({ model: 'heygen', config: new HeyGenConfig(config) })
+    ).toEqual(wire);
+    expect(await sentConfig({ model: 'heygen', config })).toEqual(wire);
+  });
+
+  it('passes API keys and unlisted options through unchanged', async () => {
+    const config = { audio_id: 'a-1', newOption: 1, caption: true };
+    expect(await sentConfig({ model: 'heygen', config })).toEqual(config);
+  });
+
+  it("leaves another model's config alone", async () => {
+    const config = { audioId: 'a-1' };
+    expect(await sentConfig({ model: 'seedance', config })).toEqual(config);
+  });
+});
+
+describe('poll deadline', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('ignores system clock changes', () => {
+    let wall = 1_000_000;
+    jest.spyOn(Date, 'now').mockImplementation(() => wall);
+    const schedule = new PollSchedule({ maxPollTime: 60_000 });
+    wall += 3_600_000;
+    expect(schedule.expired).toBe(false);
   });
 });

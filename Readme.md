@@ -46,6 +46,7 @@ The VideoDB Node.js SDK lets you upload, understand, search, and edit video from
 - [Ask questions](#ask-questions)
 - [Legacy spoken-word search](#legacy-spoken-word-search)
 - [Edit with a timeline](#edit-with-a-timeline)
+- [Generate a talking avatar](#generate-a-talking-avatar)
 - [Handle errors](#handle-errors)
 - [Contributing](#contributing)
 - [License](#license)
@@ -164,6 +165,51 @@ console.log(await timeline.generateStream());
 console.log(await video.addSubtitle());
 ```
 
+Clips also take a colour grade, motion, or a named effect:
+
+```ts
+import { Effect, Keyframe, KeyframeProperty, Lut, Motion, MotionPreset } from 'videodb';
+
+const asset = new EditorVideoAsset({ id: video.id, start: 0 });
+
+// Colour grade from a 3D .cube file; set timeline.lut to grade the whole frame
+const lut = await Lut.fromFile(conn, 'teal-orange.cube', 0.8);
+
+// Entrance and exit presets, plus keyframes
+const motion = new Motion({
+  enter: new MotionPreset({ preset: 'slide_up', duration: 0.5 }),
+  exit: new MotionPreset({ preset: 'fade' }),
+  keyframes: {
+    [KeyframeProperty.scale]: [
+      new Keyframe({ time: 0, value: 0.8 }),
+      new Keyframe({ time: 0.5, value: 1, easing: 'back_out' }),
+    ],
+  },
+});
+main.addClip(5, new Clip({ asset, duration: 5, lut, motion }));
+
+// A named effect; it cannot be combined with motion
+main.addClip(10, new Clip({ asset, duration: 5, effect: Effect.zoomIn }));
+```
+
+## Generate a talking avatar
+
+`generateVideo()` takes a `model`. With `heygen`, a face photo speaks the prompt as a script. Options specific to one model go in `config`.
+
+```ts
+import { HeyGenConfig } from 'videodb';
+
+const avatar = await coll.generateVideo('Welcome to VideoDB.', 5, undefined, {
+  model: 'heygen',
+  imageUrl: 'https://example.com/face.jpg',
+  aspectRatio: '16:9',
+  config: new HeyGenConfig({ voice: 'Warm Pro Narrator', talkingStyle: 'expressive' }),
+});
+console.log(avatar?.playerUrl);
+```
+
+Set `audioId` in the config to lip-sync your own audio instead of speaking the prompt. `conn.getGenerationModels()` lists the image and video models your account can use.
+
 ## Handle errors
 
 Every error the SDK throws extends `VdbBaseError`. Errors from the API include the server's explanation in the message, and also carry the HTTP `status`, a machine-readable `code` when the server sends one, and the response body in `data`.
@@ -177,6 +223,21 @@ try {
   if (err instanceof VdbBaseError) {
     console.error(err.message); // "Error 400: Video not found"
     console.error(err.status, err.code); // 400 "400"
+  }
+}
+```
+
+A wait that outlives its deadline throws `JobTimeoutError`. The job keeps running on VideoDB, and the error carries `jobId` and `outputUrl` so you can pick it up later.
+
+```ts
+import { JobTimeoutError } from 'videodb';
+
+try {
+  await understanding.waitUntilComplete(60);
+} catch (err) {
+  if (err instanceof JobTimeoutError) {
+    const resumed = await video.getUnderstanding(err.jobId!);
+    await resumed.waitUntilComplete();
   }
 }
 ```

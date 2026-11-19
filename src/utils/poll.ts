@@ -83,7 +83,8 @@ export class PollSchedule {
   #minInterval: number;
   #jitter: number;
   #next: number;
-  #start = Date.now();
+  // Monotonic, so a system clock change mid-wait cannot move the deadline.
+  #start = performance.now();
 
   constructor(options: PollScheduleOptions = {}) {
     this.interval = options.interval != null ? options.interval : null;
@@ -100,7 +101,7 @@ export class PollSchedule {
   }
 
   public get elapsed(): number {
-    return Date.now() - this.#start;
+    return performance.now() - this.#start;
   }
 
   public get remaining(): number {

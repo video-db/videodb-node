@@ -1,5 +1,5 @@
 import { ApiPath } from '@/constants';
-import { HeyGenConfig } from '@/types/generation';
+import { HeyGenConfig, type HeyGenConfigOptions } from '@/types/generation';
 import type {
   CollectionBase,
   ICollection,
@@ -928,7 +928,7 @@ export class Collection implements ICollection {
       referenceImages?: string[];
       aspectRatio?: string;
       resolution?: string;
-      config?: HeyGenConfig | Record<string, unknown>;
+      config?: HeyGenConfig | HeyGenConfigOptions | Record<string, unknown>;
     } = {}
   ): Promise<Video | undefined> => {
     const body: Record<string, unknown> = {
@@ -936,16 +936,20 @@ export class Collection implements ICollection {
       duration,
       callback_url: callbackUrl,
     };
+    // A plain HeyGen config gets the same key mapping as a HeyGenConfig.
+    const heygenConfig =
+      options.config instanceof HeyGenConfig
+        ? options.config
+        : options.model === 'heygen' && options.config
+          ? new HeyGenConfig(options.config as HeyGenConfigOptions)
+          : undefined;
     const optional: Record<string, unknown> = {
       model: options.model,
       image_url: options.imageUrl,
       reference_images: options.referenceImages,
       aspect_ratio: options.aspectRatio,
       resolution: options.resolution,
-      config:
-        options.config instanceof HeyGenConfig
-          ? options.config.toDict()
-          : options.config,
+      config: heygenConfig ? heygenConfig.toDict() : options.config,
     };
     for (const [key, value] of Object.entries(optional)) {
       if (value != null) body[key] = value;
