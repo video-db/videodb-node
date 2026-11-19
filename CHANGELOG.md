@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (release as minor: 0.4.0)
+## [0.4.0] (2026-11-19)
 
 Clearer errors, search fixes, and install and polling reliability. Error messages, poll timeouts, `search({ filter })`, and `shot.text` behave differently from 0.3.2; see Upgrade notes.
 
@@ -15,6 +15,8 @@ Clearer errors, search fixes, and install and polling reliability. Error message
 
 ### Added
 
+- **HeyGen talking avatars.** `generateVideo(prompt, duration, callbackUrl, { model: 'heygen', imageUrl, aspectRatio, resolution, config })` makes a talking-head video from a face photo and a script, or lip-syncs it to your own audio with `config.audio_id`. Model-specific options go in `config`. Pass a `HeyGenConfig` (with `voices`, `talkingStyles`, `maxSeconds`, `docs`) or a plain object. Other options: `model`, `imageUrl`, `referenceImages`, `aspectRatio`, `resolution`.
+- **`connection.getGenerationModels()`** lists the image and video models the account can use.
 - **Error details.** API errors carry `status` (HTTP status, or a numeric `error_code` from a `success: false` body), `code` (the server's `error_code`, such as `llm_dollar_budget_reached`), and `data` (the response body).
 - **`VdbBaseError` is exported.** Every SDK error extends it, so `instanceof VdbBaseError` catches them all.
 - **Search and ask warnings.** `SearchResponse`, `SearchResult`, and `AskResponse` expose the server's `warnings`, for example why `search()` on a video with no Search V2 index came back empty. Nothing is printed.
