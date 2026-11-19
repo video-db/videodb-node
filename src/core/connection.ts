@@ -268,6 +268,21 @@ export class Connection {
   };
 
   /**
+   * Get the generation models available to this account
+   * @returns `{ image: [...], video: [...] }`
+   */
+  public getGenerationModels = async (): Promise<{
+    image: string[];
+    video: string[];
+  }> => {
+    const res = await this.vhttp.get<{ image: string[]; video: string[] }>([
+      ApiPath.generate,
+      ApiPath.models,
+    ]);
+    return res.data;
+  };
+
+  /**
    * Get a list of all invoices
    * @returns List of invoices
    */

@@ -137,6 +137,7 @@ export {
   type FieldSchemaData,
 } from './core/indexManifest';
 export { GenerationJob, type JobStatus, type JobData } from './core/job';
+export { HeyGenConfig, type HeyGenConfigOptions } from './types/generation';
 export { Sandbox, type SandboxBase } from './core/sandbox';
 export { SandboxModel, type SandboxModelValue } from './core/sandboxModels';
 export { VoiceClone, type VoiceCloneBase } from './core/voiceClone';

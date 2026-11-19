@@ -1,4 +1,5 @@
 import { ApiPath } from '@/constants';
+import { HeyGenConfig } from '@/types/generation';
 import type {
   CollectionBase,
   ICollection,
@@ -903,20 +904,53 @@ export class Collection implements ICollection {
   };
 
   /**
-   * Generate a video from the given text prompt
-   * @param prompt - Text prompt used as input for video generation
-   * @param duration - Duration of the generated video in seconds (5-8)
+   * Generate a video with any video model. Arguments shared by several models are
+   * options; settings specific to one model go in `options.config`.
+   * `HeyGenConfig` lists HeyGen's allowed values, and
+   * https://docs.videodb.io/api-reference/generation/generate_video has every option.
+   * @param prompt - Text prompt. For `heygen`, the exact script the avatar speaks
+   * @param duration - Duration in seconds, where the model takes one (default model: 5-8)
    * @param callbackUrl - URL to receive callback once video generation is complete
+   * @param options - `model`, `imageUrl` (start frame, or the `heygen` face photo),
+   *   `referenceImages`, `aspectRatio`, `resolution`, and model-specific `config`
+   *   (e.g. `HeyGenConfig`)
    * @returns Video object
    */
   public generateVideo = async (
-    prompt: string,
+    prompt?: string,
     duration: number = 5,
-    callbackUrl?: string
+    callbackUrl?: string,
+    options: {
+      model?: string;
+      imageUrl?: string;
+      referenceImages?: string[];
+      aspectRatio?: string;
+      resolution?: string;
+      config?: HeyGenConfig | Record<string, unknown>;
+    } = {}
   ): Promise<Video | undefined> => {
-    const res = await this.#vhttp.post<VideoBase, object>(
+    const body: Record<string, unknown> = {
+      prompt,
+      duration,
+      callback_url: callbackUrl,
+    };
+    const optional: Record<string, unknown> = {
+      model: options.model,
+      image_url: options.imageUrl,
+      reference_images: options.referenceImages,
+      aspect_ratio: options.aspectRatio,
+      resolution: options.resolution,
+      config:
+        options.config instanceof HeyGenConfig
+          ? options.config.toDict()
+          : options.config,
+    };
+    for (const [key, value] of Object.entries(optional)) {
+      if (value != null) body[key] = value;
+    }
+    const res = await this.#vhttp.post<VideoBase, typeof body>(
       [collection, this.id, generate, video],
-      { prompt, duration, callback_url: callbackUrl }
+      body
     );
     if (res.data) {
       return new Video(this.#vhttp, res.data);
