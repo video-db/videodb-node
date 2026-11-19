@@ -101,7 +101,7 @@ export class Sandbox {
     timeout: number = 300,
     interval: number = 5
   ): Promise<Sandbox> => {
-    const deadline = Date.now() + timeout * 1000;
+    const deadline = performance.now() + timeout * 1000;
     for (;;) {
       await this.refresh();
       if (this.status && READY_STATUSES.includes(this.status)) return this;
@@ -110,7 +110,7 @@ export class Sandbox {
           `Sandbox ${this.id} entered terminal state: ${this.status}`
         );
       }
-      if (Date.now() >= deadline) {
+      if (performance.now() >= deadline) {
         throw new RequestTimeoutError(
           `Sandbox ${this.id} not ready within ${timeout}s`
         );
@@ -144,11 +144,11 @@ export class Sandbox {
     timeout: number = 120,
     interval: number = 5
   ): Promise<Sandbox> => {
-    const deadline = Date.now() + timeout * 1000;
+    const deadline = performance.now() + timeout * 1000;
     for (;;) {
       await this.refresh();
       if (this.status && TERMINAL_STATUSES.includes(this.status)) return this;
-      if (Date.now() >= deadline) {
+      if (performance.now() >= deadline) {
         throw new RequestTimeoutError(
           `Sandbox ${this.id} did not stop within ${timeout}s`
         );

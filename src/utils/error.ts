@@ -87,6 +87,37 @@ export class RequestTimeoutError<T = undefined> extends VdbBaseError {
   }
 }
 
+/** Resume handle carried by {@link JobTimeoutError}. */
+export interface JobTimeoutDetails {
+  /** URL to poll later for the job's result. */
+  outputUrl?: string;
+  /** Job (or understanding run) id, when the wait loop knows it. */
+  jobId?: string;
+  /** Last status response seen before the deadline. */
+  response?: unknown;
+}
+
+/**
+ * Raised when a job outlives the SDK's polling deadline. The job is still
+ * running on VideoDB; `outputUrl` / `jobId` let the caller resume polling.
+ * `data` is `{ outputUrl, jobId }`.
+ * Mirrors `videodb.exceptions.JobTimeoutError`.
+ */
+export class JobTimeoutError extends RequestTimeoutError {
+  public outputUrl?: string;
+  public jobId?: string;
+  public response?: unknown;
+
+  constructor(message?: string, details: JobTimeoutDetails = {}) {
+    super(message);
+    this.name = 'JobTimeoutError';
+    this.outputUrl = details.outputUrl;
+    this.jobId = details.jobId;
+    this.response = details.response;
+    this.data = { outputUrl: details.outputUrl, jobId: details.jobId };
+  }
+}
+
 /**
  * Error thrown when a capture operation fails
  */

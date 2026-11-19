@@ -137,6 +137,7 @@ export {
   type FieldSchemaData,
 } from './core/indexManifest';
 export { GenerationJob, type JobStatus, type JobData } from './core/job';
+export { HeyGenConfig, type HeyGenConfigOptions } from './types/generation';
 export { Sandbox, type SandboxBase } from './core/sandbox';
 export { SandboxModel, type SandboxModelValue } from './core/sandboxModels';
 export { VoiceClone, type VoiceCloneBase } from './core/voiceClone';
@@ -159,7 +160,8 @@ export {
   buildIframeEmbedCode,
   playerUrlToEmbedUrl,
 } from './utils';
-export { RequestTimeoutError } from './utils/error';
+export { RequestTimeoutError, JobTimeoutError } from './utils/error';
+export type { JobTimeoutDetails } from './utils/error';
 
 // Capture session types
 export {
@@ -206,10 +208,18 @@ export {
   CaptionBorderStyle,
   CaptionAlignment,
   CaptionAnimation,
+  Effect,
+  Easing,
+  MotionPresetName,
+  KeyframeProperty,
   // Helper classes
   Offset,
   Crop,
   Transition,
+  Keyframe,
+  MotionPreset,
+  Motion,
+  Lut,
   Font,
   Border,
   Shadow,
@@ -233,6 +243,10 @@ export {
   type OffsetConfig,
   type CropConfig,
   type TransitionConfig,
+  type KeyframeConfig,
+  type MotionPresetConfig,
+  type MotionConfig,
+  type LutConfig,
   type FontConfig,
   type BorderConfig,
   type ShadowConfig,

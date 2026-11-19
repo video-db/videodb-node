@@ -256,11 +256,11 @@ export class Index {
     timeout: number = 1800,
     pollInterval: number = 10
   ): Promise<Index> => {
-    const deadline = Date.now() + timeout * 1000;
+    const deadline = performance.now() + timeout * 1000;
     for (;;) {
       await this.refresh();
       if (this.isComplete) return this;
-      if (Date.now() >= deadline) {
+      if (performance.now() >= deadline) {
         throw new RequestTimeoutError(
           `Index ${this.indexId} did not complete within ${timeout}s`
         );

@@ -49,6 +49,7 @@ export const ApiPath = {
   alert: 'alert',
   generate_url: 'generate_url',
   generate: 'generate',
+  models: 'models',
   text: 'text',
   web: 'web',
   translate: 'translate',
@@ -248,8 +249,22 @@ export const HttpClientDefaultValues = {
   backoff_factor: 0.1,
   /** Max time (ms) to poll an async output URL before timing out. */
   maxPollTime: 500 * 1000,
-  /** Interval (ms) between polls of an async output URL. */
+  /** Interval (ms) between polls when the server sends no `retry_after`. */
   pollInterval: 5 * 1000,
+} as const;
+
+/**
+ * Fallback poll cadence (ms), used when the server sends no `retry_after`
+ * and the caller forced no interval: a flat 5s. `maxInterval` also clamps
+ * server hints. Mirrors `videodb._constants.PollDefaults`.
+ */
+export const PollDefaults = {
+  minInterval: 500,
+  firstInterval: HttpClientDefaultValues.pollInterval,
+  factor: 1,
+  maxInterval: 30 * 1000,
+  jitter: 0,
+  maxPollTime: HttpClientDefaultValues.maxPollTime,
 } as const;
 
 export const MaxSupported = {

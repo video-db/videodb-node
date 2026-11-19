@@ -7,11 +7,12 @@ import type {
 import {
   AuthenticationError,
   InvalidRequestError,
-  RequestTimeoutError,
+  JobTimeoutError,
   VdbBaseError,
   VideodbError,
 } from '@/utils/error';
 import { fromSnakeToCamel } from '@/utils';
+import { PollSchedule, retryAfterFrom } from '@/utils/poll';
 import { SDK_CLIENT_HEADER } from '@/version';
 import axios, {
   AxiosError,
@@ -23,7 +24,6 @@ import axios, {
 } from 'axios';
 import FormData from 'form-data';
 
-const POLLING_INTERVAL = HttpClientDefaultValues.pollInterval;
 const MAX_POLL_RETRIES = 3;
 
 /** Network errors, 429 and 5xx are worth retrying; other failures are not. */
@@ -46,8 +46,6 @@ const apiError = (body: {
     code: body.error_code != null ? String(body.error_code) : undefined,
     data: body,
   });
-const MAX_POLLING_TIME = HttpClientDefaultValues.maxPollTime;
-
 /**
  * Per-call polling controls, mirroring the Python client's
  * `wait` / `max_poll_time` / `poll_interval` kwargs.
@@ -55,9 +53,15 @@ const MAX_POLLING_TIME = HttpClientDefaultValues.maxPollTime;
 export interface RequestPollOptions {
   /** When false, skip polling the async output URL and return immediately. */
   wait?: boolean;
-  /** Override the max poll time (ms) for this call. */
+  /**
+   * Deadline (ms) for this call. Default 500s, which the server's `max_wait`
+   * may extend; an explicit value is kept as given.
+   */
   maxPollTime?: number;
-  /** Override the poll interval (ms) for this call. */
+  /**
+   * Force a fixed poll interval (ms) for this call. Default: the server's
+   * `retry_after` hint, else 5s.
+   */
   pollInterval?: number;
   /**
    * When false, do NOT snake→camel convert the response body. Use for endpoints
@@ -172,9 +176,10 @@ export class HttpClient {
     this.#authConfig = authConfig;
   }
 
-  #sleep = (ms: number): Promise<void> => {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  };
+  /** Base URL this client sends requests to. */
+  public get baseURL(): string {
+    return this.#baseURL;
+  }
 
   /**
    * Converts response data from snake_case to camelCase
@@ -193,36 +198,39 @@ export class HttpClient {
    */
   #getOutput = async <R>(
     url: string,
-    maxPollTime: number = MAX_POLLING_TIME,
-    pollInterval: number = POLLING_INTERVAL,
+    maxPollTime?: number,
+    pollInterval?: number,
     convert: boolean = true
   ): Promise<R> => {
-    const startTime = Date.now();
+    const schedule = new PollSchedule({ interval: pollInterval, maxPollTime });
 
     // Counts consecutive transient failures only; a good poll resets it, so a
-    // flapping endpoint keeps polling until maxPollTime. Retries wait the normal
-    // pollInterval (no backoff, Retry-After ignored), which is fine for long jobs.
+    // flapping endpoint keeps polling until the deadline.
     let transientFailures = 0;
 
-    while (Date.now() - startTime < maxPollTime) {
-      let data: ApiResponseOf<R>;
+    for (;;) {
+      let response: AxiosResponse<ApiResponseOf<R>>;
       try {
-        data = (await this.#db.get<ApiResponseOf<R>>(url)).data;
+        response = await this.#db.get<ApiResponseOf<R>>(url);
         transientFailures = 0;
       } catch (error) {
         // A dropped connection or 5xx/429 mid-poll shouldn't kill a long job.
         if (isTransient(error) && ++transientFailures <= MAX_POLL_RETRIES) {
-          await this.#sleep(pollInterval);
+          this.#throwPollTimeout(schedule, url);
+          await schedule.sleep((error as AxiosError).response);
           continue;
         }
         throw error;
       }
+      const data = response.data;
 
       if (
         data.status === ResponseStatus.in_progress ||
         data.status === ResponseStatus.processing
       ) {
-        await this.#sleep(pollInterval);
+        schedule.observe(data);
+        this.#throwPollTimeout(schedule, url, data);
+        await schedule.sleep(retryAfterFrom(data) !== null ? data : response);
         continue;
       }
 
@@ -240,13 +248,20 @@ export class HttpClient {
       }
       return convert ? this.#convertResponseData(data.data) : data.data;
     }
+  };
 
-    const timeout = new RequestTimeoutError(
-      `Polling timed out after ${Math.round(maxPollTime / 1000)}s. ` +
-        `The job may still finish; its result will be at ${url}`
+  /** Throws a {@link JobTimeoutError} for `url` once the schedule's deadline has passed. */
+  #throwPollTimeout = (
+    schedule: PollSchedule,
+    url: string,
+    lastResponse?: unknown
+  ): void => {
+    if (!schedule.expired) return;
+    throw new JobTimeoutError(
+      `Polling timed out after ${Math.round(schedule.maxPollTime / 1000)}s. ` +
+        `The job may still finish; its result will be at ${url}`,
+      { outputUrl: url, response: lastResponse }
     );
-    timeout.data = { outputUrl: url };
-    throw timeout;
   };
 
   /**

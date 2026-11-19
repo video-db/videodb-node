@@ -1,19 +1,26 @@
 # Changelog
 
-## Unreleased (release as minor: 0.4.0)
+## [0.4.0] (2026-11-19)
 
 Clearer errors, search fixes, and install and polling reliability. Error messages, poll timeouts, `search({ filter })`, and `shot.text` behave differently from 0.3.2; see Upgrade notes.
 
 ### Changed
 
+- **`Clip` `effect` is checked.** It must be `zoom_in` or `shake` (`Effect.zoomIn`, `Effect.shake`), and any other name throws before the request, as in videodb-python. Plain strings still type-check.
 - **Error messages include the server's explanation.** `Error 400: Bad Request` is now `Error 400: Video not found`, and `Authentication Error: ` is now `Authentication Error: Invalid API key`. The `connect()` hint for a missing API key is in the message. Network and unexpected errors include their reason (`Request failed: <reason>`). Classes and `cause` are unchanged.
 - **A poll timeout throws `RequestTimeoutError`.** It used to surface as `VideodbError('Unidentified Error')` with the timeout buried in `cause.cause`. The message and `data.outputUrl` give the job's output URL, so the result can be fetched later.
 - **`search({ filter })` sends the filter.** `Video.search()` and `Collection.search()` used to drop it.
 - **Search V2 shots have `text`.** V2 hits put their text in `metadata.embeddedText` and left `shot.text` null. It now falls back to that.
+- **`SandboxModel` lists the models sandboxes run today.** It now holds `QWEN_4B`, `QWEN_9B`, `WHISPER_LARGE_V3_TURBO`, `INDIC_CONFORMER`, `OMNIVOICE`, and `RTDETR_V2`. The retired `FLUX`, `FLUX_CANONICAL`, `GEMMA_4_E2B`, `GEMMA_4_26B`, `GEMMA_4_31B`, `QWEN_27B`, `STABLE_AUDIO_OPEN`, and the duplicate `OMNIVOICE_CANONICAL` are removed.
 - **Upload errors name the reason.** A missing local file throws `File not found: <path>` before any network call, and other failures read `Upload failed: <reason>` instead of `Upload failed, reason: `.
 
 ### Added
 
+- **HeyGen talking avatars.** `generateVideo(prompt, duration, callbackUrl, { model: 'heygen', imageUrl, aspectRatio, resolution, config })` makes a talking-head video from a face photo and a script, or lip-syncs it to your own audio with `config.audioId`. Model-specific options go in `config`. Pass a `HeyGenConfig` (with `voices`, `talkingStyles`, `maxSeconds`, `docs`) or a plain object. Its options are camelCase (`audioId`, `talkingStyle`) like the rest of the SDK; the API's `audio_id` and `talking_style` also work, and passing both spellings of one option throws. Other options: `model`, `imageUrl`, `referenceImages`, `aspectRatio`, `resolution`.
+- **`connection.getGenerationModels()`** lists the image and video models the account can use.
+- **Editor colour grade and motion.** `Lut` (a `.cube` grade on a `Clip` or `EditorTimeline`, with `Lut.fromFile`), `Motion` with `MotionPreset` enter/exit presets and `Keyframe` tracks, and `Effect` names (`zoomIn`, `shake`). These match videodb-python 0.5.2.
+- **Server-paced polling.** Waits follow the server's `retry_after` hint (clamped to 0.5–30s), and `max_wait` extends a default deadline. A deadline you pass is kept. Deadlines on every poll and `waitFor…` loop use a monotonic clock, so a system clock change during a wait does not move them. A job-wait timeout throws `JobTimeoutError` (a `RequestTimeoutError`) carrying `outputUrl` and `jobId`, so the result can be fetched later. Partial and cancelled understanding runs count as finished.
+- **`audio.generateTranscript(force, languageCode, sandboxId)`** runs transcription on a Whisper sandbox.
 - **Error details.** API errors carry `status` (HTTP status, or a numeric `error_code` from a `success: false` body), `code` (the server's `error_code`, such as `llm_dollar_budget_reached`), and `data` (the response body).
 - **`VdbBaseError` is exported.** Every SDK error extends it, so `instanceof VdbBaseError` catches them all.
 - **Search and ask warnings.** `SearchResponse`, `SearchResult`, and `AskResponse` expose the server's `warnings`, for example why `search()` on a video with no Search V2 index came back empty. Nothing is printed.
@@ -32,6 +39,8 @@ Clearer errors, search fixes, and install and polling reliability. Error message
 - Code that caught `VideodbError` to handle poll timeouts should catch `RequestTimeoutError` (or `VdbBaseError`).
 - A `filter` passed to `search()` is now applied, so results can be narrower than before. A filter on a field the index can't filter on now fails with the server's reason (e.g. `Field 'start' is not filterable on index 'transcript'`) instead of being ignored.
 - `shot.text` can now be a string where it used to be `null` for Search V2 hits.
+- Node.js 16 or later is required, and `package.json` now says so in `engines`.
+- Code that reads a removed `SandboxModel` key gets `undefined` at runtime and a type error in TypeScript. The server already rejects those models. Use `SandboxModel.OMNIVOICE` in place of `OMNIVOICE_CANONICAL`.
 
 ## [0.3.2] (2026-09-02)
 

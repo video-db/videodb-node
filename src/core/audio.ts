@@ -160,15 +160,23 @@ export class Audio implements IAudio {
    * Generate transcript for the audio
    * @param force - Force generate new transcript
    * @param languageCode - Language code of the spoken audio
+   * @param sandboxId - Run transcription on this Whisper-backed sandbox instead
+   *   of the default hosted path
    * @returns Success dict if transcript generated
    */
   public generateTranscript = async (
     force?: boolean,
-    languageCode?: string
+    languageCode?: string,
+    sandboxId?: string
   ): Promise<{ success: boolean; message: string } | TranscriptResponse> => {
+    const body: Record<string, unknown> = {
+      force: !!force,
+      language_code: languageCode,
+    };
+    if (sandboxId) body.sandbox_id = sandboxId;
     const res = await this.#vhttp.post<TranscriptResponse, object>(
       [audio, this.id, transcription],
-      { force: !!force, language_code: languageCode }
+      body
     );
     const transcript = res.data?.wordTimestamps;
     if (transcript && transcript.length > 0) {

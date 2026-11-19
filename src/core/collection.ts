@@ -1,4 +1,5 @@
 import { ApiPath } from '@/constants';
+import { HeyGenConfig, type HeyGenConfigOptions } from '@/types/generation';
 import type {
   CollectionBase,
   ICollection,
@@ -760,7 +761,9 @@ export class Collection implements ICollection {
       config?: Record<string, unknown>;
       sandboxId?: string;
       wait?: boolean;
+      /** Force a fixed number of seconds between job polls when `wait` is true (default: the server's `retry_after` hint, else 5). */
       pollInterval?: number;
+      /** Maximum seconds to wait when `wait` is true (default 600). */
       timeout?: number;
     } = {}
   ): Promise<Image | GenerationJob | JobData | undefined> => {
@@ -782,10 +785,9 @@ export class Collection implements ICollection {
     if (data.jobId || data.job_id) {
       const job = GenerationJob.fromData(this.#vhttp, data, 'image');
       return options.wait
-        ? ((await job.wait(
-            options.timeout ?? 600,
-            options.pollInterval ?? 5
-          )) as Image | JobData)
+        ? ((await job.wait(options.timeout ?? 600, options.pollInterval)) as
+            | Image
+            | JobData)
         : job;
     }
     return new Image(this.#vhttp, data as unknown as ImageBase);
@@ -860,7 +862,9 @@ export class Collection implements ICollection {
       voiceCloneId?: string;
       cloneVoiceId?: string;
       wait?: boolean;
+      /** Force a fixed number of seconds between job polls when `wait` is true (default: the server's `retry_after` hint, else 5). */
       pollInterval?: number;
+      /** Maximum seconds to wait when `wait` is true (default 600). */
       timeout?: number;
     } = {}
   ): Promise<Audio | GenerationJob | JobData | undefined> => {
@@ -893,30 +897,66 @@ export class Collection implements ICollection {
     if (data.jobId || data.job_id) {
       const job = GenerationJob.fromData(this.#vhttp, data, 'audio');
       return options.wait
-        ? ((await job.wait(
-            options.timeout ?? 600,
-            options.pollInterval ?? 5
-          )) as Audio | JobData)
+        ? ((await job.wait(options.timeout ?? 600, options.pollInterval)) as
+            | Audio
+            | JobData)
         : job;
     }
     return new Audio(this.#vhttp, data as unknown as AudioBase);
   };
 
   /**
-   * Generate a video from the given text prompt
-   * @param prompt - Text prompt used as input for video generation
-   * @param duration - Duration of the generated video in seconds (5-8)
+   * Generate a video with any video model. Arguments shared by several models are
+   * options; settings specific to one model go in `options.config`.
+   * `HeyGenConfig` lists HeyGen's allowed values, and
+   * https://docs.videodb.io/api-reference/generation/models/heygen has every option.
+   * @param prompt - Text prompt. For `heygen`, the exact script the avatar speaks
+   * @param duration - Duration in seconds, where the model takes one (default model: 5-8)
    * @param callbackUrl - URL to receive callback once video generation is complete
+   * @param options - `model`, `imageUrl` (start frame, or the `heygen` face photo),
+   *   `referenceImages`, `aspectRatio`, `resolution`, and model-specific `config`
+   *   (e.g. `HeyGenConfig`)
    * @returns Video object
    */
   public generateVideo = async (
-    prompt: string,
+    prompt?: string,
     duration: number = 5,
-    callbackUrl?: string
+    callbackUrl?: string,
+    options: {
+      model?: string;
+      imageUrl?: string;
+      referenceImages?: string[];
+      aspectRatio?: string;
+      resolution?: string;
+      config?: HeyGenConfig | HeyGenConfigOptions | Record<string, unknown>;
+    } = {}
   ): Promise<Video | undefined> => {
-    const res = await this.#vhttp.post<VideoBase, object>(
+    const body: Record<string, unknown> = {
+      prompt,
+      duration,
+      callback_url: callbackUrl,
+    };
+    // A plain HeyGen config gets the same key mapping as a HeyGenConfig.
+    const heygenConfig =
+      options.config instanceof HeyGenConfig
+        ? options.config
+        : options.model?.trim().toLowerCase() === 'heygen' && options.config
+          ? new HeyGenConfig(options.config as HeyGenConfigOptions)
+          : undefined;
+    const optional: Record<string, unknown> = {
+      model: options.model,
+      image_url: options.imageUrl,
+      reference_images: options.referenceImages,
+      aspect_ratio: options.aspectRatio,
+      resolution: options.resolution,
+      config: heygenConfig ? heygenConfig.toDict() : options.config,
+    };
+    for (const [key, value] of Object.entries(optional)) {
+      if (value != null) body[key] = value;
+    }
+    const res = await this.#vhttp.post<VideoBase, typeof body>(
       [collection, this.id, generate, video],
-      { prompt, duration, callback_url: callbackUrl }
+      body
     );
     if (res.data) {
       return new Video(this.#vhttp, res.data);

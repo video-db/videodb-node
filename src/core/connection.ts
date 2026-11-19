@@ -268,6 +268,21 @@ export class Connection {
   };
 
   /**
+   * Get the generation models available to this account
+   * @returns `{ image: [...], video: [...] }`
+   */
+  public getGenerationModels = async (): Promise<{
+    image: string[];
+    video: string[];
+  }> => {
+    const res = await this.vhttp.get<{ image: string[]; video: string[] }>([
+      ApiPath.generate,
+      ApiPath.models,
+    ]);
+    return res.data;
+  };
+
+  /**
    * Get a list of all invoices
    * @returns List of invoices
    */
@@ -621,8 +636,8 @@ export class Connection {
    * @param tier - Compute tier (see {@link SandboxTier})
    * @param name - Human-readable name
    * @param callbackUrl - URL to notify on provisioning events
-   * @param modelCategories - Model categories to prepare for this sandbox, e.g. `["vlm", "image_generation"]`
-   * @param models - Specific model names to prepare for this sandbox
+   * @param modelCategories - Model categories to prepare for this sandbox, e.g. `["vlm", "speech_to_text"]`
+   * @param models - Specific model names to prepare for this sandbox, e.g. `["Qwen/Qwen3-4B"]`. With neither, the tier's default models are prepared
    */
   public createSandbox = async (
     tier?: string,
