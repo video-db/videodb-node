@@ -351,6 +351,8 @@ export interface SessionRecordingReady extends RecordingIdentity {
 
 /** Managed capture authorizes before capture and delivers automatically on stop. */
 export interface StartRecordingOptions extends StartLocalRecordingOptions {
+  /** One video target with optional audio, or audio-only default sources (managed.7+). */
+  channels: StartLocalRecordingOptions['channels'];
   owner: string;
   collectionId: string;
   uploadToken: string;

@@ -10,6 +10,8 @@ if (!process.argv.includes('--record') || !process.env.VIDEO_DB_API_KEY)
   throw new Error('Requires --record and VIDEO_DB_API_KEY');
 const withMic = process.argv.includes('--with-mic');
 const screenOnly = process.argv.includes('--screen-only');
+const audioOnly = process.argv.includes('--audio-only');
+assert.ok(!(audioOnly && screenOnly), 'Choose audio-only or screen-only');
 assert.ok(!(withMic && screenOnly), 'Choose --with-mic or --screen-only');
 const progress = [];
 const readyEvents = [];
@@ -72,11 +74,13 @@ function privacy(value) {
     collectionId: initial.collectionId,
     uploadToken: initial.token,
     channels: [
-      { channelId: 'window:none', type: 'video' },
+      ...(audioOnly ? [] : [{ channelId: 'window:none', type: 'video' }]),
       ...(screenOnly
         ? []
         : [{ channelId: 'system_audio:default', type: 'audio' }]),
-      ...(withMic ? [{ channelId: 'mic:default', type: 'audio' }] : []),
+      ...(withMic || audioOnly
+        ? [{ channelId: 'mic:default', type: 'audio' }]
+        : []),
     ],
   });
   recordingId = started.recordingId;
@@ -85,7 +89,7 @@ function privacy(value) {
     'STEP recording ' +
       (screenOnly
         ? 'screen only'
-        : withMic
+        : withMic || audioOnly
           ? 'microphone + system audio'
           : 'system audio') +
       ' for 5 seconds'
@@ -212,7 +216,8 @@ function privacy(value) {
     apiUrl: api,
     recordingId,
     tokenRequests: requests,
-    audio: screenOnly ? 'none' : withMic ? 'both' : 'system',
+    audio: screenOnly ? 'none' : withMic || audioOnly ? 'both' : 'system',
+    audioOnly,
     progressEvents: seen.length,
     stopMs,
     processingComplete: done,

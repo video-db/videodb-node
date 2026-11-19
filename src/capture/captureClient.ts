@@ -560,7 +560,8 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
         throw new Error('owner, collectionId and uploadToken are required');
       if (
         !Array.isArray(options.channels) ||
-        options.channels.filter(c => c.type === 'video').length !== 1 ||
+        options.channels.length === 0 ||
+        options.channels.filter(c => c.type === 'video').length > 1 ||
         options.channels.some(c =>
           c.type === 'video'
             ? !/^(screen|display:[0-9]+|window:[^:]+)$/.test(c.channelId)
@@ -569,7 +570,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
         )
       )
         throw new Error(
-          'Select one display/window and optional default audio sources'
+          'Select a display/window, default audio sources, or both'
         );
       if (!(await this.getCapabilities()).managedDeferredRecording)
         throw new Error(
@@ -1110,10 +1111,11 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
 
     this.currentSessionId = config.sessionId;
-    // macOS video capture creates a local recording; Windows/audio-only retain legacy behavior.
+    // Managed-capable macOS binaries also create a local recording for audio-only sessions.
     if (
       process.platform === 'darwin' &&
-      config.channels.some(ch => ch.type === 'video')
+      (config.channels.some(ch => ch.type === 'video') ||
+        this.binaryManager.capabilities?.managedDeferredRecording === true)
     ) {
       this.pendingSessions.add(config.sessionId);
       this.outcomes.delete(`session:${config.sessionId}`);

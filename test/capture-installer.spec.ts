@@ -6,8 +6,8 @@ const { binaryConfig } = require('../package.json');
 
 describe('capture binary version selection', () => {
   it.each([
-    ['darwin', 'arm64', '0.3.3-managed.5'],
-    ['darwin', 'x64', '0.3.3-managed.5'],
+    ['darwin', 'arm64', '0.3.3-managed.7'],
+    ['darwin', 'x64', '0.3.3-managed.7'],
     ['win32', 'x64', '0.3.1'],
   ] as const)(
     'selects %s-%s version %s in both installers',

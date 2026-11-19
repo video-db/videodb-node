@@ -1,6 +1,6 @@
 # Deferred recording migration
 
-SDK `0.5.3` on `release-0-5-3` selects macOS artifact `0.3.3-managed.5` (embedded native version `0.3.3`). This is a breaking change from `0.3.3-window.1`.
+SDK `0.5.3` on `release-0-5-3` selects macOS artifact `0.3.3-managed.7` (embedded native version `0.3.3`). This is a breaking change from `0.3.3-window.1`.
 
 `startLocalRecording()` is rejected by the new artifact. Tokenless local-only recording and local file paths are no longer its supported contract. Use `startRecording({owner, collectionId, uploadToken, channels})`; it authorizes a deferred server session before capture, without creating RTStreams. Connectivity is required at start. Stop automatically queues delivery.
 
@@ -74,3 +74,5 @@ The opt-in dev acceptance test is `npm run test:capture:managed` with a backend-
 Managed token refresh limits apply to consecutive attempts without delivery progress. Measured sending/server progress resets the count, allowing later token expirations during long deliveries. Relay acceptance alone does not reset it, and returning a previously supplied token is rejected.
 
 `stopRecording({timeoutMs})` permits a custom finalization budget. Its default is at least 155 seconds, increasing to one quarter of elapsed capture time plus 30 seconds for long recordings. A timeout leaves finalization running. A later `recording-ready` event clears capture state, permitting the next recording; it still does not mean processing is complete.
+
+Managed.7 also accepts audio-only channels, such as `[{channelId: "mic:default", type: "audio"}]`, optionally with `system_audio:default`. No video channel or window selection is required. The binary supplies a black picture for ingestion; the result remains a video. Empty selections and multiple video sources remain invalid. Use `--audio-only` with the acceptance test to verify this flow.

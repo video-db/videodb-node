@@ -544,3 +544,60 @@ test('a host declining a listed token request releases an ongoing shutdown wait'
   await closing;
   expect(manager.stop).toHaveBeenCalledTimes(1);
 });
+
+test.each([
+  ['mic:default'],
+  ['system_audio:default'],
+  ['mic:default', 'system_audio:default'],
+])('managed audio-only forwards selected sources: %j', async (...sources) => {
+  const { client, manager } = setup();
+  const channels = sources.map(channelId => ({
+    channelId,
+    type: 'audio' as const,
+  }));
+  await client.startRecording({ ...start, channels });
+  expect(manager.sendCommand).toHaveBeenCalledWith(
+    'startRecording',
+    expect.objectContaining({
+      channels: sources.map(channel_id => ({ channel_id, type: 'audio' })),
+    }),
+    310000
+  );
+  await client.stopRecording();
+  manager.emit('processing-complete', complete);
+  await client.shutdown();
+});
+
+test('managed selection still rejects empty, unsupported and multiple-video sources', async () => {
+  const { client, manager } = setup();
+  for (const channels of [
+    [],
+    [{ channelId: 'camera:0', type: 'video' as const }],
+    [{ channelId: 'mic:other', type: 'audio' as const }],
+    [...start.channels, ...start.channels],
+  ]) {
+    await expect(client.startRecording({ ...start, channels })).rejects.toThrow(
+      'Select'
+    );
+  }
+  expect(manager.sendCommand).not.toHaveBeenCalled();
+});
+
+test('managed-capable macOS live audio-only shutdown waits for local delivery', async () => {
+  const { client, manager } = setup({ sessionToken: 'live' });
+  await client.startSession({
+    sessionId: 'live-audio',
+    channels: [{ channelId: 'mic:default', type: 'audio' }],
+  });
+  const closing = client.shutdown();
+  await tick();
+  expect(manager.stop).not.toHaveBeenCalled();
+  manager.emit('processing-complete', {
+    recordingId: 'local-audio',
+    sessionId: 'live-audio',
+    result: { videoId: 'audio-video' },
+    fileRetained: false,
+  });
+  await closing;
+  expect(manager.stop).toHaveBeenCalledTimes(1);
+});
