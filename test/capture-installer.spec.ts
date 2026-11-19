@@ -8,7 +8,7 @@ describe('capture binary version selection', () => {
   it.each([
     ['darwin', 'arm64', '0.3.3-managed.7'],
     ['darwin', 'x64', '0.3.3-managed.7'],
-    ['win32', 'x64', '0.3.3-windows-preview.2'],
+    ['win32', 'x64', '0.3.3-windows-preview.3'],
   ] as const)(
     'selects %s-%s version %s in both installers',
     (platform, arch, version) => {

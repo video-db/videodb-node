@@ -2,8 +2,10 @@
 
 ## [0.5.3] (Unreleased)
 
+- Update Windows to `0.3.3-windows-preview.3` with a verified checksum. Storage moves to Local AppData; finish pending preview.2 deliveries before upgrading because the old storage is not automatically migrated.
+
 - Base the capture release on latest main, retaining its SDK error, search, upload, and installer improvements.
-- Select immutable macOS artifact `0.3.3-managed.4` (native version `0.3.3`); SDK and binary versions are independent.
+- Select immutable macOS artifact `0.3.3-managed.7` (native version `0.3.3`); SDK and binary versions are independent.
 - Forward typed `processing-progress` events with nullable ETA; expose partial-recording metadata and optional history progress snapshots. Completion still requires `processing-complete`.
 - Remove `CaptureClient.discardRecording`, matching the withdrawn native command. See [migration guidance](docs/capture-offline.md).
 - Include the native resume, screen-only ingestion, partial recovery and microphone fixes. Managed recording is verified against dev; Bloom validation and production server deployment are separate.
