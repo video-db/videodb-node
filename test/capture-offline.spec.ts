@@ -247,8 +247,8 @@ test('unsupported binary and invalid target selections fail before capture', asy
     manager.sendCommand.mock.calls.every(([c]) => c === 'getWindows')
   ).toBe(true);
 });
-test('Windows remains unsupported without starting the older binary', async () => {
-  Object.defineProperty(process, 'platform', { value: 'win32' });
+test('Unsupported platforms skip window discovery without starting the binary', async () => {
+  Object.defineProperty(process, 'platform', { value: 'linux' });
   const { client, manager } = setup();
   expect(await client.getWindows()).toMatchObject({
     supported: false,

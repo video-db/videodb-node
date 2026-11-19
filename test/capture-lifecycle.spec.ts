@@ -284,9 +284,9 @@ test('completion before relay acknowledgement is retained for a later waiter', a
   await client.shutdown();
 });
 
-test('Windows capture keeps legacy shutdown without waiting for unsupported local events', async () => {
+test('Unsupported platforms keep legacy shutdown without waiting for local events', async () => {
   const platform = Object.getOwnPropertyDescriptor(process, 'platform')!;
-  Object.defineProperty(process, 'platform', { value: 'win32' });
+  Object.defineProperty(process, 'platform', { value: 'linux' });
   try {
     const { client, manager } = setup();
     await client.startSession({

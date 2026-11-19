@@ -601,3 +601,75 @@ test('managed-capable macOS live audio-only shutdown waits for local delivery', 
   await closing;
   expect(manager.stop).toHaveBeenCalledTimes(1);
 });
+
+test.each([
+  start.channels,
+  [{ channelId: 'mic:default', type: 'audio' as const }],
+])(
+  'Windows managed capture forwards channels and waits for completion',
+  async (...channels) => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    const { client, manager } = setup();
+    await client.startRecording({ ...start, channels });
+    const closing = client.shutdown();
+    await tick();
+    expect(manager.stop).not.toHaveBeenCalled();
+    manager.emit('processing-complete', complete);
+    await closing;
+  }
+);
+
+test('Windows still requires managed capability before deferred capture', async () => {
+  Object.defineProperty(process, 'platform', { value: 'win32' });
+  const { client, manager } = setup();
+  manager.capabilities.managedDeferredRecording = false;
+  await expect(client.startRecording(start)).rejects.toThrow(
+    'does not support'
+  );
+  expect(manager.sendCommand).not.toHaveBeenCalled();
+  await client.shutdown();
+});
+
+test('Windows discovers and controls windows without the removed localRecording capability', async () => {
+  Object.defineProperty(process, 'platform', { value: 'win32' });
+  const { client, manager } = setup();
+  manager.sendCommand.mockResolvedValue({
+    supported: true,
+    windows: [{ channelId: 'window:test' }],
+  });
+  expect(await client.getWindows()).toMatchObject({ supported: true });
+  await client.switchWindow({ channelId: 'window:test' });
+  await client.setWindowEnabled({ enabled: false });
+  expect(manager.sendCommand.mock.calls.map(([command]) => command)).toEqual([
+    'getWindows',
+    'switchWindow',
+    'setWindowEnabled',
+  ]);
+  await client.shutdown();
+});
+
+test.each(['audio', 'video'] as const)(
+  'Windows live %s capture waits for delivery without optional capability fields',
+  async type => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    const { client, manager } = setup({ sessionToken: 'live' });
+    manager.capabilities = {} as typeof manager.capabilities;
+    await client.startSession({
+      sessionId: 'windows-live',
+      channels: [
+        { channelId: type === 'audio' ? 'mic:default' : 'display:1', type },
+      ],
+    });
+    const closing = client.shutdown();
+    await tick();
+    expect(manager.stop).not.toHaveBeenCalled();
+    manager.emit('processing-complete', {
+      recordingId: 'win-local',
+      sessionId: 'windows-live',
+      result: { videoId: 'video' },
+      fileRetained: false,
+    });
+    await closing;
+    expect(manager.stop).toHaveBeenCalledTimes(1);
+  }
+);

@@ -550,8 +550,10 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
         this.managedRecordingId
       )
         throw new Error('A recording is already active');
-      if (process.platform !== 'darwin')
-        throw new Error('Managed deferred capture is supported on macOS only');
+      if (!['darwin', 'win32'].includes(process.platform))
+        throw new Error(
+          'Managed deferred capture is supported on macOS and Windows only'
+        );
       if (
         !options.owner?.trim() ||
         !options.collectionId?.trim() ||
@@ -819,7 +821,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
 
   /** Discover current windows and mode-specific capabilities. No server call. */
   public async getWindows(): Promise<AvailableWindows> {
-    if (process.platform !== 'darwin')
+    if (!['darwin', 'win32'].includes(process.platform))
       return {
         supported: false,
         supportsSwitchWindow: false,
@@ -1111,11 +1113,13 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
 
     this.currentSessionId = config.sessionId;
-    // Managed-capable macOS binaries also create a local recording for audio-only sessions.
+    // The pinned Windows preview supports live + local, including audio-only.
+    // No localRecording capability is emitted by these binaries.
     if (
-      process.platform === 'darwin' &&
-      (config.channels.some(ch => ch.type === 'video') ||
-        this.binaryManager.capabilities?.managedDeferredRecording === true)
+      process.platform === 'win32' ||
+      (process.platform === 'darwin' &&
+        (config.channels.some(ch => ch.type === 'video') ||
+          this.binaryManager.capabilities?.managedDeferredRecording === true))
     ) {
       this.pendingSessions.add(config.sessionId);
       this.outcomes.delete(`session:${config.sessionId}`);
