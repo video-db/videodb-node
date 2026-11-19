@@ -58,7 +58,7 @@ export class HeyGenConfig {
   /** Longest script (estimated speech) or audio, in seconds */
   static readonly maxSeconds = 120;
   static readonly docs =
-    'https://docs.videodb.io/api-reference/generation/generate_video';
+    'https://docs.videodb.io/api-reference/generation/models/heygen';
 
   constructor(readonly options: HeyGenConfigOptions = {}) {}
 

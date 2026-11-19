@@ -907,7 +907,7 @@ export class Collection implements ICollection {
    * Generate a video with any video model. Arguments shared by several models are
    * options; settings specific to one model go in `options.config`.
    * `HeyGenConfig` lists HeyGen's allowed values, and
-   * https://docs.videodb.io/api-reference/generation/generate_video has every option.
+   * https://docs.videodb.io/api-reference/generation/models/heygen has every option.
    * @param prompt - Text prompt. For `heygen`, the exact script the avatar speaks
    * @param duration - Duration in seconds, where the model takes one (default model: 5-8)
    * @param callbackUrl - URL to receive callback once video generation is complete
