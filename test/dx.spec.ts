@@ -1,15 +1,19 @@
 /**
  * 0.4.0: server messages in errors, error details, search warnings and filter,
  * V2 shot text, SearchResponse chaining, poll retries and timeouts, uploads.
+ * Server-paced polling (retry_after / max_wait) and JobTimeoutError.
  */
 import axios from 'axios';
 import { connect } from '@/index';
 import { Video } from '@/core/video';
 import { Collection } from '@/core/collection';
 import { SearchResponse } from '@/core/search/responses';
+import { GenerationJob } from '@/core/job';
+import { Understanding } from '@/core/understanding';
 import {
   AuthenticationError,
   InvalidRequestError,
+  JobTimeoutError,
   RequestTimeoutError,
   VdbBaseError,
   VideodbError,
@@ -190,7 +194,8 @@ describe('polling', () => {
   });
 
   it('timeout: throws RequestTimeoutError with the output URL', async () => {
-    fakeAxios([processing, () => ({ data: { status: 'processing' } })]);
+    const still = () => ({ data: { status: 'processing' } });
+    fakeAxios([processing, still, still]);
     const err = await connect('sk-test')
       .vhttp.get(['x'], undefined, { maxPollTime: 1, pollInterval: 5 })
       .catch(e => e);
@@ -199,6 +204,103 @@ describe('polling', () => {
       'Request Timeout Error: Polling timed out after 0s. The job may still finish; its result will be at https://out/1'
     );
     expect(err.data).toEqual({ outputUrl: 'https://out/1' });
+  });
+});
+
+describe('server-paced polling', () => {
+  /** Fake clock: each sleep advances Date.now by its delay and resolves at once. */
+  let delays: number[];
+  beforeEach(() => {
+    delays = [];
+    let now = 1_000_000;
+    jest.spyOn(Date, 'now').mockImplementation(() => now);
+    jest.spyOn(global, 'setTimeout').mockImplementation(((
+      fn: () => void,
+      ms: number
+    ) => {
+      delays.push(ms);
+      now += ms;
+      fn();
+      return 0;
+    }) as never);
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  const still = (data: Record<string, unknown>) => () => ({
+    data: { status: 'processing', data },
+  });
+
+  it('waits the retry_after hint between polls instead of the flat 5s', async () => {
+    fakeAxios([
+      still({ output_url: 'https://out/1' }),
+      still({ retry_after: 2 }),
+      () => ({
+        data: { status: 'processing' },
+        headers: { 'retry-after': '7' },
+      }),
+      ok({ id: 'c-1' }),
+    ]);
+    const res = await connect('sk-test').vhttp.get(['x']);
+    expect(res.data).toEqual({ id: 'c-1' });
+    expect(delays).toEqual([2000, 7000]);
+  });
+
+  it('keeps a caller deadline even when the server advertises a longer max_wait', async () => {
+    const poll = still({ retry_after: 4, max_wait: 3600 });
+    fakeAxios([still({ output_url: 'https://out/1' }), poll, poll, poll, poll]);
+    const err = await connect('sk-test')
+      .vhttp.get(['x'], undefined, { maxPollTime: 10_000 })
+      .catch(e => e);
+    expect(err).toBeInstanceOf(JobTimeoutError);
+    expect(delays).toEqual([4000, 4000, 2000]);
+  });
+
+  it('GenerationJob.wait throws JobTimeoutError carrying the job handle', async () => {
+    const data = { outputUrl: 'https://out/j-1', retryAfter: 3 };
+    const http = {
+      get: () => Promise.resolve({ success: true, status: 'processing', data }),
+    } as unknown as HttpClient;
+    const err = await new GenerationJob(http, { jobId: 'j-1' })
+      .wait(5)
+      .catch(e => e);
+    expect(err).toBeInstanceOf(JobTimeoutError);
+    expect(err).toBeInstanceOf(RequestTimeoutError);
+    expect(err.name).toBe('JobTimeoutError');
+    expect(err.jobId).toBe('j-1');
+    expect(err.outputUrl).toBe('https://out/j-1');
+    expect(err.response).toBe(data);
+    expect(err.data).toEqual({ jobId: 'j-1', outputUrl: 'https://out/j-1' });
+    expect(err.message).toContain(
+      'Generation job j-1 did not complete within 5s'
+    );
+    expect(delays).toEqual([3000, 2000]);
+  });
+
+  it('treats partial and cancelled understanding runs as finished', async () => {
+    for (const status of ['partial', 'cancelled']) {
+      const http = {
+        get: () => Promise.resolve({ data: { status } }),
+      } as unknown as HttpClient;
+      const u = new Understanding(http, 'm-1', { id: 'u-1' });
+      await expect(u.waitUntilComplete()).resolves.toBe(u);
+      expect(u.isComplete).toBe(true);
+      expect(u.isSuccessful).toBe(false);
+    }
+    expect(delays).toEqual([]);
+  });
+
+  it('an understanding timeout carries its id and a URL to resume from', async () => {
+    const http = {
+      baseURL: 'https://api.test/',
+      get: () => Promise.resolve({ data: { status: 'processing' } }),
+    } as unknown as HttpClient;
+    const err = await new Understanding(http, 'm-1', { id: 'u-1' })
+      .waitUntilComplete(25)
+      .catch(e => e);
+    expect(err).toBeInstanceOf(JobTimeoutError);
+    expect(err.jobId).toBe('u-1');
+    expect(err.outputUrl).toBe('https://api.test/video/m-1/understand/u-1');
+    expect(delays).toEqual([10000, 10000, 5000]);
   });
 });
 

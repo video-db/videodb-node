@@ -160,7 +160,8 @@ export {
   buildIframeEmbedCode,
   playerUrlToEmbedUrl,
 } from './utils';
-export { RequestTimeoutError } from './utils/error';
+export { RequestTimeoutError, JobTimeoutError } from './utils/error';
+export type { JobTimeoutDetails } from './utils/error';
 
 // Capture session types
 export {
@@ -207,10 +208,18 @@ export {
   CaptionBorderStyle,
   CaptionAlignment,
   CaptionAnimation,
+  Effect,
+  Easing,
+  MotionPresetName,
+  KeyframeProperty,
   // Helper classes
   Offset,
   Crop,
   Transition,
+  Keyframe,
+  MotionPreset,
+  Motion,
+  Lut,
   Font,
   Border,
   Shadow,
@@ -234,6 +243,10 @@ export {
   type OffsetConfig,
   type CropConfig,
   type TransitionConfig,
+  type KeyframeConfig,
+  type MotionPresetConfig,
+  type MotionConfig,
+  type LutConfig,
   type FontConfig,
   type BorderConfig,
   type ShadowConfig,

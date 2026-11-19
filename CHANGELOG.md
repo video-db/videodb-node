@@ -6,6 +6,7 @@ Clearer errors, search fixes, and install and polling reliability. Error message
 
 ### Changed
 
+- **`Clip` `effect` is checked.** It must be `zoom_in` or `shake` (`Effect.zoomIn`, `Effect.shake`), and any other name throws before the request, as in videodb-python. Plain strings still type-check.
 - **Error messages include the server's explanation.** `Error 400: Bad Request` is now `Error 400: Video not found`, and `Authentication Error: ` is now `Authentication Error: Invalid API key`. The `connect()` hint for a missing API key is in the message. Network and unexpected errors include their reason (`Request failed: <reason>`). Classes and `cause` are unchanged.
 - **A poll timeout throws `RequestTimeoutError`.** It used to surface as `VideodbError('Unidentified Error')` with the timeout buried in `cause.cause`. The message and `data.outputUrl` give the job's output URL, so the result can be fetched later.
 - **`search({ filter })` sends the filter.** `Video.search()` and `Collection.search()` used to drop it.
@@ -17,6 +18,9 @@ Clearer errors, search fixes, and install and polling reliability. Error message
 
 - **HeyGen talking avatars.** `generateVideo(prompt, duration, callbackUrl, { model: 'heygen', imageUrl, aspectRatio, resolution, config })` makes a talking-head video from a face photo and a script, or lip-syncs it to your own audio with `config.audio_id`. Model-specific options go in `config`. Pass a `HeyGenConfig` (with `voices`, `talkingStyles`, `maxSeconds`, `docs`) or a plain object. Other options: `model`, `imageUrl`, `referenceImages`, `aspectRatio`, `resolution`.
 - **`connection.getGenerationModels()`** lists the image and video models the account can use.
+- **Editor colour grade and motion.** `Lut` (a `.cube` grade on a `Clip` or `EditorTimeline`, with `Lut.fromFile`), `Motion` with `MotionPreset` enter/exit presets and `Keyframe` tracks, and `Effect` names (`zoomIn`, `shake`). These match videodb-python 0.5.2.
+- **Server-paced polling.** Waits follow the server's `retry_after` hint (clamped to 0.5–30s), and `max_wait` extends a default deadline. A deadline you pass is kept. A job-wait timeout throws `JobTimeoutError` (a `RequestTimeoutError`) carrying `outputUrl` and `jobId`, so the result can be fetched later. Partial and cancelled understanding runs count as finished.
+- **`audio.generateTranscript(force, languageCode, sandboxId)`** runs transcription on a Whisper sandbox.
 - **Error details.** API errors carry `status` (HTTP status, or a numeric `error_code` from a `success: false` body), `code` (the server's `error_code`, such as `llm_dollar_budget_reached`), and `data` (the response body).
 - **`VdbBaseError` is exported.** Every SDK error extends it, so `instanceof VdbBaseError` catches them all.
 - **Search and ask warnings.** `SearchResponse`, `SearchResult`, and `AskResponse` expose the server's `warnings`, for example why `search()` on a video with no Search V2 index came back empty. Nothing is printed.

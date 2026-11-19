@@ -1,7 +1,10 @@
 import { ApiPath } from '@/constants';
 import { buildIframeEmbedCode } from '@/utils';
-import { VideodbError } from '@/utils/error';
+import { InvalidRequestError, VideodbError } from '@/utils/error';
 import { HttpClient } from '@/utils/httpClient';
+import { uploadBytes } from '@/utils/upload';
+import { readFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 import type { Connection } from './connection';
 
 export const AssetType = {
@@ -179,6 +182,246 @@ export class Transition {
       out: this.out,
       duration: this.duration,
     };
+  }
+}
+
+const assertMember = <T extends string>(
+  values: Record<string, T>,
+  value: string,
+  name: string
+): T => {
+  if (!(Object.values(values) as string[]).includes(value))
+    throw new Error(`'${value}' is not a valid ${name}`);
+  return value as T;
+};
+
+/** A named effect for a visual clip. Cannot be combined with `Clip.motion`. */
+export const Effect = {
+  zoomIn: 'zoom_in',
+  shake: 'shake',
+} as const;
+export type Effect = (typeof Effect)[keyof typeof Effect];
+
+/** Interpolation curve. On a keyframe it belongs to the destination keyframe. */
+export const Easing = {
+  linear: 'linear',
+  easeIn: 'ease_in',
+  easeOut: 'ease_out',
+  easeInOut: 'ease_in_out',
+  backOut: 'back_out',
+} as const;
+export type Easing = (typeof Easing)[keyof typeof Easing];
+
+/** Entrance/exit animations. Slides and pop include a fade; wipes reveal the layer. */
+export const MotionPresetName = {
+  fade: 'fade',
+  slideUp: 'slide_up',
+  slideDown: 'slide_down',
+  slideLeft: 'slide_left',
+  slideRight: 'slide_right',
+  pop: 'pop',
+  wipeLeft: 'wipe_left',
+  wipeRight: 'wipe_right',
+} as const;
+export type MotionPresetName =
+  (typeof MotionPresetName)[keyof typeof MotionPresetName];
+
+/** Clip properties that can be keyframed. */
+export const KeyframeProperty = {
+  offsetX: 'offset.x',
+  offsetY: 'offset.y',
+  scale: 'scale',
+  rotation: 'rotation',
+  opacity: 'opacity',
+} as const;
+export type KeyframeProperty =
+  (typeof KeyframeProperty)[keyof typeof KeyframeProperty];
+
+export interface KeyframeConfig {
+  /** Seconds from the start of the clip. */
+  time: number;
+  /** Property value at that time; holds before the first and after the last keyframe. */
+  value: number;
+  /** Curve from the previous keyframe to this one (default `linear`). */
+  easing?: Easing;
+}
+
+export class Keyframe {
+  public time: number;
+  public value: number;
+  public easing: Easing;
+
+  constructor(config: KeyframeConfig) {
+    if (config.time < 0) throw new Error('time must not be negative');
+    this.time = config.time;
+    this.value = config.value;
+    this.easing = assertMember(
+      Easing,
+      config.easing ?? Easing.linear,
+      'Easing'
+    );
+  }
+
+  toJSON(): Record<string, unknown> {
+    return { time: this.time, value: this.value, easing: this.easing };
+  }
+}
+
+export interface MotionPresetConfig {
+  preset: MotionPresetName;
+  /** Animation length in seconds, above 0 and up to 10 (default 0.4). */
+  duration?: number;
+  /** Slide distance as a canvas fraction, 0 to 1 (default 0.08). */
+  amount?: number;
+  /** Progress curve (default `ease_out`). */
+  easing?: Easing;
+}
+
+export class MotionPreset {
+  public preset: MotionPresetName;
+  public duration: number;
+  public amount: number;
+  public easing: Easing;
+
+  constructor(config: MotionPresetConfig) {
+    const duration = config.duration ?? 0.4;
+    const amount = config.amount ?? 0.08;
+    if (!(duration > 0 && duration <= 10))
+      throw new Error('duration must be between 0 and 10 seconds');
+    if (!(amount >= 0 && amount <= 1))
+      throw new Error('amount must be between 0 and 1');
+    this.preset = assertMember(
+      MotionPresetName,
+      config.preset,
+      'MotionPresetName'
+    );
+    this.duration = duration;
+    this.amount = amount;
+    this.easing = assertMember(
+      Easing,
+      config.easing ?? Easing.easeOut,
+      'Easing'
+    );
+  }
+
+  toJSON(): Record<string, unknown> {
+    return {
+      preset: this.preset,
+      duration: this.duration,
+      amount: this.amount,
+      easing: this.easing,
+    };
+  }
+}
+
+export interface MotionConfig {
+  enter?: MotionPreset;
+  exit?: MotionPreset;
+  /** Keyframes per property, e.g. `KeyframeProperty.scale` mapped to a Keyframe list. */
+  keyframes?: Partial<Record<KeyframeProperty, Keyframe[]>>;
+}
+
+/**
+ * Entrance/exit presets and keyframed transforms for a visual clip.
+ * Keyframe values replace the clip's base value; presets compose on top.
+ */
+export class Motion {
+  public enter: MotionPreset | undefined;
+  public exit: MotionPreset | undefined;
+  public keyframes: Partial<Record<KeyframeProperty, Keyframe[]>>;
+
+  constructor(config: MotionConfig = {}) {
+    this.enter = config.enter;
+    this.exit = config.exit;
+    this.keyframes = {};
+    for (const [key, frames] of Object.entries(config.keyframes ?? {})) {
+      const prop = assertMember(KeyframeProperty, key, 'KeyframeProperty');
+      const list = [...(frames ?? [])];
+      if (!list.length)
+        throw new Error(`${prop}: expected at least one keyframe`);
+      if (list.some((f, i) => i > 0 && f.time <= list[i - 1].time))
+        throw new Error(`${prop}: keyframe times must strictly increase`);
+      this.keyframes[prop] = list;
+    }
+  }
+
+  /** True when no entrance, exit or keyframe is set. */
+  isEmpty(): boolean {
+    return !this.enter && !this.exit && !Object.keys(this.keyframes).length;
+  }
+
+  toJSON(): Record<string, unknown> {
+    const json: Record<string, unknown> = {};
+    if (this.enter) json.enter = this.enter.toJSON();
+    if (this.exit) json.exit = this.exit.toJSON();
+    const keyframes: Record<string, unknown> = {};
+    for (const [prop, frames] of Object.entries(this.keyframes))
+      keyframes[prop] = frames.map(f => f.toJSON());
+    if (Object.keys(keyframes).length) json.keyframes = keyframes;
+    return json;
+  }
+}
+
+export interface LutConfig {
+  /** URL of the `.cube` file; use `Lut.fromFile` to upload a local one. */
+  src: string;
+  /** Grade strength between 0 and 1 (default 1). */
+  intensity?: number;
+}
+
+/**
+ * A 3D `.cube` lookup table used as a colour grade, on a `Clip` (before its
+ * filter) or an `EditorTimeline` (whole frame, under captions).
+ */
+export class Lut {
+  public src: string;
+  public intensity: number;
+
+  constructor(config: LutConfig) {
+    const intensity = config.intensity ?? 1.0;
+    if (!(intensity >= 0 && intensity <= 1))
+      throw new Error('intensity must be between 0 and 1');
+    this.src = config.src;
+    this.intensity = intensity;
+  }
+
+  /**
+   * Upload a local `.cube` file and return a Lut pointing at it.
+   * Throws InvalidRequestError if the file cannot be read or the upload fails.
+   */
+  static async fromFile(
+    connection: Connection,
+    path: string,
+    intensity: number = 1.0
+  ): Promise<Lut> {
+    let content: Buffer;
+    try {
+      content = await readFile(path);
+    } catch (e) {
+      throw new InvalidRequestError(
+        `Failed to read LUT file: ${(e as Error).message}`
+      );
+    }
+    let src: string;
+    try {
+      src = await uploadBytes(
+        connection.vhttp,
+        content,
+        basename(path),
+        'text/plain',
+        'default'
+      );
+    } catch (e) {
+      throw new InvalidRequestError(
+        `Failed to upload LUT: ${(e as Error).message}`,
+        e
+      );
+    }
+    return new Lut({ src, intensity });
+  }
+
+  toJSON(): Record<string, unknown> {
+    return { src: this.src, intensity: this.intensity };
   }
 }
 
@@ -686,7 +929,8 @@ export interface ClipConfig {
   asset: AnyEditorAsset;
   duration: number;
   transition?: Transition;
-  effect?: string;
+  /** Named effect; cannot be combined with `motion`. */
+  effect?: Effect | (string & {});
   filter?: Filter;
   scale?: number;
   opacity?: number;
@@ -694,13 +938,17 @@ export interface ClipConfig {
   position?: Position;
   offset?: Offset;
   zIndex?: number;
+  /** 3D LUT colour grade, applied before the filter. Not valid on audio or caption clips. */
+  lut?: Lut;
+  /** Entrance/exit presets and keyframes. Not valid on audio or caption clips or with an effect. */
+  motion?: Motion;
 }
 
 export class Clip {
   public asset: AnyEditorAsset;
   public duration: number;
   public transition: Transition | undefined;
-  public effect: string | undefined;
+  public effect: Effect | undefined;
   public filter: Filter | undefined;
   public scale: number;
   public opacity: number;
@@ -708,6 +956,8 @@ export class Clip {
   public position: Position;
   public offset: Offset;
   public zIndex: number;
+  public lut: Lut | undefined;
+  public motion: Motion | undefined;
 
   constructor(config: ClipConfig) {
     const scale = config.scale ?? 1;
@@ -721,7 +971,9 @@ export class Clip {
     this.asset = config.asset;
     this.duration = config.duration;
     this.transition = config.transition;
-    this.effect = config.effect;
+    this.effect = config.effect
+      ? assertMember(Effect, config.effect, 'Effect')
+      : undefined;
     this.filter = config.filter;
     this.scale = scale;
     this.opacity = opacity;
@@ -729,6 +981,8 @@ export class Clip {
     this.position = config.position ?? Position.center;
     this.offset = config.offset ?? new Offset();
     this.zIndex = config.zIndex ?? 0;
+    this.lut = config.lut;
+    this.motion = config.motion;
   }
 
   toJSON(): Record<string, unknown> {
@@ -745,6 +999,9 @@ export class Clip {
     };
     if (this.transition) json.transition = this.transition.toJSON();
     if (this.filter) json.filter = this.filter;
+    if (this.lut) json.lut = this.lut.toJSON();
+    if (this.motion && !this.motion.isEmpty())
+      json.motion = this.motion.toJSON();
     return json;
   }
 }
@@ -795,6 +1052,8 @@ interface EditorStreamResponse {
 export class EditorTimeline {
   public background: string;
   public resolution: string;
+  /** 3D LUT colour grade for the whole frame, under captions. */
+  public lut: Lut | undefined;
   public tracks: Track[];
   public streamUrl: string | null;
   public playerUrl: string | null;
@@ -814,13 +1073,13 @@ export class EditorTimeline {
   }
 
   toJSON(): Record<string, unknown> {
-    return {
-      timeline: {
-        background: this.background,
-        resolution: this.resolution,
-        tracks: this.tracks.map(t => t.toJSON()),
-      },
+    const timeline: Record<string, unknown> = {
+      background: this.background,
+      resolution: this.resolution,
+      tracks: this.tracks.map(t => t.toJSON()),
     };
+    if (this.lut) timeline.lut = this.lut.toJSON();
+    return { timeline };
   }
 
   async generateStream(): Promise<string | null> {

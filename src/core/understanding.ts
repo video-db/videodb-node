@@ -1,11 +1,15 @@
 import { ApiPath } from '@/constants';
-import { RequestTimeoutError } from '@/utils/error';
 import { HttpClient } from '@/utils/httpClient';
-import { sleep } from '@/utils';
+import { PollSchedule } from '@/utils/poll';
 
 const { video, understand } = ApiPath;
 
-export const UNDERSTANDING_TERMINAL_STATUSES = new Set(['done', 'failed']);
+export const UNDERSTANDING_TERMINAL_STATUSES = new Set([
+  'done',
+  'partial',
+  'failed',
+  'cancelled',
+]);
 export const ANALYZER_TERMINAL_STATUSES = new Set([
   'done',
   'failed',
@@ -110,6 +114,14 @@ export const normalizeUnderstandingAnalyzers = (
   return normalized;
 };
 
+const understandingSchedule = (timeout?: number, pollInterval?: number) =>
+  new PollSchedule({
+    interval: pollInterval != null ? pollInterval * 1000 : undefined,
+    maxPollTime: timeout != null ? timeout * 1000 : undefined,
+    firstInterval: 10 * 1000,
+    defaultMaxPollTime: 1800 * 1000,
+  });
+
 /**
  * Analyzer status and output handle for one analyzer in an understanding run.
  * Mirrors `videodb.understanding.UnderstandingAnalyzer`.
@@ -161,24 +173,24 @@ export class UnderstandingAnalyzer {
   /**
    * Poll this analyzer until it reaches a terminal status.
    *
-   * @param timeout - Maximum time to wait, in seconds (default 1800)
-   * @param pollInterval - Seconds between status checks (default 10)
-   * @throws {RequestTimeoutError} If the analyzer does not complete before timeout
+   * @param timeout - Maximum time to wait, in seconds (default 1800, extended by the server's `max_wait`)
+   * @param pollInterval - Force a fixed number of seconds between checks (default: server hint, else 10)
+   * @throws {JobTimeoutError} If the analyzer does not complete before timeout; carries the understanding id and URL
    */
   public waitUntilComplete = async (
-    timeout: number = 1800,
-    pollInterval: number = 10
+    timeout?: number,
+    pollInterval?: number
   ): Promise<UnderstandingAnalyzer> => {
-    const deadline = Date.now() + timeout * 1000;
+    const schedule = understandingSchedule(timeout, pollInterval);
     for (;;) {
       await this.refresh();
       if (this.isComplete) return this;
-      if (Date.now() >= deadline) {
-        throw new RequestTimeoutError(
-          `Analyzer ${this.name || this.id} did not complete within ${timeout}s`
-        );
-      }
-      await sleep(pollInterval * 1000);
+      schedule.throwIfExpired(`Analyzer ${this.name || this.id}`, {
+        lastResponse: this.understanding.lastResponse,
+        jobId: this.understanding.id,
+        outputUrl: this.understanding.pollOutputUrl(),
+      });
+      await schedule.sleep(this.understanding.lastResponse);
     }
   };
 
@@ -244,6 +256,8 @@ export class Understanding {
   public outputUrl?: string;
   public extra: Record<string, unknown>;
   public analyzers: UnderstandingAnalyzer[];
+  /** @internal Last status response, read for the server's poll hints. */
+  public lastResponse?: UnderstandingData;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, videoId: string, data: UnderstandingData = {}) {
@@ -285,6 +299,7 @@ export class Understanding {
   }
 
   public updateFromResponse(data: UnderstandingData = {}): Understanding {
+    this.lastResponse = data;
     this.status = data.status ?? this.status;
     if (data.understandingId || data.id) {
       this.id = data.understandingId ?? data.id;
@@ -311,27 +326,35 @@ export class Understanding {
     return this.updateFromResponse(res.data);
   };
 
+  /** @internal URL to resume polling this run, for timeout errors. */
+  public pollOutputUrl(): string {
+    if (this.outputUrl) return this.outputUrl;
+    const base = (this.#vhttp?.baseURL ?? '').replace(/\/+$/, '');
+    return `${base}/${video}/${this.videoId}/${understand}/${this.id ?? ''}`;
+  }
+
   /**
-   * Poll this understanding until it reaches a terminal status (`done`/`failed`).
+   * Poll this understanding until it reaches a terminal status
+   * (`done`, `partial`, `failed` or `cancelled`).
    *
-   * @param timeout - Maximum time to wait, in seconds (default 1800)
-   * @param pollInterval - Seconds between status checks (default 10)
-   * @throws {RequestTimeoutError} If the run does not complete before timeout
+   * @param timeout - Maximum time to wait, in seconds (default 1800, extended by the server's `max_wait`)
+   * @param pollInterval - Force a fixed number of seconds between checks (default: server hint, else 10)
+   * @throws {JobTimeoutError} If the run does not complete before timeout; carries its id and URL
    */
   public waitUntilComplete = async (
-    timeout: number = 1800,
-    pollInterval: number = 10
+    timeout?: number,
+    pollInterval?: number
   ): Promise<Understanding> => {
-    const deadline = Date.now() + timeout * 1000;
+    const schedule = understandingSchedule(timeout, pollInterval);
     for (;;) {
       await this.refresh();
       if (this.isComplete) return this;
-      if (Date.now() >= deadline) {
-        throw new RequestTimeoutError(
-          `Understanding ${this.id} did not complete within ${timeout}s`
-        );
-      }
-      await sleep(pollInterval * 1000);
+      schedule.throwIfExpired(`Understanding ${this.id}`, {
+        lastResponse: this.lastResponse,
+        jobId: this.id,
+        outputUrl: this.pollOutputUrl(),
+      });
+      await schedule.sleep(this.lastResponse);
     }
   };
 
@@ -355,6 +378,7 @@ export class Understanding {
         { params: { analyzer: nameOrId } }
       );
       const data = res.data ?? {};
+      this.lastResponse = data;
       this.status = data.status ?? this.status;
       const analyzerData = (data.analyzers ?? [])[0];
       if (analyzerData) {

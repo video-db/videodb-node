@@ -1,7 +1,7 @@
 import { ApiPath } from '@/constants';
-import { InvalidRequestError, RequestTimeoutError } from '@/utils/error';
+import { InvalidRequestError } from '@/utils/error';
 import { HttpClient } from '@/utils/httpClient';
-import { sleep } from '@/utils';
+import { PollSchedule } from '@/utils/poll';
 import { Audio } from '@/core/audio';
 import { Image } from '@/core/image';
 import type { AudioBase, ImageBase } from '@/interfaces/core';
@@ -130,28 +130,34 @@ export class GenerationJob {
 
   /**
    * Poll this job until it completes and return the generated asset.
+   * Cadence follows the server's `retry_after` hint when it sends one.
    *
-   * @param timeout - Maximum seconds to wait (default 600)
-   * @param interval - Seconds between polls (default 5)
+   * @param timeout - Maximum seconds to wait (default 600, extended by the server's `max_wait`)
+   * @param interval - Force a fixed number of seconds between polls (default: server hint, else 5)
    * @returns An {@link Audio}, {@link Image}, or the final job data if the
    *   result type cannot be inferred.
-   * @throws {RequestTimeoutError} If the job does not complete in time
+   * @throws {JobTimeoutError} If the job does not complete in time; carries `jobId` and `outputUrl`
    * @throws {InvalidRequestError} If the job ends in the `failed` status
    */
   public wait = async (
-    timeout: number = 600,
-    interval: number = 5
+    timeout?: number,
+    interval?: number
   ): Promise<Audio | Image | JobData> => {
-    const deadline = Date.now() + timeout * 1000;
+    const schedule = new PollSchedule({
+      interval: interval != null ? interval * 1000 : undefined,
+      maxPollTime: timeout != null ? timeout * 1000 : undefined,
+      firstInterval: 5 * 1000,
+      defaultMaxPollTime: 600 * 1000,
+    });
     for (;;) {
       await this.refresh();
       if (this.status !== 'processing') break;
-      if (Date.now() >= deadline) {
-        throw new RequestTimeoutError(
-          `Generation job ${this.jobId} did not complete within ${timeout} seconds`
-        );
-      }
-      await sleep(interval * 1000);
+      schedule.throwIfExpired(`Generation job ${this.jobId}`, {
+        outputUrl: this.outputUrl,
+        jobId: this.jobId,
+        lastResponse: this.data,
+      });
+      await schedule.sleep(this.data);
     }
 
     if (this.status === 'failed') {

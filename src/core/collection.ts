@@ -761,7 +761,9 @@ export class Collection implements ICollection {
       config?: Record<string, unknown>;
       sandboxId?: string;
       wait?: boolean;
+      /** Force a fixed number of seconds between job polls when `wait` is true (default: the server's `retry_after` hint, else 5). */
       pollInterval?: number;
+      /** Maximum seconds to wait when `wait` is true (default 600). */
       timeout?: number;
     } = {}
   ): Promise<Image | GenerationJob | JobData | undefined> => {
@@ -783,10 +785,9 @@ export class Collection implements ICollection {
     if (data.jobId || data.job_id) {
       const job = GenerationJob.fromData(this.#vhttp, data, 'image');
       return options.wait
-        ? ((await job.wait(
-            options.timeout ?? 600,
-            options.pollInterval ?? 5
-          )) as Image | JobData)
+        ? ((await job.wait(options.timeout ?? 600, options.pollInterval)) as
+            | Image
+            | JobData)
         : job;
     }
     return new Image(this.#vhttp, data as unknown as ImageBase);
@@ -861,7 +862,9 @@ export class Collection implements ICollection {
       voiceCloneId?: string;
       cloneVoiceId?: string;
       wait?: boolean;
+      /** Force a fixed number of seconds between job polls when `wait` is true (default: the server's `retry_after` hint, else 5). */
       pollInterval?: number;
+      /** Maximum seconds to wait when `wait` is true (default 600). */
       timeout?: number;
     } = {}
   ): Promise<Audio | GenerationJob | JobData | undefined> => {
@@ -894,10 +897,9 @@ export class Collection implements ICollection {
     if (data.jobId || data.job_id) {
       const job = GenerationJob.fromData(this.#vhttp, data, 'audio');
       return options.wait
-        ? ((await job.wait(
-            options.timeout ?? 600,
-            options.pollInterval ?? 5
-          )) as Audio | JobData)
+        ? ((await job.wait(options.timeout ?? 600, options.pollInterval)) as
+            | Audio
+            | JobData)
         : job;
     }
     return new Audio(this.#vhttp, data as unknown as AudioBase);
