@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **`collection.changeVoice(audioId, voiceName, config, callbackUrl)`** re-voices an existing audio with a preset voice, keeping its words and timing, and saves the result as a new audio. Sources can be up to 30 minutes. `getGenerationModels()` now also returns `voices`, the preset voice names with descriptions.
+
 ## [0.4.0] (2026-11-19)
 
 Clearer errors, search fixes, and install and polling reliability. Error messages, poll timeouts, `search({ filter })`, and `shot.text` behave differently from 0.3.2; see Upgrade notes.
