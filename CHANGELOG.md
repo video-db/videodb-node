@@ -6,6 +6,7 @@
 
 - **`generateVideo` takes `imageId`.** `generateVideo(prompt, duration, callbackUrl, { model: 'heygen', imageId: 'img-...' })` uses an image already in VideoDB instead of a hosted `imageUrl`. It works as the HeyGen face photo and as the start frame for `default` and `seedance`. Pass `imageId` or `imageUrl`, not both.
 - **Readme** shows `imageId` next to `imageUrl` for talking avatars.
+- **`collection.changeVoice(audioId, voiceName, config, callbackUrl)`** re-voices an existing audio with a preset voice, keeping its words and timing, and saves the result as a new audio. Sources can be up to 30 minutes. `getGenerationModels()` now also returns `voices`, the preset voice names with descriptions.
 
 ## [0.4.0] (2026-11-19)
 

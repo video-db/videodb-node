@@ -269,16 +269,18 @@ export class Connection {
 
   /**
    * Get the generation models available to this account
-   * @returns `{ image: [...], video: [...] }`
+   * @returns `{ image: [...], video: [...], voices: [{ name, description }, ...] }`
    */
   public getGenerationModels = async (): Promise<{
     image: string[];
     video: string[];
+    voices: { name: string; description: string }[];
   }> => {
-    const res = await this.vhttp.get<{ image: string[]; video: string[] }>([
-      ApiPath.generate,
-      ApiPath.models,
-    ]);
+    const res = await this.vhttp.get<{
+      image: string[];
+      video: string[];
+      voices: { name: string; description: string }[];
+    }>([ApiPath.generate, ApiPath.models]);
     return res.data;
   };
 
