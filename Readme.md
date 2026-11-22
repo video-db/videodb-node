@@ -208,7 +208,7 @@ const avatar = await coll.generateVideo('Welcome to VideoDB.', 5, undefined, {
 console.log(avatar?.playerUrl);
 ```
 
-Set `audioId` in the config to lip-sync your own audio instead of speaking the prompt. `conn.getGenerationModels()` lists the image and video models your account can use.
+Pass `imageId` instead of `imageUrl` to use an image already in VideoDB. Set `audioId` in the config to lip-sync your own audio instead of speaking the prompt. `conn.getGenerationModels()` lists the image and video models your account can use.
 
 ## Handle errors
 

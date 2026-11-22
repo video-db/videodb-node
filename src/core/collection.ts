@@ -914,7 +914,7 @@ export class Collection implements ICollection {
    * @param duration - Duration in seconds, where the model takes one (default model: 5-8)
    * @param callbackUrl - URL to receive callback once video generation is complete
    * @param options - `model`, `imageUrl` (start frame, or the `heygen` face photo),
-   *   `referenceImages`, `aspectRatio`, `resolution`, and model-specific `config`
+   *   `imageId` (a VideoDB image, instead of `imageUrl`), `referenceImages`, `aspectRatio`, `resolution`, and model-specific `config`
    *   (e.g. `HeyGenConfig`)
    * @returns Video object
    */
@@ -925,6 +925,8 @@ export class Collection implements ICollection {
     options: {
       model?: string;
       imageUrl?: string;
+      /** A VideoDB image (`img-...`) used instead of `imageUrl`. Pass one, not both. */
+      imageId?: string;
       referenceImages?: string[];
       aspectRatio?: string;
       resolution?: string;
@@ -946,6 +948,7 @@ export class Collection implements ICollection {
     const optional: Record<string, unknown> = {
       model: options.model,
       image_url: options.imageUrl,
+      image_id: options.imageId,
       reference_images: options.referenceImages,
       aspect_ratio: options.aspectRatio,
       resolution: options.resolution,

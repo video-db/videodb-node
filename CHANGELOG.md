@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.1] (unreleased)
+
+### Added
+
+- **`generateVideo` takes `imageId`.** `generateVideo(prompt, duration, callbackUrl, { model: 'heygen', imageId: 'img-...' })` uses an image already in VideoDB instead of a hosted `imageUrl`. It works as the HeyGen face photo and as the start frame for `default` and `seedance`. Pass `imageId` or `imageUrl`, not both.
+
 ## [0.4.0] (2026-11-19)
 
 Clearer errors, search fixes, and install and polling reliability. Error messages, poll timeouts, `search({ filter })`, and `shot.text` behave differently from 0.3.2; see Upgrade notes.

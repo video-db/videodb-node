@@ -463,6 +463,19 @@ describe('HeyGen config', () => {
     const config = { audioId: 'a-1' };
     expect(await sentConfig({ model: 'seedance', config })).toEqual(config);
   });
+
+  it('sends imageId as image_id, and only when set', async () => {
+    const { bodies, client } = recorder({ id: 'm-1' });
+    const coll = new Collection(client, { id: 'c-1' } as never);
+    await coll.generateVideo('Hi', 5, undefined, {
+      model: 'heygen',
+      imageId: 'img-1',
+    });
+    await coll.generateVideo('a cat', 6);
+    expect(bodies[0]).toMatchObject({ model: 'heygen', image_id: 'img-1' });
+    expect(bodies[0]).not.toHaveProperty('image_url');
+    expect(bodies[1]).not.toHaveProperty('image_id');
+  });
 });
 
 describe('poll deadline', () => {
