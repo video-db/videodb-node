@@ -28,6 +28,8 @@ export interface SandboxBase {
   models?: string[];
   region?: string;
   expiresAt?: string;
+  /** Server's reason when the sandbox failed; null clears it. */
+  error?: string | null;
 }
 
 /**
@@ -48,6 +50,8 @@ export class Sandbox {
   public models: string[];
   public region?: string;
   public expiresAt?: string;
+  /** Why the sandbox failed, when the server says. */
+  public error?: string | null;
   #vhttp: HttpClient;
 
   constructor(http: HttpClient, data: SandboxBase = {}) {
@@ -63,6 +67,7 @@ export class Sandbox {
     this.models = data.models ?? [];
     this.region = data.region;
     this.expiresAt = data.expiresAt;
+    this.error = data.error;
   }
 
   #update = (data?: SandboxBase): void => {
@@ -78,6 +83,7 @@ export class Sandbox {
     this.models = data.models ?? this.models;
     this.region = data.region ?? this.region;
     this.expiresAt = data.expiresAt ?? this.expiresAt;
+    if ('error' in data) this.error = data.error;
   };
 
   /**
@@ -90,7 +96,9 @@ export class Sandbox {
   };
 
   /**
-   * Poll until the sandbox is active.
+   * Poll until the sandbox is active. A timeout ends this wait only; startup
+   * may continue, so refresh or wait again on this same sandbox. A terminal
+   * failure includes the server's reason, also kept in `error`.
    *
    * @param timeout - Maximum seconds to wait (default 300)
    * @param interval - Seconds between polls (default 5)
@@ -107,12 +115,15 @@ export class Sandbox {
       if (this.status && READY_STATUSES.includes(this.status)) return this;
       if (this.status && TERMINAL_STATUSES.includes(this.status)) {
         throw new VideodbError(
-          `Sandbox ${this.id} entered terminal state: ${this.status}`
+          `Sandbox ${this.id} entered terminal state: ${this.status}` +
+            (this.error ? `. ${this.error}` : '')
         );
       }
       if (performance.now() >= deadline) {
         throw new RequestTimeoutError(
-          `Sandbox ${this.id} not ready within ${timeout}s`
+          `Sandbox ${this.id} not ready within ${timeout}s. ` +
+            'Startup may still be in progress. Check its status or ' +
+            'continue waiting with the same sandbox ID.'
         );
       }
       await sleep(interval * 1000);

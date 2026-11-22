@@ -73,6 +73,8 @@ export class GenerationJob {
   public resultType?: string;
   public data: JobData;
   #vhttp: HttpClient;
+  // The accept response's poll hint, used once by wait() before the first check.
+  #initial?: { data: JobData; at: number };
 
   constructor(http: HttpClient, config: GenerationJobConfig) {
     this.#vhttp = http;
@@ -82,6 +84,7 @@ export class GenerationJob {
     this.status = config.status || 'processing';
     this.resultType = config.resultType;
     this.data = config.data || {};
+    this.#initial = { data: this.data, at: performance.now() };
   }
 
   /**
@@ -117,6 +120,7 @@ export class GenerationJob {
    * Refresh this job's status from VideoDB.
    */
   public refresh = async (): Promise<GenerationJob> => {
+    this.#initial = undefined;
     const jobStatus = await fetchJobStatus(this.#vhttp, this.jobId);
     this.status = jobStatus.status || this.status;
     this.data = (jobStatus.data as JobData) || {};
@@ -149,6 +153,11 @@ export class GenerationJob {
       firstInterval: 5 * 1000,
       defaultMaxPollTime: 600 * 1000,
     });
+    const initial = this.#initial;
+    this.#initial = undefined;
+    if (initial && this.status === 'processing') {
+      await schedule.waitBeforeFirstPoll(initial.data, undefined, initial.at);
+    }
     for (;;) {
       await this.refresh();
       if (this.status !== 'processing') break;

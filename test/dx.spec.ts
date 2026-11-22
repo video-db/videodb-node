@@ -12,6 +12,8 @@ import { GenerationJob } from '@/core/job';
 import { Understanding } from '@/core/understanding';
 import { HeyGenConfig } from '@/types/generation';
 import { PollSchedule } from '@/utils/poll';
+import { Sandbox } from '@/core/sandbox';
+import { Lut } from '@/core/editor';
 import {
   AuthenticationError,
   InvalidRequestError,
@@ -291,6 +293,32 @@ describe('server-paced polling', () => {
     expect(delays).toEqual([]);
   });
 
+  it("waits the accept response's retry_after before the first poll", async () => {
+    fakeAxios([
+      still({ output_url: 'https://out/1', retry_after: 3 }),
+      ok({ id: 'c-1' }),
+    ]);
+    const res = await connect('sk-test').vhttp.get(['x']);
+    expect(res.data).toEqual({ id: 'c-1' });
+    expect(delays).toEqual([3000]);
+  });
+
+  it("GenerationJob.wait honours the create response's hint once", async () => {
+    let calls = 0;
+    const http = {
+      get: () => {
+        calls += 1;
+        return Promise.resolve({ status: 'done', data: { id: 'a-1' } });
+      },
+    } as unknown as HttpClient;
+    await new GenerationJob(http, {
+      jobId: 'j-1',
+      data: { retryAfter: 4 },
+    }).wait();
+    expect(delays).toEqual([4000]);
+    expect(calls).toBe(1);
+  });
+
   it('an understanding timeout carries its id and a URL to resume from', async () => {
     const http = {
       baseURL: 'https://api.test/',
@@ -487,5 +515,51 @@ describe('poll deadline', () => {
     const schedule = new PollSchedule({ maxPollTime: 60_000 });
     wall += 3_600_000;
     expect(schedule.expired).toBe(false);
+  });
+});
+
+describe('sandbox', () => {
+  const sandboxWith = (...states: Record<string, unknown>[]) => {
+    const http = {
+      get: () =>
+        Promise.resolve({
+          data: states.length > 1 ? states.shift() : states[0],
+        }),
+    } as unknown as HttpClient;
+    return new Sandbox(http, { sandboxId: 'bx_test' });
+  };
+
+  it('keeps the failure reason and puts it in the terminal error', async () => {
+    const sbx = sandboxWith({ status: 'failed', error: 'Out of capacity' });
+    const err = await sbx.waitForReady(0).catch(e => e);
+    expect(err.message).toContain(
+      'entered terminal state: failed. Out of capacity'
+    );
+    expect(sbx.error).toBe('Out of capacity');
+  });
+
+  it('says a timed-out wait can resume on the same sandbox', async () => {
+    const sbx = sandboxWith({ status: 'provisioning' });
+    const err = await sbx.waitForReady(0).catch(e => e);
+    expect(err).toBeInstanceOf(RequestTimeoutError);
+    expect(err.message).toContain('same sandbox ID');
+  });
+});
+
+describe('Lut source', () => {
+  it('leaves a URL alone and reports a local path', async () => {
+    const url = new Lut({ src: 'https://x/grade.cube' });
+    expect(url.isLocal()).toBe(false);
+    await expect(url.upload({} as HttpClient)).resolves.toBe(
+      'https://x/grade.cube'
+    );
+    expect(new Lut({ src: './grade.cube' }).isLocal()).toBe(true);
+  });
+
+  it('fails clearly when a local file is missing', async () => {
+    const err = await new Lut({ src: './missing.cube' })
+      .upload({} as HttpClient)
+      .catch(e => e);
+    expect(err.message).toContain('Failed to read LUT file');
   });
 });

@@ -2,6 +2,18 @@
 
 ## [0.4.1] (2026-11-22)
 
+Matches videodb-python 0.5.3.
+
+### Changed
+
+- **`Lut` takes a local path or a URL.** `new Lut({ src: './teal-orange.cube', intensity: 0.8 })` uploads the file during `EditorTimeline.generateStream()` and replaces `src` with the resulting URL. A URL is passed through. `lut.upload(conn)` uploads earlier and `lut.isLocal()` reports which kind of `src` it holds.
+- **Async waits honour the server's first `retry_after` hint** before the first status request, for request polling, `GenerationJob.wait()` and understanding waits. Without a hint the first check stays immediate. An explicit interval still wins.
+- **Sandbox failures say why.** `sandbox.error` holds the server's reason and the terminal-state error includes it. A `waitForReady()` timeout says startup may still be running and the same sandbox can be waited on again.
+
+### Removed
+
+- **`Lut.fromFile(conn, path)`**, introduced in 0.4.0. Use `new Lut({ src: path })` instead.
+
 ### Added
 
 - **`generateVideo` takes `imageId`.** `generateVideo(prompt, duration, callbackUrl, { model: 'heygen', imageId: 'img-...' })` uses an image already in VideoDB instead of a hosted `imageUrl`. It works as the HeyGen face photo and as the start frame for `default` and `seedance`. Pass `imageId` or `imageUrl`, not both.
@@ -26,7 +38,7 @@ Clearer errors, search fixes, and install and polling reliability. Error message
 
 - **HeyGen talking avatars.** `generateVideo(prompt, duration, callbackUrl, { model: 'heygen', imageUrl, aspectRatio, resolution, config })` makes a talking-head video from a face photo and a script, or lip-syncs it to your own audio with `config.audioId`. Model-specific options go in `config`. Pass a `HeyGenConfig` (with `voices`, `talkingStyles`, `maxSeconds`, `docs`) or a plain object. Its options are camelCase (`audioId`, `talkingStyle`) like the rest of the SDK; the API's `audio_id` and `talking_style` also work, and passing both spellings of one option throws. Other options: `model`, `imageUrl`, `referenceImages`, `aspectRatio`, `resolution`.
 - **`connection.getGenerationModels()`** lists the image and video models the account can use.
-- **Editor colour grade and motion.** `Lut` (a `.cube` grade on a `Clip` or `EditorTimeline`, with `Lut.fromFile`), `Motion` with `MotionPreset` enter/exit presets and `Keyframe` tracks, and `Effect` names (`zoomIn`, `shake`). These match videodb-python 0.5.2.
+- **Editor colour grade and motion.** `Lut` (a `.cube` grade on a `Clip` or `EditorTimeline`, with `Lut.fromFile`, removed in 0.4.1), `Motion` with `MotionPreset` enter/exit presets and `Keyframe` tracks, and `Effect` names (`zoomIn`, `shake`). These match videodb-python 0.5.2.
 - **Server-paced polling.** Waits follow the server's `retry_after` hint (clamped to 0.5–30s), and `max_wait` extends a default deadline. A deadline you pass is kept. Deadlines on every poll and `waitFor…` loop use a monotonic clock, so a system clock change during a wait does not move them. A job-wait timeout throws `JobTimeoutError` (a `RequestTimeoutError`) carrying `outputUrl` and `jobId`, so the result can be fetched later. Partial and cancelled understanding runs count as finished.
 - **`audio.generateTranscript(force, languageCode, sandboxId)`** runs transcription on a Whisper sandbox.
 - **Error details.** API errors carry `status` (HTTP status, or a numeric `error_code` from a `success: false` body), `code` (the server's `error_code`, such as `llm_dollar_budget_reached`), and `data` (the response body).
