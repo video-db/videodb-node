@@ -172,8 +172,9 @@ import { Effect, Keyframe, KeyframeProperty, Lut, Motion, MotionPreset } from 'v
 
 const asset = new EditorVideoAsset({ id: video.id, start: 0 });
 
-// Colour grade from a 3D .cube file; set timeline.lut to grade the whole frame
-const lut = await Lut.fromFile(conn, 'teal-orange.cube', 0.8);
+// Colour grade from a 3D .cube file (local path or URL); a local file uploads on generateStream().
+// Set timeline.lut to grade the whole frame.
+const lut = new Lut({ src: './teal-orange.cube', intensity: 0.8 });
 
 // Entrance and exit presets, plus keyframes
 const motion = new Motion({

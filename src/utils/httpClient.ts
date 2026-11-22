@@ -200,9 +200,14 @@ export class HttpClient {
     url: string,
     maxPollTime?: number,
     pollInterval?: number,
-    convert: boolean = true
+    convert: boolean = true,
+    accepted?: AxiosResponse
   ): Promise<R> => {
     const schedule = new PollSchedule({ interval: pollInterval, maxPollTime });
+    if (accepted) {
+      await schedule.waitBeforeFirstPoll(accepted.data, accepted);
+      this.#throwPollTimeout(schedule, url, accepted.data);
+    }
 
     // Counts consecutive transient failures only; a good poll resets it, so a
     // flapping endpoint keeps polling until the deadline.
@@ -304,7 +309,8 @@ export class HttpClient {
             outputUrl,
             poll?.maxPollTime,
             poll?.pollInterval,
-            convert
+            convert,
+            response
           );
           return { data: result, success: true } as ResponseOf<R>;
         }
