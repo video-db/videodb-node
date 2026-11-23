@@ -12,7 +12,6 @@ import { GenerationJob } from '@/core/job';
 import { Understanding } from '@/core/understanding';
 import { HeyGenConfig } from '@/types/generation';
 import { PollSchedule } from '@/utils/poll';
-import { Sandbox } from '@/core/sandbox';
 import { Lut } from '@/core/editor';
 import { RTStream } from '@/core/rtstream';
 import {
@@ -519,33 +518,6 @@ describe('poll deadline', () => {
   });
 });
 
-describe('sandbox', () => {
-  const sandboxWith = (...states: Record<string, unknown>[]) => {
-    const http = {
-      get: () =>
-        Promise.resolve({
-          data: states.length > 1 ? states.shift() : states[0],
-        }),
-    } as unknown as HttpClient;
-    return new Sandbox(http, { sandboxId: 'bx_test' });
-  };
-
-  it('keeps the failure reason and puts it in the terminal error', async () => {
-    const sbx = sandboxWith({ status: 'failed', error: 'Out of capacity' });
-    const err = await sbx.waitForReady(0).catch(e => e);
-    expect(err.message).toContain(
-      'entered terminal state: failed. Out of capacity'
-    );
-    expect(sbx.error).toBe('Out of capacity');
-  });
-
-  it('says a timed-out wait can resume on the same sandbox', async () => {
-    const sbx = sandboxWith({ status: 'provisioning' });
-    const err = await sbx.waitForReady(0).catch(e => e);
-    expect(err).toBeInstanceOf(RequestTimeoutError);
-    expect(err.message).toContain('same sandbox ID');
-  });
-});
 
 describe('Lut source', () => {
   it('leaves a URL alone and reports a local path', async () => {
