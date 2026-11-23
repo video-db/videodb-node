@@ -7,7 +7,6 @@ Matches videodb-python 0.5.3.
 ### Changed
 
 - **`Lut` takes a local path or a URL.** `new Lut({ src: './teal-orange.cube', intensity: 0.8 })` uploads the file during `EditorTimeline.generateStream()` and replaces `src` with the resulting URL. A URL is passed through. `lut.upload(conn)` uploads earlier and `lut.isLocal()` reports which kind of `src` it holds.
-- **Async waits honour the server's first `retry_after` hint** before the first status request, for request polling, `GenerationJob.wait()` and understanding waits. Without a hint the first check stays immediate. An explicit interval still wins.
 - **Sandbox failures say why.** `sandbox.error` holds the server's reason and the terminal-state error includes it. A `waitForReady()` timeout says startup may still be running and the same sandbox can be waited on again.
 
 ### Removed

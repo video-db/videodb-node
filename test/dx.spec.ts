@@ -293,31 +293,7 @@ describe('server-paced polling', () => {
     expect(delays).toEqual([]);
   });
 
-  it("waits the accept response's retry_after before the first poll", async () => {
-    fakeAxios([
-      still({ output_url: 'https://out/1', retry_after: 3 }),
-      ok({ id: 'c-1' }),
-    ]);
-    const res = await connect('sk-test').vhttp.get(['x']);
-    expect(res.data).toEqual({ id: 'c-1' });
-    expect(delays).toEqual([3000]);
-  });
 
-  it("GenerationJob.wait honours the create response's hint once", async () => {
-    let calls = 0;
-    const http = {
-      get: () => {
-        calls += 1;
-        return Promise.resolve({ status: 'done', data: { id: 'a-1' } });
-      },
-    } as unknown as HttpClient;
-    await new GenerationJob(http, {
-      jobId: 'j-1',
-      data: { retryAfter: 4 },
-    }).wait();
-    expect(delays).toEqual([4000]);
-    expect(calls).toBe(1);
-  });
 
   it('an understanding timeout carries its id and a URL to resume from', async () => {
     const http = {
