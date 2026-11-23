@@ -41,12 +41,12 @@ The VideoDB Node.js SDK lets you upload, understand, search, and edit video from
 
 VideoDB lets an AI agent watch, search and clip video.
 
-- **Claude**: [Add VideoDB from the plugin directory](https://videodb.io/claude?utm_source=github.com/video-db/videodb-node&utm_medium=readme)
-- **ChatGPT**: [Add VideoDB from the plugin directory](https://videodb.io/chatgpt?utm_source=github.com/video-db/videodb-node&utm_medium=readme)
+- **Claude**: [Add VideoDB from the plugin directory](https://videodb.io/claude?utm_source=github&utm_medium=readme&utm_campaign=videodb-node)
+- **ChatGPT**: [Add VideoDB from the plugin directory](https://videodb.io/chatgpt?utm_source=github&utm_medium=readme&utm_campaign=videodb-node)
 - **Claude Code**: `claude mcp add --transport http videodb https://mcp.videodb.io/mcp`
 - **Cursor or any MCP client**: Add the remote MCP server and log in once: `https://mcp.videodb.io/mcp`
 
-Free to start: $20 of credits, no credit card. [Steps for every client](https://docs.videodb.io/pages/mcp/connect?utm_source=github.com/video-db/videodb-node&utm_medium=readme).
+Free to start: $20 of credits, no credit card. [Steps for every client](https://docs.videodb.io/pages/mcp/connect?utm_source=github&utm_medium=readme&utm_campaign=videodb-node).
 
 The Node.js SDK below is for writing code against VideoDB yourself.
 
