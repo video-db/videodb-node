@@ -154,28 +154,6 @@ export class PollSchedule {
     return delay;
   }
 
-  /**
-   * Wait out the hint on the response that accepted the job before the first
-   * status check. Without a hint the first check stays immediate; an explicit
-   * interval wins. The wait counts toward the deadline.
-   */
-  public async waitBeforeFirstPoll(
-    source?: unknown,
-    headers?: unknown,
-    receivedAt?: number
-  ): Promise<void> {
-    this.observe(source);
-    const hint = retryAfterFrom(source) !== null ? source : headers;
-    if (retryAfterFrom(hint) === null) return;
-    const age =
-      receivedAt != null ? Math.max(0, performance.now() - receivedAt) : 0;
-    const delay = Math.min(
-      Math.max(0, this.nextDelay(hint) - age),
-      Math.max(0, this.remaining)
-    );
-    if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
-  }
-
   /** Throw {@link JobTimeoutError} once the deadline has passed. */
   public throwIfExpired(
     what: string = 'Job',

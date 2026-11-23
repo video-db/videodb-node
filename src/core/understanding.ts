@@ -182,8 +182,6 @@ export class UnderstandingAnalyzer {
     pollInterval?: number
   ): Promise<UnderstandingAnalyzer> => {
     const schedule = understandingSchedule(timeout, pollInterval);
-    if (!this.isComplete)
-      await this.understanding.waitBeforeFirstPoll(schedule);
     for (;;) {
       await this.refresh();
       if (this.isComplete) return this;
@@ -261,8 +259,6 @@ export class Understanding {
   /** @internal Last status response, read for the server's poll hints. */
   public lastResponse?: UnderstandingData;
   #vhttp: HttpClient;
-  // The create response's poll hint, used once before the first status check.
-  #initial?: { data: UnderstandingData; at: number };
 
   constructor(http: HttpClient, videoId: string, data: UnderstandingData = {}) {
     const {
@@ -283,16 +279,6 @@ export class Understanding {
     this.outputUrl = outputUrl;
     this.extra = extra;
     this.analyzers = (analyzers ?? []).map(item => this.createAnalyzer(item));
-    this.#initial = { data, at: performance.now() };
-  }
-
-  /** @internal Wait out the create response's hint once, before the first check. */
-  public async waitBeforeFirstPoll(schedule: PollSchedule): Promise<void> {
-    const initial = this.#initial;
-    this.#initial = undefined;
-    if (initial && !this.isComplete) {
-      await schedule.waitBeforeFirstPoll(initial.data, undefined, initial.at);
-    }
   }
 
   /** True when the understanding run is in a terminal status. */
@@ -331,7 +317,6 @@ export class Understanding {
 
   /** Refresh understanding and analyzer statuses from the API. */
   public refresh = async (): Promise<Understanding> => {
-    this.#initial = undefined;
     const res = await this.#vhttp.get<UnderstandingData>([
       video,
       this.videoId,
@@ -361,7 +346,6 @@ export class Understanding {
     pollInterval?: number
   ): Promise<Understanding> => {
     const schedule = understandingSchedule(timeout, pollInterval);
-    await this.waitBeforeFirstPoll(schedule);
     for (;;) {
       await this.refresh();
       if (this.isComplete) return this;
