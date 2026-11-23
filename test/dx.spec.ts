@@ -14,6 +14,7 @@ import { HeyGenConfig } from '@/types/generation';
 import { PollSchedule } from '@/utils/poll';
 import { Sandbox } from '@/core/sandbox';
 import { Lut } from '@/core/editor';
+import { RTStream } from '@/core/rtstream';
 import {
   AuthenticationError,
   InvalidRequestError,
@@ -561,5 +562,26 @@ describe('Lut source', () => {
       .upload({} as HttpClient)
       .catch(e => e);
     expect(err.message).toContain('Failed to read LUT file');
+  });
+});
+
+describe('rtstream transcript language', () => {
+  it('sends language_code only when a language is given', async () => {
+    const bodies: unknown[] = [];
+    const http = {
+      post: (_p: string[], body: unknown) => {
+        bodies.push(body);
+        return Promise.resolve({ data: {} });
+      },
+    } as unknown as HttpClient;
+    const stream = new RTStream(http, { id: 'rts-1' } as never);
+    await stream.startTranscript(undefined, 'assemblyai', 'es');
+    await stream.startTranscript();
+    expect(bodies[0]).toEqual({
+      action: 'start',
+      engine: 'assemblyai',
+      language_code: 'es',
+    });
+    expect(bodies[1]).toEqual({ action: 'start', engine: 'assemblyai' });
   });
 });
