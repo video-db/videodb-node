@@ -363,7 +363,7 @@ export class Motion {
 }
 
 export interface LutConfig {
-  /** URL of the `.cube` file; use `Lut.fromFile` to upload a local one. */
+  /** URL or local path of the `.cube` file; a local file is uploaded by `generateStream()`. */
   src: string;
   /** Grade strength between 0 and 1 (default 1). */
   intensity?: number;
@@ -371,7 +371,8 @@ export interface LutConfig {
 
 /**
  * A 3D `.cube` lookup table used as a colour grade, on a `Clip` (before its
- * filter) or an `EditorTimeline` (whole frame, under captions).
+ * filter) or an `EditorTimeline` (whole frame, under captions). `src` may be a
+ * URL or a local path; local files are uploaded when the timeline is generated.
  */
 export class Lut {
   public src: string;
@@ -385,29 +386,33 @@ export class Lut {
     this.intensity = intensity;
   }
 
+  /** Whether `src` is a local file path rather than a URL. */
+  isLocal(): boolean {
+    return !/^https?:\/\//.test(this.src);
+  }
+
   /**
-   * Upload a local `.cube` file and return a Lut pointing at it.
+   * Upload a local `.cube` file and point `src` at the uploaded URL. A URL is
+   * left unchanged. Called by `EditorTimeline.generateStream()`.
    * Throws InvalidRequestError if the file cannot be read or the upload fails.
    */
-  static async fromFile(
-    connection: Connection,
-    path: string,
-    intensity: number = 1.0
-  ): Promise<Lut> {
+  async upload(connection: Connection | HttpClient): Promise<string> {
+    if (!this.isLocal()) return this.src;
+    const vhttp =
+      connection instanceof HttpClient ? connection : connection.vhttp;
     let content: Buffer;
     try {
-      content = await readFile(path);
+      content = await readFile(this.src);
     } catch (e) {
       throw new InvalidRequestError(
         `Failed to read LUT file: ${(e as Error).message}`
       );
     }
-    let src: string;
     try {
-      src = await uploadBytes(
-        connection.vhttp,
+      this.src = await uploadBytes(
+        vhttp,
         content,
-        basename(path),
+        basename(this.src),
         'text/plain',
         'default'
       );
@@ -417,7 +422,7 @@ export class Lut {
         e
       );
     }
-    return new Lut({ src, intensity });
+    return this.src;
   }
 
   toJSON(): Record<string, unknown> {
@@ -1083,6 +1088,11 @@ export class EditorTimeline {
   }
 
   async generateStream(): Promise<string | null> {
+    const luts = [
+      this.lut,
+      ...this.tracks.flatMap(t => t.clips.map(i => i.clip.lut)),
+    ];
+    for (const lut of luts) if (lut) await lut.upload(this.#vhttp);
     const res = await this.#vhttp.post<EditorStreamResponse, object>(
       [ApiPath.editor],
       this.toJSON()

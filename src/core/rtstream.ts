@@ -1250,14 +1250,18 @@ export class RTStream {
    * Start transcription for the rtstream
    * @param socketId - WebSocket connection ID for real-time transcript updates (optional)
    * @param engine - Transcription engine (default: "assemblyai")
+   * @param language - Spoken language as an ISO 639-1 code, e.g. "es" (optional).
+   *   Without it the language is detected automatically.
    * @returns Transcription status with start time
    */
   public startTranscript = async (
     socketId?: string,
-    engine: string = 'assemblyai'
+    engine: string = 'assemblyai',
+    language?: string
   ): Promise<Record<string, unknown>> => {
     const data: Record<string, unknown> = { action: 'start', engine };
     if (socketId) data.ws_connection_id = socketId;
+    if (language) data.language_code = language;
 
     const res = await this.#vhttp.post<Record<string, unknown>, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.transcription],

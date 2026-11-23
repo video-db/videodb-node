@@ -12,6 +12,8 @@ import { GenerationJob } from '@/core/job';
 import { Understanding } from '@/core/understanding';
 import { HeyGenConfig } from '@/types/generation';
 import { PollSchedule } from '@/utils/poll';
+import { Lut } from '@/core/editor';
+import { RTStream } from '@/core/rtstream';
 import {
   AuthenticationError,
   InvalidRequestError,
@@ -291,6 +293,8 @@ describe('server-paced polling', () => {
     expect(delays).toEqual([]);
   });
 
+
+
   it('an understanding timeout carries its id and a URL to resume from', async () => {
     const http = {
       baseURL: 'https://api.test/',
@@ -463,6 +467,19 @@ describe('HeyGen config', () => {
     const config = { audioId: 'a-1' };
     expect(await sentConfig({ model: 'seedance', config })).toEqual(config);
   });
+
+  it('sends imageId as image_id, and only when set', async () => {
+    const { bodies, client } = recorder({ id: 'm-1' });
+    const coll = new Collection(client, { id: 'c-1' } as never);
+    await coll.generateVideo('Hi', 5, undefined, {
+      model: 'heygen',
+      imageId: 'img-1',
+    });
+    await coll.generateVideo('a cat', 6);
+    expect(bodies[0]).toMatchObject({ model: 'heygen', image_id: 'img-1' });
+    expect(bodies[0]).not.toHaveProperty('image_url');
+    expect(bodies[1]).not.toHaveProperty('image_id');
+  });
 });
 
 describe('poll deadline', () => {
@@ -474,5 +491,45 @@ describe('poll deadline', () => {
     const schedule = new PollSchedule({ maxPollTime: 60_000 });
     wall += 3_600_000;
     expect(schedule.expired).toBe(false);
+  });
+});
+
+
+describe('Lut source', () => {
+  it('leaves a URL alone and reports a local path', async () => {
+    const url = new Lut({ src: 'https://x/grade.cube' });
+    expect(url.isLocal()).toBe(false);
+    await expect(url.upload({} as HttpClient)).resolves.toBe(
+      'https://x/grade.cube'
+    );
+    expect(new Lut({ src: './grade.cube' }).isLocal()).toBe(true);
+  });
+
+  it('fails clearly when a local file is missing', async () => {
+    const err = await new Lut({ src: './missing.cube' })
+      .upload({} as HttpClient)
+      .catch(e => e);
+    expect(err.message).toContain('Failed to read LUT file');
+  });
+});
+
+describe('rtstream transcript language', () => {
+  it('sends language_code only when a language is given', async () => {
+    const bodies: unknown[] = [];
+    const http = {
+      post: (_p: string[], body: unknown) => {
+        bodies.push(body);
+        return Promise.resolve({ data: {} });
+      },
+    } as unknown as HttpClient;
+    const stream = new RTStream(http, { id: 'rts-1' } as never);
+    await stream.startTranscript(undefined, 'assemblyai', 'es');
+    await stream.startTranscript();
+    expect(bodies[0]).toEqual({
+      action: 'start',
+      engine: 'assemblyai',
+      language_code: 'es',
+    });
+    expect(bodies[1]).toEqual({ action: 'start', engine: 'assemblyai' });
   });
 });

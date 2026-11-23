@@ -844,6 +844,36 @@ export class Collection implements ICollection {
   };
 
   /**
+   * Re-voice an existing audio with a preset voice, keeping its words, timing and delivery.
+   * Sources up to 30 minutes are supported; the result is saved as a new audio in this collection.
+   * @param audioId - ID of the source audio (`a-...`)
+   * @param voiceName - Preset voice, e.g. `'Aria'` or `'George'`. `conn.getGenerationModels()` lists them under `voices`.
+   * @param config - Optional `stability`, `similarity_boost`, `style` (0-1), `use_speaker_boost`, `remove_background_noise`
+   * @param callbackUrl - URL to receive the callback (optional)
+   * @returns Audio object
+   */
+  public changeVoice = async (
+    audioId: string,
+    voiceName: string = 'Default',
+    config: Record<string, unknown> = {},
+    callbackUrl?: string
+  ): Promise<Audio | undefined> => {
+    const res = await this.#vhttp.post<AudioBase, object>(
+      [collection, this.id, generate, audio],
+      {
+        audio_type: 'voice_change',
+        audio_id: audioId,
+        voice_name: voiceName,
+        config,
+        callback_url: callbackUrl,
+      }
+    );
+    if (res.data) {
+      return new Audio(this.#vhttp, res.data);
+    }
+  };
+
+  /**
    * Generate voice from text
    * @param textContent - Text to convert to voice
    * @param voiceName - Name of the voice to use
@@ -914,7 +944,7 @@ export class Collection implements ICollection {
    * @param duration - Duration in seconds, where the model takes one (default model: 5-8)
    * @param callbackUrl - URL to receive callback once video generation is complete
    * @param options - `model`, `imageUrl` (start frame, or the `heygen` face photo),
-   *   `referenceImages`, `aspectRatio`, `resolution`, and model-specific `config`
+   *   `imageId` (a VideoDB image, instead of `imageUrl`), `referenceImages`, `aspectRatio`, `resolution`, and model-specific `config`
    *   (e.g. `HeyGenConfig`)
    * @returns Video object
    */
@@ -925,6 +955,8 @@ export class Collection implements ICollection {
     options: {
       model?: string;
       imageUrl?: string;
+      /** A VideoDB image (`img-...`) used instead of `imageUrl`. Pass one, not both. */
+      imageId?: string;
       referenceImages?: string[];
       aspectRatio?: string;
       resolution?: string;
@@ -946,6 +978,7 @@ export class Collection implements ICollection {
     const optional: Record<string, unknown> = {
       model: options.model,
       image_url: options.imageUrl,
+      image_id: options.imageId,
       reference_images: options.referenceImages,
       aspect_ratio: options.aspectRatio,
       resolution: options.resolution,
