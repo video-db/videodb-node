@@ -293,8 +293,6 @@ describe('server-paced polling', () => {
     expect(delays).toEqual([]);
   });
 
-
-
   it('an understanding timeout carries its id and a URL to resume from', async () => {
     const http = {
       baseURL: 'https://api.test/',
@@ -494,7 +492,6 @@ describe('poll deadline', () => {
   });
 });
 
-
 describe('Lut source', () => {
   it('leaves a URL alone and reports a local path', async () => {
     const url = new Lut({ src: 'https://x/grade.cube' });
@@ -569,5 +566,13 @@ describe('rtstream transcript language', () => {
       stream.startTranscript(undefined, undefined, 'es', { languageCode: 'fr' })
     ).rejects.toThrow('Pass languageCode only');
     expect(bodies).toHaveLength(2);
+    await stream.startTranscript(undefined, undefined, 'es', {
+      languageCode: 'es',
+    });
+    expect(bodies[2]).toEqual({
+      action: 'start',
+      engine: 'assemblyai',
+      language_code: 'es',
+    });
   });
 });
