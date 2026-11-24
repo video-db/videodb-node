@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import * as path from 'node:path';
 import * as readline from 'node:readline';
 import { EventEmitter } from 'node:events';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,12 +10,29 @@ import {
   HEALTH_CHECK_INTERVAL,
   HEALTH_CHECK_TIMEOUT,
   type BinaryMessage,
-  type BinaryResponse,
-  type BinaryEvent,
 } from './types';
 import { RecorderInstaller } from './installer';
 
+/** Native rejection with a stable code (for example TARGET_NOT_FOUND). */
+export class CaptureCommandError extends Error {
+  public readonly code: string;
+  constructor(result: unknown) {
+    const detail =
+      result && typeof result === 'object'
+        ? (result as Record<string, unknown>)
+        : {};
+    super(
+      typeof detail.message === 'string'
+        ? detail.message
+        : 'Recorder command failed'
+    );
+    this.name = 'CaptureCommandError';
+    this.code = typeof detail.code === 'string' ? detail.code : 'UNKNOWN_ERROR';
+  }
+}
+
 interface PendingCommand {
+  timer: NodeJS.Timeout;
   resolve: (value: unknown) => void;
   reject: (error: Error) => void;
 }
@@ -34,6 +52,9 @@ export class BinaryManager extends EventEmitter {
   private healthCheckInterval: NodeJS.Timeout | null = null;
   private lastHealthCheck: number | null = null;
   private installer: RecorderInstaller;
+  private stopping = false;
+  private startupError: CaptureCommandError | null = null;
+  public capabilities: { managedDeferredRecording?: boolean } = {};
   private initConfig: Record<string, unknown> = {};
 
   constructor(options: { dev?: boolean; restartOnError?: boolean } = {}) {
@@ -49,7 +70,6 @@ export class BinaryManager extends EventEmitter {
   private getBinaryCommand(): { command: string; args: string[] } {
     if (this.isDev) {
       // In dev mode, use a mock binary (Node.js script)
-      const path = require('node:path');
       return {
         command: 'node',
         args: [path.join(__dirname, '..', '..', 'mock', 'binary.js')],
@@ -78,6 +98,7 @@ export class BinaryManager extends EventEmitter {
    */
   private flushPendingCommands(error: Error): void {
     this.pendingCommands.forEach(promise => {
+      clearTimeout(promise.timer);
       promise.reject(error);
     });
     this.pendingCommands.clear();
@@ -92,15 +113,26 @@ export class BinaryManager extends EventEmitter {
       const { commandId, status, result } = response;
       const promise = this.pendingCommands.get(commandId);
       if (promise) {
+        clearTimeout(promise.timer);
         if (status === 'success') {
           promise.resolve(result);
         } else {
-          promise.reject(new Error(JSON.stringify(result)));
+          promise.reject(new CaptureCommandError(result));
         }
         this.pendingCommands.delete(commandId);
       }
     } else if (msg.type === 'event') {
       const event = msg;
+      if (
+        event.event === 'error' &&
+        ['INSTANCE_ALREADY_RUNNING', 'INSTANCE_LOCK_UNAVAILABLE'].includes(
+          String(event.payload?.code)
+        )
+      ) {
+        this.startupError = new CaptureCommandError(event.payload);
+        this.stopHealthCheck();
+        this.flushPendingCommands(this.startupError);
+      }
       this.emit(event.event, event.payload);
     }
   }
@@ -111,34 +143,38 @@ export class BinaryManager extends EventEmitter {
   private startHealthCheck(): void {
     this.stopHealthCheck();
 
-    this.healthCheckInterval = setInterval(async () => {
-      try {
-        const start = Date.now();
-        await this.sendCommand('ping');
-        this.lastHealthCheck = Date.now();
+    this.healthCheckInterval = setInterval(() => {
+      void (async () => {
+        try {
+          const start = Date.now();
+          await this.sendCommand('ping');
+          this.lastHealthCheck = Date.now();
 
-        const duration = this.lastHealthCheck - start;
-        if (duration > 5000) {
-          console.warn(`VideoDB Capture: Health check slow (${duration}ms)`);
-        }
-      } catch {
-        console.error('VideoDB Capture: Health check failed');
+          const duration = this.lastHealthCheck - start;
+          if (duration > 5000) {
+            console.warn(`VideoDB Capture: Health check slow (${duration}ms)`);
+          }
+        } catch {
+          console.error('VideoDB Capture: Health check failed');
 
-        if (
-          this.lastHealthCheck &&
-          Date.now() - this.lastHealthCheck > HEALTH_CHECK_TIMEOUT
-        ) {
-          console.error('VideoDB Capture: Binary appears hung, restarting...');
-          this.emit('error', {
-            type: 'health_check_timeout',
-            message: 'Binary not responding to health checks',
-          });
+          if (
+            this.lastHealthCheck &&
+            Date.now() - this.lastHealthCheck > HEALTH_CHECK_TIMEOUT
+          ) {
+            console.error(
+              'VideoDB Capture: Binary appears hung, restarting...'
+            );
+            this.emit('error', {
+              type: 'health_check_timeout',
+              message: 'Binary not responding to health checks',
+            });
 
-          if (this.process) {
-            this.process.kill();
+            if (this.process) {
+              this.process.kill();
+            }
           }
         }
-      }
+      })();
     }, HEALTH_CHECK_INTERVAL);
   }
 
@@ -157,10 +193,13 @@ export class BinaryManager extends EventEmitter {
    */
   public async start(config: Record<string, unknown> = {}): Promise<void> {
     if (this.process && this.process.exitCode === null) {
+      if (this.startupError) throw this.startupError;
       console.warn('VideoDB Capture: Process already running');
       return;
     }
 
+    this.stopping = false;
+    this.startupError = null;
     this.initConfig = config;
 
     // Ensure binary is installed
@@ -224,13 +263,16 @@ export class BinaryManager extends EventEmitter {
         });
       });
 
-      // Handle process exit
-      this.process.on('exit', (code: number | null, signal: string | null) => {
+      // Drain stdout before handling exit so final native errors reach the host.
+      this.process.on('close', (code: number | null, signal: string | null) => {
         console.log(
           `VideoDB Capture: Process exited with code ${code}, signal ${signal}`
         );
 
-        this.flushPendingCommands(new Error(`Process exited: ${code}`));
+        this.stopHealthCheck();
+        this.flushPendingCommands(
+          this.startupError ?? new Error(`Process exited: ${code}`)
+        );
         this.emit('shutdown', { code: code ?? 0, signal: signal ?? '' });
 
         stderrRl.close();
@@ -238,7 +280,12 @@ export class BinaryManager extends EventEmitter {
         this.process = null;
 
         // Auto-restart logic
-        if (code !== 0 && signal !== 'SIGINT') {
+        if (
+          !this.stopping &&
+          !this.startupError &&
+          code !== 0 &&
+          signal !== 'SIGINT'
+        ) {
           this.unexpectedShutdown = true;
 
           if (this.restartOnError && this.remainingRestarts > 0) {
@@ -251,7 +298,13 @@ export class BinaryManager extends EventEmitter {
             );
 
             setTimeout(() => {
-              this.start(this.initConfig);
+              if (!this.stopping)
+                void this.start(this.initConfig).catch(() => {
+                  this.emit('error', {
+                    type: 'restart',
+                    message: 'Recorder restart failed',
+                  });
+                });
             }, 1000);
           } else if (this.remainingRestarts === 0) {
             console.error(
@@ -274,7 +327,11 @@ export class BinaryManager extends EventEmitter {
       this.startHealthCheck();
 
       // Send init command
-      await this.sendCommand('init', config);
+      this.capabilities = {};
+      const initialized = await this.sendCommand<{
+        capabilities?: { managedDeferredRecording?: boolean };
+      }>('init', config);
+      this.capabilities = initialized?.capabilities ?? {};
     } catch (error) {
       console.error('VideoDB Capture: Failed to initialize:', error);
       throw error;
@@ -286,7 +343,8 @@ export class BinaryManager extends EventEmitter {
    */
   public async sendCommand<T = unknown>(
     command: string,
-    params: Record<string, unknown> = {}
+    params: Record<string, unknown> = {},
+    timeoutMs: number = 30_000
   ): Promise<T> {
     if (!this.process || !this.process.stdin || this.process.stdin.destroyed) {
       throw new Error('SDK not initialized or binary process is not running.');
@@ -297,7 +355,12 @@ export class BinaryManager extends EventEmitter {
       PROTOCOL_PREFIX + JSON.stringify({ command, commandId, params }) + '\n';
 
     return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingCommands.delete(commandId);
+        reject(new Error(`Recorder command '${command}' timed out`));
+      }, timeoutMs);
       this.pendingCommands.set(commandId, {
+        timer,
         resolve: resolve as (value: unknown) => void,
         reject,
       });
@@ -305,6 +368,7 @@ export class BinaryManager extends EventEmitter {
         if (err) {
           const pending = this.pendingCommands.get(commandId);
           if (pending) {
+            clearTimeout(pending.timer);
             pending.reject(
               new Error(`Failed to send command '${command}': ${err.message}`)
             );
@@ -319,29 +383,34 @@ export class BinaryManager extends EventEmitter {
    * Gracefully stop the binary
    */
   public async stop(): Promise<void> {
+    this.stopping = true;
     if (!this.process) {
       return;
     }
 
     this.stopHealthCheck();
-
+    const currentProc = this.process;
+    // Wait for stdio to drain and lifecycle state to clear before resolving shutdown.
+    let onExit: () => void = () => {};
+    const exited = new Promise<void>(resolve => {
+      onExit = resolve;
+      currentProc.once('close', onExit);
+    });
+    const killTimer = setTimeout(() => {
+      if (currentProc.exitCode === null && currentProc.signalCode === null)
+        currentProc.kill('SIGKILL');
+    }, 160_000);
     try {
-      await this.sendCommand('shutdown');
-
-      // Force kill after 5 seconds if still running
-      const currentProc = this.process;
-      setTimeout(() => {
-        if (currentProc && !currentProc.killed) {
-          console.warn('VideoDB Capture: Force killing process after timeout');
-          currentProc.kill();
-        }
-      }, 5000);
-    } catch {
-      // If shutdown command fails, just kill
-      console.warn('VideoDB Capture: Shutdown command failed, force killing');
-      if (this.process) {
-        this.process.kill();
-      }
+      await this.sendCommand('shutdown', {}, 155_000);
+      await exited;
+    } catch (error) {
+      if (currentProc.exitCode === null && currentProc.signalCode === null)
+        currentProc.kill('SIGKILL');
+      await exited;
+      throw error;
+    } finally {
+      clearTimeout(killTimer);
+      currentProc.off('close', onExit);
     }
   }
 
@@ -349,6 +418,8 @@ export class BinaryManager extends EventEmitter {
    * Immediately kill the binary process
    */
   public kill(): void {
+    this.stopping = true;
+    this.stopHealthCheck();
     if (this.process) {
       this.process.kill();
     }

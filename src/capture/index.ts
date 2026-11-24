@@ -90,3 +90,52 @@ export {
   type CaptureClientOptions,
   type TrackTypeValue,
 } from './types';
+
+export type {
+  RecordingIdentity,
+  LocalRecordingStage,
+  ProcessingResult,
+  LocalRecording,
+  ProcessingComplete,
+  RecordingFailure,
+  RecorderTokenRequest,
+  RecorderTokenProvider,
+  RelayRecordingOptions,
+  RelayRecordingResult,
+  WaitForProcessingOptions,
+  CaptureShutdownOptions,
+} from './types';
+
+export type {
+  CaptureWindow,
+  AvailableWindows,
+  WindowEvent,
+  SwitchWindowOptions,
+  SetWindowEnabledOptions,
+  WindowEnabledResult,
+  StartLocalRecordingOptions,
+  LocalRecordingStarted,
+  LocalRecordingResult,
+  LocalRecordingFailure,
+  SessionRecordingReady,
+} from './types';
+export { CaptureCommandError } from './binaryManager';
+
+export type {
+  StartRecordingOptions,
+  ManagedRecording,
+  ManagedProcessingComplete,
+  ManagedProcessingProgress,
+  ManagedProgress,
+  ManagedRecordingReady,
+  ManagedRecordingFailure,
+  ManagedTokenRequest,
+  RecordingStopResult,
+  RecorderCapabilities,
+} from './types';
+
+export type {
+  RecordingResolution,
+  RecordingNotice,
+  RecordingNotices,
+} from './types';

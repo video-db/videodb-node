@@ -23,6 +23,8 @@ export const HEALTH_CHECK_TIMEOUT = 60000;
 export interface BinaryConfig {
   baseUrl: string;
   version: string;
+  /** Per-platform overrides; other platforms continue to use version. */
+  platformVersions?: Record<string, string>;
   checksums: Record<string, string>;
 }
 
@@ -125,6 +127,30 @@ export type BinaryMessage = BinaryResponse | BinaryEvent;
  * CaptureClient event types
  */
 export interface CaptureClientEvents {
+  'local-recording-ready': SessionRecordingReady | LocalRecordingResult;
+  'recording-token-needed':
+    | (RecordingIdentity & { stage?: LocalRecordingStage })
+    | ManagedTokenRequest;
+  'recording-token-error':
+    | RecordingFailure
+    | { recordingId: string; owner: string; error: string };
+  'local-recording-failed': RecordingFailure | LocalRecordingFailure;
+  'local-recording-started': Pick<LocalRecordingStarted, 'recordingId'>;
+  'windows-available': AvailableWindows;
+  'window-suspended': WindowEvent & { reason: string };
+  'window-resumed': WindowEvent;
+  'window-closed': WindowEvent & { reason: string };
+  'window-switched': WindowEvent;
+  'recording-relay-failed': RecordingFailure;
+  'processing-progress': ManagedProcessingProgress;
+  'processing-complete': ProcessingComplete | ManagedProcessingComplete;
+  'recording-notice': RecordingNotice;
+  'recording-ready': ManagedRecordingReady;
+  'recording-failed': ManagedRecordingFailure;
+  'processing-failed': ManagedRecordingFailure;
+  'recording-started': { sessionId: string } | { recordingId: string };
+  'recording-complete': { sessionId: string };
+
   /** Recording started */
   'recording:started': { sessionId: string };
   /** Recording stopped */
@@ -132,7 +158,7 @@ export interface CaptureClientEvents {
   /** Recording error */
   'recording:error': { error: string; code?: string };
   /** Binary process error */
-  error: { type: string; message: string };
+  error: { type?: string; code?: string; message: string };
   /** Binary process shutdown */
   shutdown: { code: number; signal?: string };
   /** Transcript data received */
@@ -152,14 +178,21 @@ export interface StartCaptureSessionClientConfig {
   sessionId: string;
   /** Channels to capture */
   channels: RecordingChannelConfig[];
+  /** Output height; defaults to 720p. Audio-only capture is unaffected. */
+  resolution?: RecordingResolution;
 }
 
 /**
  * CaptureClient constructor options
  */
 export interface CaptureClientOptions {
+  /** Request fresh tokens automatically for native recording-token-needed events. */
+  getRecorderToken?: RecorderTokenProvider;
+  /** Maximum automatic token requests before delivery progress (default 3 for managed jobs).
+   * Legacy session jobs retain a per-recording limit. Cached tokens are always rejected. */
+  maxTokenRefreshAttempts?: number;
   /** Session token for authentication */
-  sessionToken: string;
+  sessionToken?: string;
   /** API URL for the VideoDB API (defaults to https://api.videodb.io) */
   apiUrl?: string;
   /** Whether to run in dev mode (uses mock binary) */
@@ -178,3 +211,257 @@ export const TrackType = {
 } as const;
 
 export type TrackTypeValue = (typeof TrackType)[keyof typeof TrackType];
+
+/** Identity supplied by the recorder; use sessionId to authorize the owning user. */
+export interface RecordingIdentity {
+  recordingId: string;
+  sessionId: string;
+}
+export type LocalRecordingStage =
+  | 'recording'
+  | 'finalizing'
+  | 'awaiting_token'
+  | 'uploading'
+  | 'uploaded'
+  | 'processing'
+  | 'complete'
+  | 'failed';
+export interface ProcessingResult {
+  videoId: string;
+  playerUrl?: string | null;
+  streamUrl?: string | null;
+  indexStatus?: string | null;
+}
+export interface LocalRecording extends RecordingIdentity {
+  stage: LocalRecordingStage;
+  durationSeconds: number | null;
+  partial: boolean;
+  partialReason: string | null;
+  progress?: ManagedProgress;
+  error: string | null;
+  result: ProcessingResult | null;
+}
+export interface ProcessingComplete extends RecordingIdentity {
+  result: ProcessingResult;
+  fileRetained: boolean;
+}
+export interface RecordingFailure extends RecordingIdentity {
+  error: string;
+  retryable?: boolean;
+  /** True while the native worker is still retrying; failure is not final. */
+  retrying?: boolean;
+  fileRetained?: boolean;
+  retained?: boolean;
+}
+export interface RecorderTokenRequest extends RecordingIdentity {
+  stage?: LocalRecordingStage;
+  /** Always true: bypass host token caches and issue a new same-user token. */
+  forceRefresh: true;
+}
+/** Return null to leave an unrelated retained recording untouched. */
+export type RecorderTokenProvider = (
+  request: RecorderTokenRequest | (ManagedTokenRequest & { forceRefresh: true })
+) => Promise<string | null>;
+export interface RelayRecordingOptions {
+  /** Required for managed deferred recordings. */
+  owner?: string;
+  recordingId: string;
+  /** Fresh token issued for the user who owns this recording's session. */
+  uploadToken: string;
+}
+export interface RelayRecordingResult {
+  recordingId: string;
+  status: 'accepted' | 'complete';
+  result?: ProcessingResult | null;
+}
+export type WaitForProcessingOptions = (
+  | { recordingId: string; sessionId?: never }
+  | { sessionId: string; recordingId?: never }
+) & { timeoutMs?: number };
+export interface CaptureShutdownOptions {
+  /** Default true. Delayed native retries are retained for recovery instead of blocking shutdown.
+   * False suspends all pending work for recovery later. */
+  waitForProcessing?: boolean;
+  /** Processing wait budget, default 15 minutes. On timeout the binary stays running. */
+  timeoutMs?: number;
+}
+
+/** Local UI metadata. Tokens are valid only for this recorder process. */
+export interface CaptureWindow {
+  channelId: string;
+  token: string;
+  title: string;
+  appName: string;
+  bundleId: string;
+  width: number;
+  height: number;
+  isOnScreen: boolean;
+}
+export interface AvailableWindows {
+  supported: boolean;
+  supportsSwitchWindow: boolean;
+  supportsDeferredWindow: boolean;
+  supportsPlaceholder: boolean;
+  supportsSetWindowEnabled: boolean;
+  supportsAddWindowMidRecording: boolean;
+  windows: CaptureWindow[];
+}
+export interface WindowEvent {
+  sourceId: number;
+  channel: string;
+  channelId: string;
+}
+export interface SwitchWindowOptions {
+  channelId: string;
+  sourceChannelId?: string;
+}
+export interface SetWindowEnabledOptions {
+  enabled: boolean;
+  channelId?: string;
+  sourceChannelId?: string;
+}
+export interface WindowEnabledResult {
+  channelId: string;
+  enabled: boolean;
+  suspended: boolean;
+}
+export interface StartLocalRecordingOptions {
+  /** Exactly one screen/display/window target, plus optional selected audio. No server storage. */
+  channels: Array<Pick<RecordingChannelConfig, 'channelId' | 'type'>>;
+}
+export interface LocalRecordingStarted {
+  recordingId: string;
+  mode: 'deferred';
+}
+/** Standalone finalization is local success, not server ingestion. */
+export interface LocalRecordingResult extends LocalRecordingStarted {
+  status: 'ready';
+  path: string;
+  files: string[];
+  durationSeconds: number;
+  metadata: Record<string, unknown>;
+  finalizedOnShutdown: boolean;
+}
+export interface LocalRecordingFailure {
+  recordingId: string;
+  error?: string;
+  retained: boolean;
+}
+export interface SessionRecordingReady extends RecordingIdentity {
+  durationSeconds: number;
+  partial: boolean;
+  partialReason: string | null;
+  mode?: never;
+}
+
+/** Managed capture authorizes before capture and delivers automatically on stop. */
+export interface StartRecordingOptions extends StartLocalRecordingOptions {
+  /** One video target with optional audio, or audio-only default sources (managed.7+). */
+  channels: StartLocalRecordingOptions['channels'];
+  owner: string;
+  collectionId: string;
+  uploadToken: string;
+  name?: string;
+  /** Output height; defaults to 720p. Audio-only capture is unaffected. */
+  resolution?: RecordingResolution;
+  /** Resume an authorizing receipt after a lost reply; never resumes capture implicitly. */
+  recordingId?: string;
+}
+export interface ManagedTokenRequest {
+  recordingId: string;
+  owner: string;
+  collectionId: string;
+  sessionId?: string | null;
+  purpose: 'recording-delivery';
+}
+export interface ManagedProcessingComplete {
+  recordingId: string;
+  owner: string;
+  result: ProcessingResult;
+}
+/** Delivery estimate; completion is signalled only by processing-complete. */
+export interface ManagedProgress {
+  /** Native estimate from 0 to 99 while processing. */
+  percent: number;
+  /** Null when no reliable estimate is available. */
+  etaSeconds: number | null;
+}
+export interface ManagedProcessingProgress extends ManagedProgress {
+  recordingId: string;
+  owner: string;
+}
+export interface ManagedRecordingReady {
+  partial: boolean;
+  partialReason: string | null;
+  recordingId: string;
+  owner: string;
+  status: 'ready';
+  durationSeconds: number;
+  mode: 'deferred';
+  finalizedOnShutdown: boolean;
+}
+export interface ManagedRecordingFailure {
+  recordingId: string;
+  owner?: string;
+  errorCode: string;
+  retryable?: boolean;
+  /** True while the native worker is still retrying; failure is not final. */
+  retrying?: boolean;
+}
+export interface ManagedRecording {
+  partial: boolean;
+  partialReason: string | null;
+  /** Present while this recorder process has a delivery estimate. */
+  progress?: ManagedProgress;
+  recordingId: string;
+  owner: string;
+  name: string | null;
+  stage:
+    | 'authorizing'
+    | 'recording'
+    | 'finalizing'
+    | 'ready'
+    | 'uploaded'
+    | 'processing'
+    | 'needs_recovery'
+    | 'reconciliation_required'
+    | 'discarding'
+    | 'complete'
+    | 'failed'
+    | 'discarded';
+  createdAt: number;
+  durationSeconds: number | null;
+  result: ProcessingResult | null;
+  errorCode: string | null;
+  retryable: boolean;
+}
+export interface RecordingStopResult {
+  recordingId: string;
+  status: 'ready';
+  durationSeconds: number;
+}
+export interface RecorderCapabilities {
+  managedDeferredRecording: boolean;
+}
+
+/** Recording output height; display aspect ratio is preserved. */
+export type RecordingResolution = '720p' | '1080p';
+/** Ignore codes not recognized by your application. */
+export interface RecordingNotice {
+  code:
+    | 'LOW_STORAGE'
+    | 'STORAGE_STOPPED'
+    | 'MIC_SILENT'
+    | 'AUDIO_IDLE'
+    | (string & {});
+  severity: 'info' | 'warning' | 'critical';
+  active: boolean;
+  recordingId: string;
+  sessionId?: string;
+  source?: string;
+  minutesLeft?: number;
+  minutesIdle?: number;
+}
+export interface RecordingNotices {
+  notices: RecordingNotice[];
+}

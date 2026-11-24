@@ -37,14 +37,19 @@ export class RecorderInstaller {
     // Default binary config - can be overridden or loaded from package.json
     this.binaryConfig = binaryConfig || {
       baseUrl: 'https://artifacts.videodb.io/capture',
-      version: '0.3.1',
+      version: '0.3.4',
+      platformVersions: {
+        'darwin-arm64': '0.3.4',
+        'darwin-x64': '0.3.4',
+        'win32-x64': '0.3.4',
+      },
       checksums: {
         'darwin-x64':
-          '8b456607ba3628092081d92c1a22fcf4e8156f4e83b2d3d119bf0244eaa870b2',
+          'c1406275c8d94f638be716ccfc6311b4307e98756fb9de81593210f4d7f1bc38',
         'darwin-arm64':
-          'cefc35883acd53f63dc50f8deb186ea0a8e17c65e646af8e81a309251a220b9d',
+          '1180767923db4e37fa6e3fe17add581026793ef31b83fdd41083e8c57d233cf5',
         'win32-x64':
-          'e388639c15ab35ac32179d3fc05a363f0f71d4d90265c6b48fb1af56ecae7736',
+          'fed9bb6685a69c47808aafc9e95b46ac55c7c79d201ae8f80d963164df226ebc',
       },
     };
 
@@ -76,7 +81,9 @@ export class RecorderInstaller {
    */
   public getDownloadUrl(): string {
     const { platformKey } = this.getPlatformInfo();
-    const { baseUrl, version } = this.binaryConfig;
+    const { baseUrl, platformVersions } = this.binaryConfig;
+    const version =
+      platformVersions?.[platformKey] ?? this.binaryConfig.version;
     return `${baseUrl}/v${version}/capture-${platformKey}.tar.gz`;
   }
 
@@ -122,7 +129,25 @@ export class RecorderInstaller {
    */
   public isInstalled(): boolean {
     const binaryPath = this.getBinaryPath();
-    return fs.existsSync(binaryPath);
+    if (!fs.existsSync(binaryPath)) return false;
+    try {
+      const marker = JSON.parse(
+        fs.readFileSync(this.getArtifactMarkerPath(), 'utf8')
+      ) as { url?: string; checksum?: string };
+      return (
+        marker.url === this.getDownloadUrl() &&
+        marker.checksum === this.getExpectedChecksum()
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  private getArtifactMarkerPath(): string {
+    const dir = this.getBinaryPath().includes('app.asar.unpacked')
+      ? this.binDir.replace('app.asar', 'app.asar.unpacked')
+      : this.binDir;
+    return path.join(dir, '.artifact.json');
   }
 
   /**
@@ -315,6 +340,17 @@ export class RecorderInstaller {
             );
           }
         }
+      }
+
+      // Mark only a checksum-verified artifact as current; mere file existence can be stale.
+      if (!skipChecksum && this.getExpectedChecksum()) {
+        fs.writeFileSync(
+          this.getArtifactMarkerPath(),
+          JSON.stringify({
+            url: this.getDownloadUrl(),
+            checksum: this.getExpectedChecksum(),
+          })
+        );
       }
 
       // Clean up archive

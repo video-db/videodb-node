@@ -1,0 +1,62 @@
+// Compile-time coverage of the public 0.3.4 contract.
+import type {
+  CaptureClient,
+  ManagedProcessingProgress,
+  ManagedRecording,
+  ManagedRecordingReady,
+} from '../../src/capture';
+declare const client: CaptureClient;
+client.on('processing-progress', event => {
+  const typed: ManagedProcessingProgress = event;
+  const eta: number | null = typed.etaSeconds;
+  return eta;
+});
+client.on('recording-ready', event => {
+  const typed: ManagedRecordingReady = event;
+  const partial: boolean = typed.partial;
+  const reason: string | null = typed.partialReason;
+  return { partial, reason };
+});
+async function listing() {
+  const records: ManagedRecording[] = await client.listRecordings({
+    owner: 'fixture',
+  });
+  const eta: number | null | undefined = records[0].progress?.etaSeconds;
+  return { eta, partial: records[0].partial, reason: records[0].partialReason };
+}
+// @ts-expect-error The native command was withdrawn; apps must not offer discard.
+client.discardRecording({ recordingId: 'fixture', owner: 'fixture' });
+void listing;
+
+client.on('processing-failed', event => {
+  const retrying: boolean | undefined = event.retrying;
+  void retrying;
+});
+client.on('recording-relay-failed', event => {
+  const retrying: boolean | undefined = event.retrying;
+  void retrying;
+});
+void client.stopRecording({ timeoutMs: 600000 });
+
+client.on('recording-notice', notice => {
+  const active: boolean = notice.active;
+  const severity: 'info' | 'warning' | 'critical' = notice.severity;
+  return { active, severity };
+});
+void client.getNotices().then(({ notices }) => notices.map(n => n.code));
+const resolution: import('../../src/capture').RecordingResolution = '1080p';
+// @ts-expect-error Only 720p and 1080p are supported.
+const invalidResolution: import('../../src/capture').RecordingResolution =
+  '1440p';
+void resolution;
+void invalidResolution;
+client.on('local-recording-ready', event => {
+  if ('sessionId' in event) {
+    const partial: boolean = event.partial;
+    // @ts-expect-error Current live recording events expose no local path.
+    event.path;
+    // @ts-expect-error Current live recording events expose no media internals.
+    event.metadata;
+    return partial;
+  }
+});

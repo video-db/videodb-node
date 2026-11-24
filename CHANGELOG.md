@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3] (Unreleased)
+
+- Pin capture binary 0.3.4 for macOS (Apple Silicon and Intel) and Windows x64, with verified archive checksums. SDK and binary versions are independent.
+- Add authorized deferred capture, audio-only recording, window controls, fresh-token delivery and recovery, processing progress and partial recordings. Shutdown waits for processing; delayed retries remain recoverable.
+- Add 720p/1080p resolution, recording notices and `getNotices()`. Preserve native storage and startup error codes.
+- Remove unsupported discard and stale local-file fields; see [capture migration](docs/capture-offline.md).
+
 ## [0.4.1] (2026-11-22)
 
 Matches videodb-python 0.5.3.
