@@ -532,4 +532,42 @@ describe('rtstream transcript language', () => {
     });
     expect(bodies[1]).toEqual({ action: 'start', engine: 'assemblyai' });
   });
+
+  it('sends model and speaker options only when given', async () => {
+    const bodies: unknown[] = [];
+    const http = {
+      post: (_p: string[], body: unknown) => {
+        bodies.push(body);
+        return Promise.resolve({ data: {} });
+      },
+    } as unknown as HttpClient;
+    const stream = new RTStream(http, { id: 'rts-1' } as never);
+    await stream.startTranscript('ws-1', undefined, undefined, {
+      languageCode: 'es',
+      modelName: 'pro',
+      speakerLabels: true,
+      maxSpeakers: 3,
+    });
+    await stream.startTranscript(undefined, undefined, undefined, {
+      speakerLabels: false,
+    });
+    expect(bodies[0]).toEqual({
+      action: 'start',
+      engine: 'assemblyai',
+      ws_connection_id: 'ws-1',
+      language_code: 'es',
+      model_name: 'pro',
+      speaker_labels: true,
+      max_speakers: 3,
+    });
+    expect(bodies[1]).toEqual({
+      action: 'start',
+      engine: 'assemblyai',
+      speaker_labels: false,
+    });
+    await expect(
+      stream.startTranscript(undefined, undefined, 'es', { languageCode: 'fr' })
+    ).rejects.toThrow('Pass languageCode only');
+    expect(bodies).toHaveLength(2);
+  });
 });
