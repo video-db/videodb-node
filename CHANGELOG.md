@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.2] (2026-11-24)
+
+Matches videodb-python 0.5.4.
+
+### Added
+
+- **`rtstream.startTranscript(socketId, engine, language, options)`** takes `{ languageCode, modelName, speakerLabels, maxSpeakers }`. `modelName` is `'standard'` (default) or `'pro'`, the more accurate model. `speakerLabels: true` labels who speaks on each record and word; with `'standard'` it works for en, es, fr, de, pt, it or no language. `maxSpeakers` (1-10) needs `speakerLabels`. Unset options aren't sent. Same as videodb-python's `start_transcript(language_code=, model_name=, speaker_labels=, max_speakers=)`.
+- **Transcript types.** `getTranscript()` returns `RTStreamTranscript`, whose records and words carry an optional `speaker`. `RTStreamTranscriptOptions`, `RTStreamTranscriptRecord` and `RTStreamTranscriptWord` are exported.
+
+### Changed
+
+- **`language` is the older name for `options.languageCode`.** The third positional argument still works. Passing both with different values throws `VideodbError`.
+
 ## [0.4.1] (2026-11-22)
 
 Matches videodb-python 0.5.3.
