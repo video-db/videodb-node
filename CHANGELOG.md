@@ -11,7 +11,7 @@ Matches videodb-python 0.5.4.
 
 ### Changed
 
-- **`language` is the older name for `options.languageCode`.** The third positional argument still works. Passing both throws `VideodbError`.
+- **`language` is the older name for `options.languageCode`.** The third positional argument still works. Passing both with different values throws `VideodbError`.
 
 ## [0.4.1] (2026-11-22)
 
