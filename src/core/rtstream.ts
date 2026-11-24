@@ -1261,7 +1261,7 @@ export class RTStream {
    *   With "standard", supported for en, es, fr, de, pt, it or no language.
    * @param options.maxSpeakers - Upper bound on distinct speakers, 1-10. Requires `speakerLabels: true`.
    * @returns Transcription status with start time
-   * @throws VideodbError if `language` and `options.languageCode` are both given
+   * @throws VideodbError if `language` and `options.languageCode` are both given and differ
    *
    * @example
    * ```typescript
@@ -1279,7 +1279,7 @@ export class RTStream {
     language?: string,
     options: RTStreamTranscriptOptions = {}
   ): Promise<Record<string, unknown>> => {
-    if (language && options.languageCode) {
+    if (language && options.languageCode && language !== options.languageCode) {
       throw new VideodbError(
         'Pass languageCode only; language is its older name'
       );
