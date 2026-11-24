@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.4.2] (unreleased)
+## [0.4.2] (2026-11-24)
 
 Matches videodb-python 0.5.4.
 
