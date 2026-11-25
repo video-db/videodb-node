@@ -2,7 +2,8 @@
 
 ## [0.5.3] (Unreleased)
 
-- Update Windows to `0.3.3-windows-preview.3` with a verified checksum. Storage moves to Local AppData; finish pending preview.2 deliveries before upgrading because the old storage is not automatically migrated.
+- Windows capture binary rebuild: audio and stop fixes. Pin `0.3.4-windows.2` (native version `0.3.4`) with a verified checksum.
+- Windows storage uses Local AppData (since preview.3); finish pending preview.2 deliveries before upgrading because the old storage is not automatically migrated.
 
 - Base the capture release on latest main, retaining its SDK error, search, upload, and installer improvements.
 - Select immutable macOS artifact `0.3.3-managed.7` (native version `0.3.3`); SDK and binary versions are independent.
