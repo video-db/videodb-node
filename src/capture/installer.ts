@@ -41,7 +41,7 @@ export class RecorderInstaller {
       platformVersions: {
         'darwin-arm64': '0.3.4',
         'darwin-x64': '0.3.4',
-        'win32-x64': '0.3.4',
+        'win32-x64': '0.3.4-windows.2',
       },
       checksums: {
         'darwin-x64':
@@ -49,7 +49,7 @@ export class RecorderInstaller {
         'darwin-arm64':
           '1180767923db4e37fa6e3fe17add581026793ef31b83fdd41083e8c57d233cf5',
         'win32-x64':
-          'fed9bb6685a69c47808aafc9e95b46ac55c7c79d201ae8f80d963164df226ebc',
+          '3ea5ab7b35010396074f26ba1eadaf442a1cec78ec3857fcc09c2fbb7ff8fa5d',
       },
     };
 
