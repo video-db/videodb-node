@@ -48,12 +48,12 @@
     "platformVersions": {
       "darwin-arm64": "0.3.4",
       "darwin-x64": "0.3.4",
-      "win32-x64": "0.3.4"
+      "win32-x64": "0.3.4-windows.2"
     },
     "checksums": {
       "darwin-arm64": "1180767923db4e37fa6e3fe17add581026793ef31b83fdd41083e8c57d233cf5",
       "darwin-x64": "c1406275c8d94f638be716ccfc6311b4307e98756fb9de81593210f4d7f1bc38",
-      "win32-x64": "fed9bb6685a69c47808aafc9e95b46ac55c7c79d201ae8f80d963164df226ebc"
+      "win32-x64": "3ea5ab7b35010396074f26ba1eadaf442a1cec78ec3857fcc09c2fbb7ff8fa5d"
     }
   },
   "repository": {

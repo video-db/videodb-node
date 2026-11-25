@@ -1,6 +1,6 @@
 # Deferred recording migration
 
-SDK `0.4.3` on `release-0.4.3` selects binary `0.3.4` for macOS and Windows x64. This is a breaking change from `0.3.3-window.1`.
+SDK `0.4.3` on `release-0.4.3` selects binary `0.3.4` for macOS and Windows artifact `0.3.4-windows.2` (native version `0.3.4`). This is a breaking change from `0.3.3-window.1`.
 
 `startLocalRecording()` is rejected by the new artifact. Tokenless local-only recording and local file paths are no longer its supported contract. Use `startRecording({owner, collectionId, uploadToken, channels})`; it authorizes a deferred server session before capture, without creating RTStreams. Connectivity is required at start. Stop automatically queues delivery.
 
@@ -65,7 +65,7 @@ The SDK acceptance test uses **dev** with explicit `baseUrl` and `apiUrl`; `dev:
 
 The reproduced microphone-stop deadlock is fixed in this artifact. Microphone plus system-audio capture is covered by the opt-in acceptance test.
 
-**Release limitations:** USB/Bluetooth device switching and sleep/wake remain separate validation gates. The macOS binaries are ad-hoc signed, not notarized. Physical Intel and oldest-supported macOS capture remain unverified; x64 checks use Rosetta. Windows x64 selects `0.3.4`, an unsigned build supporting managed deferred recording, window capture and live + local including audio-only. Window capture requires Windows 10 build 19041 or newer. The recorder team reports Windows Server 2022 / NVIDIA T4 validation and a clean Windows 11 CPU-only check without the Visual C++ runtime installed; Intel/AMD laptop capture and real microphone/AEC remain unverified. Updating this SDK does not update Bloom's installed dependency automatically.
+**Release limitations:** USB/Bluetooth device switching and sleep/wake remain separate validation gates. The macOS binaries are ad-hoc signed, not notarized. Physical Intel and oldest-supported macOS capture remain unverified; x64 checks use Rosetta. Windows x64 selects `0.3.4-windows.2` (native version `0.3.4`), an unsigned build supporting managed deferred recording, window capture and live + local including audio-only. Window capture requires Windows 10 build 19041 or newer. The recorder team reports Windows Server 2022 / NVIDIA T4 validation and a clean Windows 11 CPU-only check without the Visual C++ runtime installed; Intel/AMD laptop capture and real microphone/AEC remain unverified. Updating this SDK does not update Bloom's installed dependency automatically.
 
 The opt-in dev acceptance test is `npm run test:capture:managed` with a backend-only `VIDEO_DB_API_KEY`. Pass `-- --with-mic` to include the microphone, or `-- --screen-only` to verify video without selected audio. Screen-only recording has a native silent audio track for ingestion. It uses explicit `baseUrl`/`apiUrl`, captures five seconds of selected audio, checks stop/finalization against a 30-second limit, checks progress events and partial fields, tests an expired token, restart recovery, fresh authorization, ingestion, repeated relay and payload privacy. The older `test:capture:offline` belongs to the previous tokenless artifact and is not an acceptance test for this release.
 
@@ -98,3 +98,5 @@ const {notices} = await client.getNotices();
 ```
 
 Native rejections preserve `CaptureCommandError.code`: `INSUFFICIENT_STORAGE` means capture did not start; `INVALID_RESOLUTION` means choose 720p or 1080p. `INSTANCE_ALREADY_RUNNING` and `INSTANCE_LOCK_UNAVAILABLE` reject initialization and are also forwarded on `error`. They do not trigger an automatic restart loop. A live `local-recording-ready` or history entry exposes duration and partial status, without local paths or media metadata. The older tokenless result type remains only for legacy adapters.
+
+Windows rebuild 2 fixes stop crashes and timeouts, quiet system-audio delivery, microphone buffering, and recorder lifetime races. The recorder team tested it on a Windows VM with Remote Desktop audio; physical microphones, speakers, Bluetooth, sleep and lid-close behavior remain unverified.

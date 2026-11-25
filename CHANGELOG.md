@@ -2,7 +2,8 @@
 
 ## [0.4.3] (Unreleased)
 
-- Pin capture binary 0.3.4 for macOS (Apple Silicon and Intel) and Windows x64, with verified archive checksums. SDK and binary versions are independent.
+- Windows capture binary rebuild: audio and stop fixes. Pin `0.3.4-windows.2` (native version `0.3.4`) with a verified checksum.
+- Pin capture binary 0.3.4 for macOS (Apple Silicon and Intel), with verified archive checksums. SDK and binary versions are independent.
 - Add authorized deferred capture, audio-only recording, window controls, fresh-token delivery and recovery, processing progress and partial recordings. Shutdown waits for processing; delayed retries remain recoverable.
 - Add 720p/1080p resolution, recording notices and `getNotices()`. Preserve native storage and startup error codes.
 - Remove unsupported discard and stale local-file fields; see [capture migration](docs/capture-offline.md).
