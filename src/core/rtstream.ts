@@ -1260,6 +1260,8 @@ export class RTStream {
    * @param options.speakerLabels - Label who speaks on each transcript record and word.
    *   With "standard", supported for en, es, fr, de, pt, it or no language.
    * @param options.maxSpeakers - Upper bound on distinct speakers, 1-10. Requires `speakerLabels: true`.
+   * @param options.keyterms - Names, acronyms or terms to recognise and spell as given: up to 100
+   *   strings of at most 50 characters. Requires `modelName: 'pro'`.
    * @returns Transcription status with start time
    * @throws VideodbError if `language` and `options.languageCode` are both given and differ
    *
@@ -1292,6 +1294,7 @@ export class RTStream {
     if (options.speakerLabels != null)
       data.speaker_labels = options.speakerLabels;
     if (options.maxSpeakers != null) data.max_speakers = options.maxSpeakers;
+    if (options.keyterms?.length) data.keyterms = options.keyterms;
 
     const res = await this.#vhttp.post<Record<string, unknown>, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.transcription],

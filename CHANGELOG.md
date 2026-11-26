@@ -2,6 +2,7 @@
 
 ## [0.4.3] (Unreleased)
 
+- **`rtstream.startTranscript(..., { keyterms })`**: names, acronyms or terms the transcriber should recognise and spell as given. Up to 100 strings of at most 50 characters, with `modelName: 'pro'`. Matches videodb-python 0.5.5.
 - Windows capture binary rebuild: audio and stop fixes. Pin `0.3.4-windows.2` (native version `0.3.4`) with a verified checksum.
 - Pin capture binary 0.3.4 for macOS (Apple Silicon and Intel), with verified archive checksums. SDK and binary versions are independent.
 - Add authorized deferred capture, audio-only recording, window controls, fresh-token delivery and recovery, processing progress and partial recordings. Shutdown waits for processing; delayed retries remain recoverable.

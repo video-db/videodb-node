@@ -258,6 +258,8 @@ export interface RTStreamTranscriptOptions {
   speakerLabels?: boolean;
   /** Upper bound on distinct speakers, 1-10. Requires `speakerLabels: true`. */
   maxSpeakers?: number;
+  /** Names, acronyms or terms to recognise and spell as given: up to 100 strings of at most 50 characters. Requires `modelName: 'pro'`. */
+  keyterms?: string[];
 }
 
 /**

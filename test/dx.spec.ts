@@ -530,6 +530,36 @@ describe('rtstream transcript language', () => {
     expect(bodies[1]).toEqual({ action: 'start', engine: 'assemblyai' });
   });
 
+  it('sends keyterms only when the list is not empty', async () => {
+    const bodies: unknown[] = [];
+    const http = {
+      post: (_p: string[], body: unknown) => {
+        bodies.push(body);
+        return Promise.resolve({ data: {} });
+      },
+    } as unknown as HttpClient;
+    const stream = new RTStream(http, { id: 'rts-1' } as never);
+    await stream.startTranscript(undefined, undefined, undefined, {
+      modelName: 'pro',
+      keyterms: ['Pedraz', 'AEMET'],
+    });
+    await stream.startTranscript(undefined, undefined, undefined, {
+      modelName: 'pro',
+      keyterms: [],
+    });
+    expect(bodies[0]).toEqual({
+      action: 'start',
+      engine: 'assemblyai',
+      model_name: 'pro',
+      keyterms: ['Pedraz', 'AEMET'],
+    });
+    expect(bodies[1]).toEqual({
+      action: 'start',
+      engine: 'assemblyai',
+      model_name: 'pro',
+    });
+  });
+
   it('sends model and speaker options only when given', async () => {
     const bodies: unknown[] = [];
     const http = {
