@@ -145,10 +145,29 @@ export interface CaptureClientEvents {
   'processing-progress': ManagedProcessingProgress;
   'processing-complete': ProcessingComplete | ManagedProcessingComplete;
   'recording-notice': RecordingNotice;
+  'meeting-detected': {
+    event: string;
+    timestamp: string;
+    camera: boolean;
+    microphone: boolean;
+    app?: string;
+  };
+  'meeting-ended': { event: string; timestamp: string; lastActiveAt: string };
   'recording-ready': ManagedRecordingReady;
   'recording-failed': ManagedRecordingFailure;
   'processing-failed': ManagedRecordingFailure;
-  'recording-started': { sessionId: string } | { recordingId: string };
+  'recording-started':
+    | {
+        sessionId: string;
+        recordingId?: string;
+        live?: 'connecting' | 'live' | false;
+      }
+    | { recordingId: string };
+  'recording-live': {
+    sessionId: string;
+    recordingId: string;
+    streams: unknown[];
+  };
   'recording-complete': { sessionId: string };
 
   /** Recording started */
@@ -182,9 +201,15 @@ export interface StartCaptureSessionClientConfig {
   resolution?: RecordingResolution;
 }
 
-/**
- * CaptureClient constructor options
- */
+/** Native start acknowledgement. Capture is running; live readiness is a separate event. */
+export interface CaptureSessionStarted {
+  sessionId: string;
+  status: string;
+  /** Present on 0.3.6; older binaries may omit it. */
+  recordingId?: string;
+}
+
+/** CaptureClient constructor options. */
 export interface CaptureClientOptions {
   /** Request fresh tokens automatically for native recording-token-needed events. */
   getRecorderToken?: RecorderTokenProvider;
@@ -211,6 +236,8 @@ export const TrackType = {
 } as const;
 
 export type TrackTypeValue = (typeof TrackType)[keyof typeof TrackType];
+/** Legacy track name or a channel ID supplied at start (0.3.6+). */
+export type TrackSelector = TrackTypeValue | `${string}:${string}`;
 
 /** Identity supplied by the recorder; use sessionId to authorize the owning user. */
 export interface RecordingIdentity {
@@ -356,6 +383,8 @@ export interface SessionRecordingReady extends RecordingIdentity {
 
 /** Managed capture authorizes before capture and delivers automatically on stop. */
 export interface StartRecordingOptions extends StartLocalRecordingOptions {
+  /** Explicitly disable live streams. Deferred mode remains set for older binaries. */
+  live?: false;
   /** One video target with optional audio, or audio-only default sources (managed.7+). */
   channels: StartLocalRecordingOptions['channels'];
   owner: string;
@@ -442,6 +471,10 @@ export interface RecordingStopResult {
 }
 export interface RecorderCapabilities {
   managedDeferredRecording: boolean;
+  /** Omitted when not advertised by the installed binary. */
+  resolutions?: RecordingResolution[];
+  recordingNotices?: boolean;
+  instantStart?: boolean;
 }
 
 /** Recording output height; display aspect ratio is preserved. */
@@ -453,6 +486,7 @@ export interface RecordingNotice {
     | 'STORAGE_STOPPED'
     | 'MIC_SILENT'
     | 'AUDIO_IDLE'
+    | 'LIVE_UNAVAILABLE'
     | (string & {});
   severity: 'info' | 'warning' | 'critical';
   active: boolean;

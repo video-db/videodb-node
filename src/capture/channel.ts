@@ -2,7 +2,7 @@
  * Channel classes for managing capture channels with pause/resume functionality
  */
 
-import type { BinaryChannel, TrackTypeValue } from './types';
+import type { BinaryChannel, TrackTypeValue, TrackSelector } from './types';
 
 /**
  * Base Channel class representing a capture channel
@@ -187,8 +187,8 @@ export class Channels {
  * This avoids circular dependency with CaptureClient
  */
 export interface ChannelClient {
-  pauseTracks(tracks: TrackTypeValue[]): Promise<void>;
-  resumeTracks(tracks: TrackTypeValue[]): Promise<void>;
+  pauseTracks(tracks: TrackSelector[]): Promise<void>;
+  resumeTracks(tracks: TrackSelector[]): Promise<void>;
 }
 
 /**

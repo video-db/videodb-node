@@ -89,6 +89,8 @@ export {
   type StartCaptureSessionClientConfig,
   type CaptureClientOptions,
   type TrackTypeValue,
+  type TrackSelector,
+  type CaptureSessionStarted,
 } from './types';
 
 export type {

@@ -10,6 +10,7 @@ import {
   HEALTH_CHECK_INTERVAL,
   HEALTH_CHECK_TIMEOUT,
   type BinaryMessage,
+  type RecorderCapabilities,
 } from './types';
 import { RecorderInstaller } from './installer';
 
@@ -54,7 +55,7 @@ export class BinaryManager extends EventEmitter {
   private installer: RecorderInstaller;
   private stopping = false;
   private startupError: CaptureCommandError | null = null;
-  public capabilities: { managedDeferredRecording?: boolean } = {};
+  public capabilities: Partial<RecorderCapabilities> = {};
   private initConfig: Record<string, unknown> = {};
 
   constructor(options: { dev?: boolean; restartOnError?: boolean } = {}) {
@@ -329,7 +330,7 @@ export class BinaryManager extends EventEmitter {
       // Send init command
       this.capabilities = {};
       const initialized = await this.sendCommand<{
-        capabilities?: { managedDeferredRecording?: boolean };
+        capabilities?: Partial<RecorderCapabilities>;
       }>('init', config);
       this.capabilities = initialized?.capabilities ?? {};
     } catch (error) {

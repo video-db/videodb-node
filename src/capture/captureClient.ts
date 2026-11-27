@@ -36,7 +36,8 @@ import {
   type PermissionStatusValue,
   type StartCaptureSessionClientConfig,
   type CaptureClientOptions,
-  type TrackTypeValue,
+  type TrackSelector,
+  type CaptureSessionStarted,
 } from './types';
 import { Channels, groupChannels, type ChannelClient } from './channel';
 
@@ -108,6 +109,10 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     string,
     Array<{ recordingId: string; apply: () => void }>
   >();
+  private startingEvents?: {
+    owner: string;
+    events: Array<{ recordingId: string; apply: () => void }>;
+  };
   private managedOwners = new Map<string, string>();
   private localRecordingId: string | null = null;
   private localOutcomes = new Map<string, LocalRecordingResult | Error>();
@@ -160,6 +165,9 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
     for (const name of [
       'recording-notice',
+      'recording-live',
+      'meeting-detected',
+      'meeting-ended',
       'windows-available',
       'window-suspended',
       'window-resumed',
@@ -425,10 +433,12 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       this.managedOwners.get(event.recordingId) === event.owner
     )
       apply();
-    else if (event.owner)
-      this.listingEvents
-        .get(event.owner)
-        ?.push({ recordingId: event.recordingId, apply });
+    else if (event.owner) {
+      const buffered = { recordingId: event.recordingId, apply };
+      this.listingEvents.get(event.owner)?.push(buffered);
+      if (this.startingEvents?.owner === event.owner)
+        this.startingEvents.events.push(buffered);
+    }
   }
 
   private managedFailure(event: ManagedRecordingFailure): void {
@@ -535,9 +545,18 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
 
   public async getCapabilities(): Promise<RecorderCapabilities> {
     await this.ensureInitialized();
+    const capabilities = this.binaryManager.capabilities ?? {};
     return {
-      managedDeferredRecording:
-        this.binaryManager.capabilities?.managedDeferredRecording === true,
+      managedDeferredRecording: capabilities.managedDeferredRecording === true,
+      ...(capabilities.resolutions === undefined
+        ? {}
+        : { resolutions: [...capabilities.resolutions] }),
+      ...(capabilities.recordingNotices === undefined
+        ? {}
+        : { recordingNotices: capabilities.recordingNotices }),
+      ...(capabilities.instantStart === undefined
+        ? {}
+        : { instantStart: capabilities.instantStart }),
     };
   }
 
@@ -547,15 +566,19 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
   ): Promise<LocalRecordingStarted> {
     return this.serializeCapture(async () => {
       if (this.shuttingDown) throw new Error('CaptureClient is shutting down');
+      if (options.live !== undefined && options.live !== false)
+        throw new Error(
+          'startRecording supports live: false only; use startSession for live capture'
+        );
       if (
         this.currentSessionId ||
         this.localRecordingId ||
         this.managedRecordingId
       )
         throw new Error('A recording is already active');
-      if (!['darwin', 'win32'].includes(process.platform))
+      if (!['darwin', 'win32', 'linux'].includes(process.platform))
         throw new Error(
-          'Managed deferred capture is supported on macOS and Windows only'
+          'Managed deferred capture is supported on macOS, Windows and Linux'
         );
       if (
         !options.owner?.trim() ||
@@ -581,34 +604,43 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
         throw new Error(
           'The installed recorder does not support managed deferred recording'
         );
-      const started =
-        await this.binaryManager.sendCommand<LocalRecordingStarted>(
-          'startRecording',
-          {
-            mode: 'deferred',
-            ...(options.resolution === undefined
-              ? {}
-              : { resolution: options.resolution }),
-            owner: options.owner,
-            collectionId: options.collectionId,
-            uploadToken: options.uploadToken,
-            ...(options.name === undefined ? {} : { name: options.name }),
-            ...(options.recordingId === undefined
-              ? {}
-              : { recordingId: options.recordingId }),
-            channels: options.channels.map(c => ({
-              channel_id: c.channelId,
-              type: c.type,
-            })),
-          },
-          310_000
-        );
-      this.managedRecordingId = started.recordingId;
-      this.managedStartedAt = performance.now();
-      this.managedOwners.set(started.recordingId, options.owner);
-      this.pendingRecordings.add(started.recordingId);
-      this.outcomes.delete(`recording:${started.recordingId}`);
-      return started;
+      const buffered: Array<{ recordingId: string; apply: () => void }> = [];
+      this.startingEvents = { owner: options.owner, events: buffered };
+      try {
+        const started =
+          await this.binaryManager.sendCommand<LocalRecordingStarted>(
+            'startRecording',
+            {
+              mode: 'deferred',
+              ...(options.live === undefined ? {} : { live: options.live }),
+              ...(options.resolution === undefined
+                ? {}
+                : { resolution: options.resolution }),
+              owner: options.owner,
+              collectionId: options.collectionId,
+              uploadToken: options.uploadToken,
+              ...(options.name === undefined ? {} : { name: options.name }),
+              ...(options.recordingId === undefined
+                ? {}
+                : { recordingId: options.recordingId }),
+              channels: options.channels.map(c => ({
+                channel_id: c.channelId,
+                type: c.type,
+              })),
+            },
+            310_000
+          );
+        this.managedRecordingId = started.recordingId;
+        this.managedStartedAt = performance.now();
+        this.managedOwners.set(started.recordingId, options.owner);
+        this.pendingRecordings.add(started.recordingId);
+        this.outcomes.delete(`recording:${started.recordingId}`);
+        for (const event of buffered)
+          if (event.recordingId === started.recordingId) event.apply();
+        return started;
+      } finally {
+        this.startingEvents = undefined;
+      }
     });
   }
 
@@ -765,6 +797,8 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       throw new Error(
         'Use stopLocalRecording to await standalone finalization'
       );
+    if (!!options.recordingId === !!options.sessionId)
+      throw new Error('Exactly one of recordingId or sessionId is required');
     const timeoutMs = options.timeoutMs ?? 900_000;
     if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
       throw new Error('timeoutMs must be positive');
@@ -825,15 +859,15 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     });
   }
 
-  /** Discover current windows and mode-specific capabilities. No server call. */
   /** Active recording notices. Subscribe to recording-notice for subsequent changes. */
   public async getNotices(): Promise<RecordingNotices> {
     await this.ensureInitialized();
     return this.binaryManager.sendCommand<RecordingNotices>('getNotices');
   }
 
+  /** Discover native window capabilities, including portal-specific Linux support. */
   public async getWindows(): Promise<AvailableWindows> {
-    if (!['darwin', 'win32'].includes(process.platform))
+    if (!['darwin', 'win32', 'linux'].includes(process.platform))
       return {
         supported: false,
         supportsSwitchWindow: false,
@@ -986,6 +1020,19 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     });
   }
 
+  /** Read current OS permission without opening the permission dialog. */
+  public async getPermissionStatus(
+    kind: PermissionTypeValue
+  ): Promise<PermissionStatusValue> {
+    if (!Object.values(PermissionType).includes(kind))
+      throw new Error('Invalid permission type');
+    await this.ensureInitialized();
+    const result = await this.binaryManager.sendCommand<{
+      status: PermissionStatusValue;
+    }>('getPermissionStatus', { permission: kind });
+    return result.status;
+  }
+
   /**
    * Request a system permission
    * @param kind - The type of permission to request
@@ -1080,13 +1127,15 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
    * Start capture session
    * @param config - Capture session configuration (sessionId is required)
    */
-  public startSession(config: StartCaptureSessionClientConfig): Promise<void> {
+  public startSession(
+    config: StartCaptureSessionClientConfig
+  ): Promise<CaptureSessionStarted> {
     return this.serializeCapture(() => this.startSessionInternal(config));
   }
 
   private async startSessionInternal(
     config: StartCaptureSessionClientConfig
-  ): Promise<void> {
+  ): Promise<CaptureSessionStarted> {
     if (
       this.currentSessionId ||
       this.localRecordingId ||
@@ -1125,10 +1174,11 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
 
     this.currentSessionId = config.sessionId;
-    // Both pinned platforms support live + local, including audio-only.
+    // All pinned platforms support live + local, including audio-only.
     // No localRecording capability is emitted by these binaries.
     if (
       process.platform === 'win32' ||
+      process.platform === 'linux' ||
       (process.platform === 'darwin' &&
         (config.channels.some(ch => ch.type === 'video') ||
           this.binaryManager.capabilities?.managedDeferredRecording === true))
@@ -1142,7 +1192,7 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
       channels.find(ch => ch.type === 'video');
 
     try {
-      await this.binaryManager.sendCommand(
+      return await this.binaryManager.sendCommand<CaptureSessionStarted>(
         'startRecording',
         {
           uploadToken: this.sessionToken,
@@ -1201,13 +1251,13 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
 
   /**
    * Pause specific tracks
-   * @param tracks - Array of track types to pause
+   * @param tracks - Track names or channel IDs supplied at start (channel IDs require 0.3.6+)
    */
-  public pauseTracks(tracks: TrackTypeValue[]): Promise<void> {
+  public pauseTracks(tracks: TrackSelector[]): Promise<void> {
     return this.serializeCapture(() => this.pauseTracksInternal(tracks));
   }
 
-  private async pauseTracksInternal(tracks: TrackTypeValue[]): Promise<void> {
+  private async pauseTracksInternal(tracks: TrackSelector[]): Promise<void> {
     if (this.shuttingDown) throw new Error('CaptureClient is shutting down');
     if (!this.isInitialized) {
       throw new Error('CaptureClient not initialized');
@@ -1222,12 +1272,16 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
 
     const validTracks = ['mic', 'system_audio', 'screen'];
-    const invalidTracks = tracks.filter(t => !validTracks.includes(t));
+    const invalidTracks = tracks.filter(
+      t =>
+        typeof t !== 'string' ||
+        (!validTracks.includes(t) && !/^[^:\s]+:[^\s]+$/.test(t))
+    );
     if (invalidTracks.length > 0) {
       throw new Error(
         `Invalid track(s): ${invalidTracks.join(
           ', '
-        )}. Valid tracks: ${validTracks.join(', ')}`
+        )}. Use track names (${validTracks.join(', ')}) or channel IDs supplied at start`
       );
     }
 
@@ -1236,13 +1290,13 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
 
   /**
    * Resume specific tracks
-   * @param tracks - Array of track types to resume
+   * @param tracks - Track names or channel IDs supplied at start (channel IDs require 0.3.6+)
    */
-  public resumeTracks(tracks: TrackTypeValue[]): Promise<void> {
+  public resumeTracks(tracks: TrackSelector[]): Promise<void> {
     return this.serializeCapture(() => this.resumeTracksInternal(tracks));
   }
 
-  private async resumeTracksInternal(tracks: TrackTypeValue[]): Promise<void> {
+  private async resumeTracksInternal(tracks: TrackSelector[]): Promise<void> {
     if (this.shuttingDown) throw new Error('CaptureClient is shutting down');
     if (!this.isInitialized) {
       throw new Error('CaptureClient not initialized');
@@ -1257,12 +1311,16 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     }
 
     const validTracks = ['mic', 'system_audio', 'screen'];
-    const invalidTracks = tracks.filter(t => !validTracks.includes(t));
+    const invalidTracks = tracks.filter(
+      t =>
+        typeof t !== 'string' ||
+        (!validTracks.includes(t) && !/^[^:\s]+:[^\s]+$/.test(t))
+    );
     if (invalidTracks.length > 0) {
       throw new Error(
         `Invalid track(s): ${invalidTracks.join(
           ', '
-        )}. Valid tracks: ${validTracks.join(', ')}`
+        )}. Use track names (${validTracks.join(', ')}) or channel IDs supplied at start`
       );
     }
 

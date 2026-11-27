@@ -247,8 +247,13 @@ test('unsupported binary and invalid target selections fail before capture', asy
     manager.sendCommand.mock.calls.every(([c]) => c === 'getWindows')
   ).toBe(true);
 });
-test('Unsupported platforms skip window discovery without starting the binary', async () => {
+test('Linux uses the recorder window capabilities', async () => {
   Object.defineProperty(process, 'platform', { value: 'linux' });
+  const { client } = setup();
+  expect(await client.getWindows()).toMatchObject({ supported: true });
+});
+test('Unsupported platforms skip window discovery without starting the binary', async () => {
+  Object.defineProperty(process, 'platform', { value: 'freebsd' });
   const { client, manager } = setup();
   expect(await client.getWindows()).toMatchObject({
     supported: false,

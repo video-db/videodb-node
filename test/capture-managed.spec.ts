@@ -751,3 +751,112 @@ test.each(['INSUFFICIENT_STORAGE', 'INVALID_RESOLUTION'])(
     await client.shutdown({ waitForProcessing: false });
   }
 );
+
+test('live false preserves managed authorization and legacy deferred mode', async () => {
+  const { client, manager } = setup();
+  const result = await client.startRecording({ ...start, live: false });
+  expect(result.recordingId).toBe('rec-one');
+  expect(manager.sendCommand).toHaveBeenCalledWith(
+    'startRecording',
+    expect.objectContaining({
+      mode: 'deferred',
+      live: false,
+      owner: start.owner,
+      collectionId: start.collectionId,
+      uploadToken: start.uploadToken,
+    }),
+    expect.any(Number)
+  );
+});
+
+test('rejects live true on managed start before issuing a native command', async () => {
+  const { client, manager } = setup();
+  await expect(
+    client.startRecording({ ...start, live: true } as unknown as Parameters<
+      CaptureClient['startRecording']
+    >[0])
+  ).rejects.toThrow('startSession');
+  expect(manager.sendCommand).not.toHaveBeenCalled();
+});
+
+test('Linux deferred capture requires capability and authorization, and waits for delivery after stop', async () => {
+  Object.defineProperty(process, 'platform', { value: 'linux' });
+  const { client, manager } = setup();
+  const options = {
+    ...start,
+    channels: [{ channelId: 'display:1', type: 'video' as const }],
+    live: false as const,
+  };
+  await expect(
+    client.startRecording({ ...options, uploadToken: '' })
+  ).rejects.toThrow('required');
+  manager.capabilities.managedDeferredRecording = false;
+  await expect(client.startRecording(options)).rejects.toThrow(
+    'does not support'
+  );
+  expect(manager.sendCommand).not.toHaveBeenCalled();
+  manager.capabilities.managedDeferredRecording = true;
+  await expect(client.startRecording(options)).resolves.toHaveProperty(
+    'recordingId',
+    'rec-one'
+  );
+  expect(manager.sendCommand).toHaveBeenCalledWith(
+    'startRecording',
+    expect.objectContaining({
+      owner: start.owner,
+      collectionId: start.collectionId,
+      uploadToken: start.uploadToken,
+      live: false,
+      mode: 'deferred',
+      channels: [{ channel_id: 'display:1', type: 'video' }],
+    }),
+    expect.any(Number)
+  );
+  await client.pauseTracks(['display:1']);
+  await client.resumeTracks(['display:1']);
+  expect(manager.sendCommand).toHaveBeenCalledWith('pauseTracks', {
+    tracks: ['display:1'],
+  });
+  expect(manager.sendCommand).toHaveBeenCalledWith('resumeTracks', {
+    tracks: ['display:1'],
+  });
+  await client.stopRecording();
+  let delivered = false;
+  const waiting = client
+    .waitForProcessing({ recordingId: 'rec-one' })
+    .then(result => {
+      delivered = true;
+      return result;
+    });
+  await tick();
+  expect(delivered).toBe(false);
+  manager.emit('processing-complete', complete);
+  await expect(waiting).resolves.toEqual(complete);
+  await client.shutdown();
+});
+
+test('adopts managed events arriving before the start response, only for the returned ID', async () => {
+  const { client, manager } = setup();
+  manager.sendCommand.mockImplementation(async command => {
+    if (command === 'startRecording') {
+      manager.emit('processing-complete', complete);
+      manager.emit('processing-complete', {
+        ...complete,
+        recordingId: 'unrelated',
+      });
+      return { recordingId: 'rec-one', mode: 'deferred' };
+    }
+  });
+  await client.startRecording(start);
+  await expect(
+    client.waitForProcessing({ recordingId: 'rec-one', timeoutMs: 100 })
+  ).resolves.toEqual(complete);
+  expect((client as any).outcomes.has('recording:unrelated')).toBe(false);
+});
+
+test('rejects ambiguous processing targets at runtime', async () => {
+  const { client } = setup();
+  await expect(
+    client.waitForProcessing({ recordingId: 'r', sessionId: 's' } as any)
+  ).rejects.toThrow('Exactly one');
+});

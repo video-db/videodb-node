@@ -12,7 +12,7 @@ const MACOS_APP_BUNDLE = 'VideoDBCapture.app';
 const SUPPORTED_PLATFORMS: Record<string, string[]> = {
   darwin: ['x64', 'arm64'],
   win32: ['x64'],
-  // linux: ['x64', 'arm64'], // Linux support can be added later
+  linux: ['x64'],
 };
 
 /**
@@ -37,19 +37,22 @@ export class RecorderInstaller {
     // Default binary config - can be overridden or loaded from package.json
     this.binaryConfig = binaryConfig || {
       baseUrl: 'https://artifacts.videodb.io/capture',
-      version: '0.3.4',
+      version: '0.3.6',
       platformVersions: {
-        'darwin-arm64': '0.3.4',
-        'darwin-x64': '0.3.4',
-        'win32-x64': '0.3.4-windows.2',
+        'darwin-arm64': '0.3.6',
+        'darwin-x64': '0.3.6',
+        'win32-x64': '0.3.6',
+        'linux-x64': '0.3.6',
       },
       checksums: {
-        'darwin-x64':
-          'c1406275c8d94f638be716ccfc6311b4307e98756fb9de81593210f4d7f1bc38',
         'darwin-arm64':
-          '1180767923db4e37fa6e3fe17add581026793ef31b83fdd41083e8c57d233cf5',
+          'b884ed61b614d42e7cea05578bd789fa718ca60bcfc5ff721482e6e1253a0300',
+        'darwin-x64':
+          '7532e09ca586a6b4e56b76956e4eda9da64f7681cb234d1985a7c98aaf57cbcd',
         'win32-x64':
-          '3ea5ab7b35010396074f26ba1eadaf442a1cec78ec3857fcc09c2fbb7ff8fa5d',
+          'eb82764bb6ba403cb5f0a3dbfe58263575f0ef07bd92b19e06d75c25e630a388',
+        'linux-x64':
+          '08ba4f62a2e1c138b7de7cbf5bc563636b71a70052ee741870345ec169e1ceb1',
       },
     };
 

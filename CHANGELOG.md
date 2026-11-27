@@ -2,9 +2,19 @@
 
 ## [0.4.3] (Unreleased)
 
-- Windows capture binary rebuild: audio and stop fixes. Pin `0.3.4-windows.2` (native version `0.3.4`) with a verified checksum.
-- Pin capture binary 0.3.4 for macOS (Apple Silicon and Intel), with verified archive checksums. SDK and binary versions are independent.
+- Align capture 0.3.6 preparation with Python 0.5.5; buffer managed events arriving before start replies and reject ambiguous processing targets. Document compatibility differences between SDKs.
+
+- Enable authorized Linux deferred recording when the binary advertises `managedDeferredRecording`; retain authorization checks and delivery waiting.
+
+- Expose advertised resolution, recording-notice and instant-start capabilities; keep new fields optional for older binaries.
+- Return native session start acknowledgements, including `recordingId` when available. `startSession()` now returns `Promise<CaptureSessionStarted>` instead of `Promise<void>`.
+- Accept channel IDs in pause/resume and `live: false` in authorized deferred `startRecording()`, retaining the legacy deferred-mode parameter.
+
+- Forward 0.3.6 `recording-live` readiness separately from instant local recording start. Surface `LIVE_UNAVAILABLE` without treating local recording as failed.
+
+- Pin capture binary 0.3.6 for macOS 13+ (Apple Silicon and Intel) and Windows/Linux x64 (Ubuntu 22.04+, PipeWire and a ScreenCast portal), with verified archive checksums. SDK and binary versions are independent.
 - Add authorized deferred capture, audio-only recording, window controls, fresh-token delivery and recovery, processing progress and partial recordings. Shutdown waits for processing; delayed retries remain recoverable.
+- Forward typed `meeting-detected` and `meeting-ended` events, including microphone activity and the detecting app.
 - Add 720p/1080p resolution, recording notices and `getNotices()`. Preserve native storage and startup error codes.
 - Remove unsupported discard and stale local-file fields; see [capture migration](docs/capture-offline.md).
 
