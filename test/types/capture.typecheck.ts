@@ -60,3 +60,37 @@ client.on('local-recording-ready', event => {
     return partial;
   }
 });
+
+async function interface036() {
+  const caps = await client.getCapabilities();
+  const instant: boolean | undefined = caps.instantStart;
+  const notices: boolean | undefined = caps.recordingNotices;
+  const heights: import('../../src/capture').RecordingResolution[] | undefined =
+    caps.resolutions;
+  const started: import('../../src/capture').CaptureSessionStarted =
+    await client.startSession({
+      sessionId: 'session',
+      channels: [{ channelId: 'display:1', type: 'video' }],
+    });
+  const id: string | undefined = started.recordingId;
+  await client.pauseTracks(['display:1', 'mic:default', 'screen']);
+  await client.resumeTracks(['window:token', 'system_audio:default']);
+  await client.startRecording({
+    owner: 'owner',
+    collectionId: 'collection',
+    uploadToken: 'token',
+    channels: [{ channelId: 'display:1', type: 'video' }],
+    live: false,
+  });
+  const invalid: import('../../src/capture').StartRecordingOptions = {
+    owner: 'owner',
+    collectionId: 'collection',
+    uploadToken: 'token',
+    channels: [],
+    // @ts-expect-error Managed recording cannot request live streams.
+    live: true,
+  };
+  void invalid;
+  return { instant, notices, heights, id };
+}
+void interface036;

@@ -1,6 +1,6 @@
 # Local recording, tokens, and recovery
 
-Node `release-0.4.3` exposes binary 0.3.4's live + local recording lifecycle on macOS and Windows through `videodb/capture`. For deferred recording without RTStreams, use the [migration guide](capture-offline.md).
+Node `release-0.4.3` uses binary 0.3.6 on macOS, Windows and Linux for the live + local recording lifecycle through `videodb/capture`. For deferred recording without RTStreams, use the [migration guide](capture-offline.md).
 
 - `listLocalRecordings(): Promise<LocalRecording[]>` returns durable jobs for the configured API environment, including their `recordingId`, `sessionId`, `stage`, duration, partial status, and result. It does not itself relay jobs. Initialization can emit token requests for retained jobs, invoking a configured provider.
 - `relayRecording({ recordingId, uploadToken })` resolves with `{ recordingId, status: 'accepted' }`. Acceptance is not upload or ingestion completion.
@@ -99,3 +99,14 @@ Alternatively, omit the listener and explicitly fetch a fresh token and call `re
 For an opt-in live macOS test, set `VIDEO_DB_API_KEY` to a development API key and run `npm run test:capture:dev`. This captures five seconds of screen, microphone, and system audio and uploads that new recording to `https://api.dev.videodb.io`. It explicitly suspends after finalization, restarts, discovers only its own job, submits a one-second token after expiry, and requires a second token request followed by ingestion completion. A sanitized report is written to the OS temporary directory. Permissions must already be granted. It never relays another user's retained jobs.
 
 For managed deferred recording without RTStreams, see the [migration guide](capture-offline.md). Its owner-scoped history and events differ from the legacy live-session flow above.
+
+## Python correspondence
+
+Python `release-0-5-5` prepares the same capture 0.3.6 lifecycle. Its arguments use
+snake_case and timeout seconds; native response and event payload keys remain
+camelCase. Python keeps boolean `request_permission()` and async event envelopes;
+Node keeps permission status strings and EventEmitter listeners. Use
+`getPermissionStatus()` / `get_permission_status()` for precise permission state.
+Set channel `store` explicitly when sharing configuration: existing Python Channel
+objects default to false. Neither SDK release nor the 0.3.6 Python wheels have
+been published as part of this preparation.

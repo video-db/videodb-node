@@ -178,31 +178,34 @@ test('discovers and explicitly resumes retained jobs; acceptance is not completi
   ).toEqual(complete);
 });
 
-test('shutdown waits through asynchronous finalization after stop acknowledgement', async () => {
-  const { client, manager } = setup(async () => 'fresh');
-  // This test deliberately exercises macOS local video behavior on any CI host.
-  const platform = Object.getOwnPropertyDescriptor(process, 'platform')!;
-  Object.defineProperty(process, 'platform', { value: 'darwin' });
-  try {
-    await client.startSession({
-      sessionId: identity.sessionId,
-      channels: [{ channelId: 'display:1', type: 'video', store: false }],
-    });
-    await client.stopSession();
-    const stopping = client.shutdown();
-    await tick();
-    expect(manager.stop).not.toHaveBeenCalled();
-    manager.emit('local-recording-ready', identity);
-    manager.emit('recording-token-needed', identity);
-    await tick();
-    expect(manager.stop).not.toHaveBeenCalled();
-    manager.emit('processing-complete', complete);
-    await stopping;
-    expect(manager.stop).toHaveBeenCalledTimes(1);
-  } finally {
-    Object.defineProperty(process, 'platform', platform);
+test.each(['darwin', 'win32', 'linux'])(
+  'shutdown on %s waits through asynchronous finalization after stop acknowledgement',
+  async targetPlatform => {
+    const { client, manager } = setup(async () => 'fresh');
+    // Exercise each supported platform on any CI host.
+    const platform = Object.getOwnPropertyDescriptor(process, 'platform')!;
+    Object.defineProperty(process, 'platform', { value: targetPlatform });
+    try {
+      await client.startSession({
+        sessionId: identity.sessionId,
+        channels: [{ channelId: 'display:1', type: 'video', store: false }],
+      });
+      await client.stopSession();
+      const stopping = client.shutdown();
+      await tick();
+      expect(manager.stop).not.toHaveBeenCalled();
+      manager.emit('local-recording-ready', identity);
+      manager.emit('recording-token-needed', identity);
+      await tick();
+      expect(manager.stop).not.toHaveBeenCalled();
+      manager.emit('processing-complete', complete);
+      await stopping;
+      expect(manager.stop).toHaveBeenCalledTimes(1);
+    } finally {
+      Object.defineProperty(process, 'platform', platform);
+    }
   }
-});
+);
 
 test('timeout/failure keeps recorder alive; explicit suspension permits shutdown', async () => {
   const { client, manager } = setup();
@@ -286,7 +289,7 @@ test('completion before relay acknowledgement is retained for a later waiter', a
 
 test('Unsupported platforms keep legacy shutdown without waiting for local events', async () => {
   const platform = Object.getOwnPropertyDescriptor(process, 'platform')!;
-  Object.defineProperty(process, 'platform', { value: 'linux' });
+  Object.defineProperty(process, 'platform', { value: 'freebsd' });
   try {
     const { client, manager } = setup();
     await client.startSession({
@@ -356,4 +359,49 @@ test('declining an unrelated retained job releases shutdown already waiting on t
     'relayRecording',
     expect.anything()
   );
+});
+
+test('forwards 0.3.5 meeting signals through the public client', () => {
+  const { client, manager } = setup();
+  const detected = jest.fn();
+  const ended = jest.fn();
+  client.on('meeting-detected', detected);
+  client.on('meeting-ended', ended);
+  const start = {
+    event: 'meeting_detected',
+    timestamp: 't1',
+    camera: false,
+    microphone: true,
+    app: 'org.zoom.Zoom',
+  };
+  const stop = { event: 'meeting_ended', timestamp: 't2', lastActiveAt: 't1' };
+  manager.emit('meeting-detected', start);
+  manager.emit('meeting-ended', stop);
+  expect(detected).toHaveBeenCalledWith(start);
+  expect(ended).toHaveBeenCalledWith(stop);
+});
+
+test('instant start preserves connecting state and forwards later live readiness', () => {
+  const { client, manager } = setup();
+  const started = jest.fn();
+  const live = jest.fn();
+  const notice = jest.fn();
+  client.on('recording-started', started);
+  client.on('recording-live', live);
+  client.on('recording-notice', notice);
+  const starting = { ...identity, live: 'connecting' };
+  manager.emit('recording-started', starting);
+  expect(started).toHaveBeenCalledWith(starting);
+  expect(live).not.toHaveBeenCalled();
+  const attached = { ...identity, streams: [{ channel_id: 'display:1' }] };
+  manager.emit('recording-live', attached);
+  expect(live).toHaveBeenCalledWith(attached);
+  const unavailable = {
+    ...identity,
+    code: 'LIVE_UNAVAILABLE',
+    severity: 'warning',
+    active: true,
+  };
+  manager.emit('recording-notice', unavailable);
+  expect(notice).toHaveBeenCalledWith(unavailable);
 });
