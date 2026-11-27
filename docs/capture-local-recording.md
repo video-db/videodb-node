@@ -11,7 +11,7 @@ The client forwards `recording-notice`, `processing-progress`, `local-recording-
 
 ## Fresh tokens
 
-Supply `getRecorderToken` to handle native token requests automatically. Every invocation receives `{ recordingId, sessionId, forceRefresh: true }`. Issue a new token for the session's owning user; bypass Bloom's cached session token. `conn.generateClientToken(expiresIn, userId)` now supports that user identity without changing the existing one-argument signature.
+Supply `getRecorderToken` to handle native token requests automatically. Every invocation receives `{ recordingId, sessionId, forceRefresh: true }`. Issue a new token for the session's owning user; bypass any cached session token. `conn.generateClientToken(expiresIn, userId)` now supports that user identity without changing the existing one-argument signature.
 
 The provider may return `null` for retained sessions the current user does not own. Never authorize a recording solely because it exists on disk: validate session ownership on the backend. The SDK does not persist tokens, rejects a repeated token for the same recording, and limits automatic submissions to three per recording (`maxTokenRefreshAttempts`). Provider exceptions are replaced by a credential-free error. After a failed automatic attempt, fix authorization and explicitly call `relayRecording` with a fresh token. A provider should have its own HTTP timeout.
 
@@ -19,7 +19,7 @@ Choose automatic relay through the provider or manual relay in a `recording-toke
 
 ## Minimal Node example (trusted backend/dev harness)
 
-This example holds an API key and therefore belongs in a trusted Node process. Bloom should replace token generation with an authenticated request to its backend, which verifies session ownership, bypasses caches, and issues a same-user token. Persist the session-to-user mapping in your backend for recovery after an app restart.
+This example holds an API key and therefore belongs in a trusted Node process. A desktop app should replace token generation with an authenticated request to its backend, which verifies session ownership, bypasses caches, and issues a same-user token. Persist the session-to-user mapping in your backend for recovery after an app restart.
 
 ```js
 const { connect } = require('videodb');

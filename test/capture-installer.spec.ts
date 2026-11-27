@@ -102,3 +102,30 @@ it('both installers reject stale/missing artifact markers and agree on current a
     fs.rmSync(directory, { recursive: true });
   }
 });
+
+it('install-time download rejects on a write error and arms a stall timeout', async () => {
+  const https = require('node:https');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { EventEmitter } = require('node:events');
+  const request = Object.assign(new EventEmitter(), {
+    setTimeout: jest.fn(),
+    destroy: jest.fn(),
+  });
+  const get = jest.spyOn(https, 'get').mockReturnValue(request);
+  const installTime = new InstallTimeInstaller(binaryConfig);
+  try {
+    await expect(
+      installTime.downloadFile(
+        'https://example.com/capture.tar.gz',
+        path.join(os.tmpdir(), 'videodb-missing-dir', 'capture.tar.gz')
+      )
+    ).rejects.toThrow(/ENOENT/);
+    expect(request.setTimeout).toHaveBeenCalledWith(
+      60000,
+      expect.any(Function)
+    );
+  } finally {
+    get.mockRestore();
+  }
+});
