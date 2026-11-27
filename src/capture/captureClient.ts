@@ -304,9 +304,19 @@ export class CaptureClient extends EventEmitter implements ChannelClient {
     );
 
     // Forward events from BinaryManager
-    this.binaryManager.on('error', payload => {
-      this.emit('error', payload);
-    });
+    this.binaryManager.on(
+      'error',
+      (payload: { code?: string; type?: string; message?: string }) => {
+        // An 'error' event with no listener throws and takes the host app down.
+        if (this.listenerCount('error') > 0) this.emit('error', payload);
+        else
+          console.error(
+            'VideoDB Capture:',
+            payload?.code ?? payload?.type ?? '',
+            payload?.message ?? ''
+          );
+      }
+    );
 
     this.binaryManager.on('shutdown', payload => {
       this.lifecycleGeneration++;

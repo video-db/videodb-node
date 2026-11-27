@@ -405,3 +405,19 @@ test('instant start preserves connecting state and forwards later live readiness
   manager.emit('recording-notice', unavailable);
   expect(notice).toHaveBeenCalledWith(unavailable);
 });
+
+test('a native error with no listener does not throw into the host', () => {
+  const { client, manager } = setup();
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    expect(() =>
+      manager.emit('error', { code: 'INSTANCE_ALREADY_RUNNING' })
+    ).not.toThrow();
+    const heard = jest.fn();
+    client.on('error', heard);
+    manager.emit('error', { code: 'INSTANCE_ALREADY_RUNNING' });
+    expect(heard).toHaveBeenCalledWith({ code: 'INSTANCE_ALREADY_RUNNING' });
+  } finally {
+    log.mockRestore();
+  }
+});

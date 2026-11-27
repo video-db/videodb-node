@@ -227,6 +227,10 @@ export class RecorderInstaller {
         reject(err);
       });
 
+      request.setTimeout(60_000, () => {
+        request.destroy(new Error('Download timed out'));
+      });
+
       file.on('error', err => {
         file.close();
         fs.unlinkSync(destPath);
