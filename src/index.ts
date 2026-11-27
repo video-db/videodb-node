@@ -107,6 +107,12 @@ export {
   RTStreamUnderstanding,
   RTStreamIndex,
 } from './core/rtstream';
+export type {
+  RTStreamTranscript,
+  RTStreamTranscriptOptions,
+  RTStreamTranscriptRecord,
+  RTStreamTranscriptWord,
+} from './interfaces/core';
 export {
   WebSocketConnection,
   type WebSocketMessage,

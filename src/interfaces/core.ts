@@ -247,6 +247,58 @@ export interface RTStreamShotBase {
 }
 
 /**
+ * Options for `RTStream.startTranscript`
+ */
+export interface RTStreamTranscriptOptions {
+  /** Spoken language as an ISO 639-1 code, e.g. "es". Without it the language is detected automatically. */
+  languageCode?: string;
+  /** "standard" (default) or "pro", the more accurate model */
+  modelName?: 'standard' | 'pro' | (string & {});
+  /** Label who speaks on each transcript record and word. With "standard", supported for en, es, fr, de, pt, it or no language. */
+  speakerLabels?: boolean;
+  /** Upper bound on distinct speakers, 1-10. Requires `speakerLabels: true`. */
+  maxSpeakers?: number;
+  /** Names, acronyms or terms to recognise and spell as given: up to 100 strings of at most 50 characters. Requires `modelName: 'pro'`. */
+  keyterms?: string[];
+}
+
+/**
+ * A word in an RTStream transcript record
+ */
+export interface RTStreamTranscriptWord {
+  text: string;
+  start: number;
+  end: number;
+  confidence?: number;
+  /** Speaker label, present when speaker labels are on */
+  speaker?: string;
+}
+
+/**
+ * A record returned by `RTStream.getTranscript`
+ */
+export interface RTStreamTranscriptRecord {
+  start: number | null;
+  end: number | null;
+  text: string;
+  wordTimestamps: RTStreamTranscriptWord[];
+  /** Speaker label, present when speaker labels are on */
+  speaker?: string;
+}
+
+/**
+ * Response of `RTStream.getTranscript`
+ */
+export interface RTStreamTranscript {
+  transcriptionRecords?: RTStreamTranscriptRecord[];
+  nextPage?: boolean;
+  totalCount?: number;
+  page?: number;
+  pageSize?: number;
+  [key: string]: unknown;
+}
+
+/**
  * Configuration for RTStream index spoken words
  */
 export interface RTStreamIndexSpokenWordsConfig {

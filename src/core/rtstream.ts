@@ -4,6 +4,8 @@ import type {
   RTStreamSceneIndexBase,
   RTStreamShotBase,
   RTStreamSearchConfig,
+  RTStreamTranscript,
+  RTStreamTranscriptOptions,
 } from '@/interfaces/core';
 import type {
   IndexVisualsConfig,
@@ -1229,7 +1231,7 @@ export class RTStream {
       since?: number;
       engine?: string;
     } = {}
-  ): Promise<Record<string, unknown>> => {
+  ): Promise<RTStreamTranscript> => {
     const params: Record<string, unknown> = {
       engine: config.engine,
       page: config.page ?? 1,
@@ -1239,7 +1241,7 @@ export class RTStream {
     if (config.end !== undefined) params.end = config.end;
     if (config.since !== undefined) params.since = config.since;
 
-    const res = await this.#vhttp.get<Record<string, unknown>>(
+    const res = await this.#vhttp.get<RTStreamTranscript>(
       [ApiPath.rtstream, this.id, ApiPath.transcription],
       { params }
     );
@@ -1250,18 +1252,49 @@ export class RTStream {
    * Start transcription for the rtstream
    * @param socketId - WebSocket connection ID for real-time transcript updates (optional)
    * @param engine - Transcription engine (default: "assemblyai")
-   * @param language - Spoken language as an ISO 639-1 code, e.g. "es" (optional).
+   * @param language - Older name for `options.languageCode` (optional)
+   * @param options - Transcription options (optional)
+   * @param options.languageCode - Spoken language as an ISO 639-1 code, e.g. "es".
    *   Without it the language is detected automatically.
+   * @param options.modelName - "standard" (default) or "pro", the more accurate model
+   * @param options.speakerLabels - Label who speaks on each transcript record and word.
+   *   With "standard", supported for en, es, fr, de, pt, it or no language.
+   * @param options.maxSpeakers - Upper bound on distinct speakers, 1-10. Requires `speakerLabels: true`.
+   * @param options.keyterms - Names, acronyms or terms to recognise and spell as given: up to 100
+   *   strings of at most 50 characters. Requires `modelName: 'pro'`.
    * @returns Transcription status with start time
+   * @throws VideodbError if `language` and `options.languageCode` are both given and differ
+   *
+   * @example
+   * ```typescript
+   * await rtstream.startTranscript(undefined, undefined, undefined, {
+   *   languageCode: 'es',
+   *   modelName: 'pro',
+   *   speakerLabels: true,
+   *   maxSpeakers: 3,
+   * });
+   * ```
    */
   public startTranscript = async (
     socketId?: string,
     engine: string = 'assemblyai',
-    language?: string
+    language?: string,
+    options: RTStreamTranscriptOptions = {}
   ): Promise<Record<string, unknown>> => {
+    if (language && options.languageCode && language !== options.languageCode) {
+      throw new VideodbError(
+        'Pass languageCode only; language is its older name'
+      );
+    }
+    const languageCode = options.languageCode || language;
     const data: Record<string, unknown> = { action: 'start', engine };
     if (socketId) data.ws_connection_id = socketId;
-    if (language) data.language_code = language;
+    if (languageCode) data.language_code = languageCode;
+    if (options.modelName) data.model_name = options.modelName;
+    if (options.speakerLabels != null)
+      data.speaker_labels = options.speakerLabels;
+    if (options.maxSpeakers != null) data.max_speakers = options.maxSpeakers;
+    if (options.keyterms?.length) data.keyterms = options.keyterms;
 
     const res = await this.#vhttp.post<Record<string, unknown>, typeof data>(
       [ApiPath.rtstream, this.id, ApiPath.transcription],
