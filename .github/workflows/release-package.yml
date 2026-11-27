@@ -8,6 +8,10 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  # npm ci runs setup.js; a downloaded capture binary in bin/ would be packed into the tarball.
+  VIDEODB_SKIP_CAPTURE_INSTALL: '1'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -45,6 +49,12 @@ jobs:
           fi
       ############# NPM PUBLISH ##############
       - run: npm ci
+      - name: Check no capture binary is packed
+        run: |
+          if npm pack --dry-run 2>&1 | grep -q ' bin/'; then
+            echo "::error::bin/ would be published. The capture binary must not ship in the tarball."
+            exit 1
+          fi
       - run: npm publish --tag ${{ steps.npm-tag.outputs.tag }}
         env:
           NODE_AUTH_TOKEN: ${{secrets.NODE_AUTH_TOKEN}}
